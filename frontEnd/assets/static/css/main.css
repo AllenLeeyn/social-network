@@ -1,0 +1,375 @@
+:root {
+  --primary: #975aa7;
+  --secondary: #b77ac7; /* Muted lavender */
+  --accent: #a888b5; /* Soft purple */
+  --highlight: #efb6c8; /* Pink */
+  --background: hsl(0, 0%, 12%);
+  --card-background: #232323; /* White for cards */
+  --text: hsl(0, 0%, 80%);
+  --text-light: #afafaf; /* Medium gray for secondary text */
+  --text-dark: black; /* Medium gray for secondary text */
+  --hover: #e8eaf6; /* Light purple for hover effects */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Roboto Mono", monospace;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: grey;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--card-background);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: darkgrey;
+}
+
+a {
+  color: var(--primary);
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--accent);
+  transition: color 0.2s ease;
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  justify-content: center;
+}
+
+/* header */
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+}
+
+.navbar {
+  background: var(--primary);
+  color: white;
+  padding: 1rem;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.nav-content {
+  max-width: 1024px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.nav-btn {
+  display: inline-block;
+  white-space: nowrap;
+  padding: 0.5rem 0.5rem;
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+  border: 1px solid var(--accent);
+  border-radius: 50px; 
+  font-size: 0.8rem;
+  transition: background-color 0.3s ease;
+}
+
+.nav-btn:hover {
+  background-color: var(--secondary);
+}
+
+#mainView{
+  margin: 80px auto 0;
+  display: flex;
+}
+
+.feed {
+  padding: 5px;
+  flex: 1;
+  max-width: 768px;
+  min-width: 320px;
+}
+
+.feed-header {
+  width: 100%;
+  overflow: visible;
+}
+
+.button-container {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 0 auto;
+  max-width: 800px; 
+}
+
+.button-container button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 10px 15px;
+}
+
+/*------ list ------*/
+.users,
+.categories {
+  margin: 5px;
+  margin-bottom: 30px;
+  overflow-y: auto;
+}
+
+.users li,
+.categories li {
+  margin: 3px;
+  font-size: 12px;
+}
+
+.user-item,
+.category-item {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  width: 150px;
+  padding: 5px;
+  padding-left: 15px;
+  border-radius: 8px;
+  background: var(--card-background);
+  cursor: pointer;
+  transition: background 0.2s;
+  color: var(--text);
+}
+
+.user-item:hover,
+.category-item:hover {
+  background: var(--highlight);
+  color: var(--card-background);
+}
+
+.category-item.active {
+  background: var(--primary);
+  color: white;
+  font-weight: bold;
+}
+
+.user-item::before{
+  content: '';
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background-color: grey;
+}
+
+.user-item.online::before{
+  content: '';
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background-color: green;
+}
+
+.user-item.unread::after {
+  content: "!";
+  font-size: 12px;
+  color: red;
+  margin-left: 5px;
+}
+
+/*----- table -----*/
+table {
+  position: relative;
+  color: var(--text);
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.8rem;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+#headertable {
+  width: 100%;
+  table-layout: auto;
+}
+
+th {
+  background-color: var(--primary);
+  color: white;
+  padding: 0.8rem;
+  font-size: 0.8rem;
+  text-align: center;
+  font-weight: bold;
+  white-space: pre-line;
+  border-bottom: 3px solid var(--primary);
+}
+
+.itable{
+  margin-bottom: 20px;
+}
+
+th.selected{
+  color: yellow;
+  border-bottom: 3px solid yellow;
+}
+
+th:hover {
+  color: hsl(51, 100%, 70%);
+  background-color: #a888b5;
+  cursor: pointer;
+}
+
+tbody tr:nth-child(even) {
+  background-color: hsl(0, 0%, 22%);
+}
+
+tbody tr:nth-child(odd) {
+  background-color: hsl(0, 0%, 18%);
+}
+
+tbody td {
+  padding: 10px;
+  text-align: left;
+}
+
+/*----- form -----*/
+#message-form,
+#comment-form {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+#message-form textarea,
+#comment-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--background);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: black;
+  margin-bottom: 5px;
+  resize: none;
+}
+
+#message-form button,
+#comment-form button {
+  background: var(--primary);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#message-form button:hover,
+#comment-form button:hover {
+  background: var(--accent);
+}
+
+/* footer */
+footer {
+  background-color: var(--primary);
+  border-top: 1px solid var(--card-background);
+  color: var(--text);
+  padding: 10px;
+  text-align: center;
+}
+
+footer ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 5px 0;
+}
+
+footer ul li {
+  display: inline-block;
+  margin: 0 10px;
+}
+
+footer ul li a {
+  font-size: 16px;
+  font-weight: bold;
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* toast message */
+.toast-message {
+  position: fixed;
+  bottom: 20px; /* Position it at the bottom of the screen */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: red; 
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  z-index: 1000; /* Make sure it appears on top of other content */
+  opacity: 0;
+  animation: fadeInOut 3s ease-out forwards; /* Add fade-in/fade-out animation */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Optional: Add subtle shadow */
+}
+
+@keyframes fadeInOut {
+  0% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(20px);
+  }
+  10% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+  }
+  90% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+  }
+  100% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(20px);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .form-section {
+    padding: 20px;
+  }
+}

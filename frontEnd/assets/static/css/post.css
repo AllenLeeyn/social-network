@@ -1,0 +1,86 @@
+/* Posts Feed */
+.post-header {
+  padding-top: 0.6rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.post-meta {
+  flex: 1;
+}
+
+.post-meta a{
+  text-decoration: none;
+}
+
+.post-author {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.post-time {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.post-content {
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.post-content pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.post-content h3 {
+  margin-bottom: 0.5rem;
+}
+
+.post-content h3 a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.post-content h3 a:hover {
+  color: var(--accent);
+}
+
+.post-actions {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid white;
+}
+
+.icon-button {
+  padding: 5px;
+  width: fit-content;
+  display: flex;
+  background: none;
+  border: none;
+  align-items: center;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.icon-button:hover {
+  background: none;
+  border: none;
+  color: var(--primary);
+}
+
+.icon-button i {
+  margin-right: 0.5rem;
+}
+
+.post-actions[data-state="1"] .icon-button i.fas.fa-thumbs-up {
+  color: green;
+}
+
+.post-actions[data-state="-1"] .icon-button i.fas.fa-thumbs-down {
+  color: red;
+}

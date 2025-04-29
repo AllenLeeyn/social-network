@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="RealEMit platform for easy posting and sharing" />
+  <meta name="author" content="JOGA" />
+
+  <!-- <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon"> -->
+  <title>REAlEMiT</title>
+
+  <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" as="style" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+  <link rel="stylesheet" href="/static/authentication.css" />
+  <link rel="stylesheet" href="/static/main.css" />
+  <link rel="stylesheet" href="/static/messenger.css" />
+  <link rel="stylesheet" href="/static/newPost.css" />
+  <link rel="stylesheet" href="/static/post.css" />
+
+  <script src="/static/script/main.js" type="module" defer></script>
+</head>
+  <body>
+
+    <div id="mainView" style="display: none;">
+      <!-- header navigation bar -->
+      <header>
+          <nav class="navbar">
+              <div class="nav-content">
+                  <a id="logo-text" class="logo-text">REAlEMiT</a>
+                  <div class="nav-actions">
+                    <button  id="new-post" class="nav-btn">New Post</button>|
+                    <button id="profile-btn" class="nav-btn">Profile</button>
+                    <button id="logout-btn" class="nav-btn">Log out</button>
+                  </div>
+              </div>
+          </nav>
+      </header>
+  
+      <div class="container">
+          <!-- Categories Sidebar -->
+          <div class="categories">
+              <ul  id="categoriesList">
+                <!-- Inserting Categories Dynamically -->
+              </ul>
+          </div>
+  
+          <!-- Posts Feed -->
+          <div class="feed">
+            <pre>Click on active tab to close it</pre>
+            <table id="headertable" class="htable">
+              <tbody>
+                <tr>
+                  <th id="tab-feed">FEED</th>
+                  <th id="tab-post" style="display: none;"></th>
+                  <th id="tab-profile" style="display: none;"></th>
+                  <th id="tab-new-post" style="display: none;">New Post</th>
+                  <th id="tab-messenger" style="display: none;"></th>
+                </tr>
+              </tbody>
+            </table>
+
+            <table id="feedDisplay" class="itable"></table>
+            <table id="postDisplay" class="itable"></table>
+            <table id="newPostDisplay" class="itable"></table>
+            <table id="profileDisplay" class="itable"></table>
+            <table id="messengerDisplay" class="itable"></table>
+          </div>
+  
+          <div class="users">
+            <pre>Users:</pre>
+            <ul  id="userList">
+              <!-- Inserting Categories Dynamically -->
+            </ul>
+          </div>
+  
+      </div>
+    </div>
+
+    <div id="validationView"  style="display: none;">
+      <div class="container">
+        <!-- Left side with image background -->
+        <div class="image-section">
+          <div class="image-content">
+            <h1>Welcome to REAlEMiT</h1>
+            <p>Sign up or log in to start chatting.</p>
+          </div>
+        </div>
+    
+        <!-- Right side with login form -->
+        <div class="form-section">
+          
+          <div class="form-container" id="signUpFormContainer">
+            <h2>Sign Up</h2>
+            <form id="signUpForm">
+              <div class="input-group">
+                <label class="form-label">First Name</label>
+                <input type="text" name="firstName" placeholder="3 to 16 alphanumeric, '_' or '-'" required />
+              </div>
+              <div class="input-group">
+                <label class="form-label">Last Name</label>
+                <input type="text" name="lastName" placeholder="3 to 16 alphanumeric, '_' or '-'" required />
+              </div>
+              <div class="input-group">
+                <label class="form-label">Nickname</label>
+                <input type="text" name="nickName" placeholder="3 to 16 alphanumeric, '_' or '-'" required />
+              </div>
+                <div class="input-group">
+                  <label class="form-label">Gender</label>
+                  <div class="radio-group">
+                    <div class="radio-item">
+                      <input type="radio" name="gender" value="Male" id="male" required />
+                      <label class="radio-label" for="male">Male</label>
+                    </div>
+                    <div class="radio-item">
+                      <input type="radio" name="gender" value="Female" id="female" required />
+                      <label class="radio-label"  for="female">Female</label>
+                    </div>
+                    <div class="radio-item">
+                      <input type="radio" name="gender" value="Other" id="other" required checked/>
+                      <label class="radio-label"  for="other">Other</label>
+                    </div>
+                </div>
+              </div>
+              <div class="input-group">
+                <label class="form-label">Age</label>
+                <input type="number" name="age" id="age" required min="1" step="1" />
+              </div>
+              <div class="input-group input-email">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" required placeholder=" ">
+              </div>
+              <div class="input-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password"  placeholder="At least 1 a-z, A-Z, 0-9 and [@$!%*?&]" required />
+              </div>
+              <div class="input-group">
+                <label class="form-label">Confirm Password</label>
+                <input type="password" name="confirm-password" placeholder="At least 1 a-z, A-Z, 0-9 and [@$!%*?&]" required />
+              </div>
+              <button type="submit" id="signup-btn">Sign Up</button>
+              <div class="link">
+                <p>Already have an account? <a id="toLogIn">Log in</a></p>
+              </div>
+            </form>
+          </div>
+
+          <div class="form-container" id="logInFormContainer" style="display: none;">
+            <h2>Login</h2>
+            <form id="logInForm">
+              <div class="input-group">
+                <label class="form-label">Use: </label>
+                  <div class="radio-group">
+                    <div class="radio-item">
+                      <input type="radio" name="logInUsing" value="nickName" id="nickNameField" required checked/>
+                      <label class="form-label" for="nickNameField">Nickname</label>
+                    </div>
+                    <div class="radio-item">
+                      <input type="radio" name="logInUsing" value="email" id="emailField" required />
+                      <label class="form-label" for="emailField">Email</label>
+                    </div>
+                  </div>
+              </div>
+              <div style="display: flex;" class="input-group" id="nickNameGroup">
+                <label class="form-label">Nickname</label>
+                <input type="text" name="nickName"/>
+              </div>
+              <div style="display: none;" class="input-group" id="emailGroup">
+                <label class="form-label">Email</label>
+                <input type="email" name="email"/>
+              </div>
+              <div class="input-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" required />
+              </div>
+  
+              <button type="submit" id="login-btn">Log in</button>
+              <div class="link">
+                <p>Don't have an account? <a id="toSignUp">Sign Up</a></p>
+              </div>
+            </form>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer>
+      <div>
+          <p>&copy; REAlEMiT (2025)</p>
+            <ul>
+                <li><a href="https://github.com/AllenLeeyn" target="_blank"> Allen Lee</a></li>
+                <li><a href="https://github.com/kurizma" target="_blank"> Joon Kim</a></li>
+            </ul>
+      </div>
+    </footer>
+</body>
+</html>

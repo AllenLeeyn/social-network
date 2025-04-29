@@ -1,0 +1,51 @@
+/* new post */
+  .newPost{
+    padding: 10px;
+  }
+  
+  .input-group input,
+  .input-group textarea {
+    resize: none;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  .checkbox-group {
+    margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .checkbox-item {
+    margin-bottom: 15px;
+  }
+
+  .checkbox-item input[type="checkbox"] {
+    display: none;
+  }
+  
+  .checkbox-item label {
+    border: 1px solid var(--accent);
+    padding: 5px;
+    margin: 3px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    background: var(--background);
+    color: var(--text);
+  }
+  
+  .checkbox-item label:hover {
+    background: #dcd0f8;
+    transition: all 0.2s ease;
+  }
+  
+  .checkbox-item input[type="checkbox"]:checked + label {
+    background: var(--secondary);
+    color: var(--background);
+    transition: all 0.2s ease;
+  }
+  
