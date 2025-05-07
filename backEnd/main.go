@@ -15,11 +15,15 @@ var m messenger.Messenger
 
 func init() {
 	var err error
-	db, err = dbTools.OpenDB("sqlite3", "./database/forum.db")
+	db, err = dbTools.OpenDB("sqlite3", "./pkg/database/forum.db")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
 
+	err = db.Migri()
+	if err != nil {
+		log.Fatal("Error migrating database: ", err)
+	}
 	db.Categories, _ = db.SelectFieldFromTable("name", "categories")
 	m = messenger.Start(db)
 	handlers.Init(db, m)
