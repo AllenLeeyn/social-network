@@ -28,7 +28,7 @@ type DBContainer struct {
 }
 
 // openDB() opens a sql database with the driver and dataSource given.
-func OpenDB(driver, dataSource string) (*DBContainer, error) {
+func OpenDB(driver, dataSource, migrateSource string) (*DBContainer, error) {
 	if _, err := os.Stat(dataSource); os.IsNotExist(err) {
 		file, err := os.Create(dataSource)
 		if err != nil {
@@ -42,7 +42,7 @@ func OpenDB(driver, dataSource string) (*DBContainer, error) {
 		return nil, err
 	}
 
-	err = migrateDB(conn, "file://pkg/database/migrate")
+	err = migrateDB(conn, migrateSource)
 	if err != nil {
 		log.Fatal("Error migrating database: ", err)
 	}

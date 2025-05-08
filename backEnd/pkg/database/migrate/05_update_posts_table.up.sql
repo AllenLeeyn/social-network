@@ -60,7 +60,6 @@ DROP TABLE post_feedback;
 ALTER TABLE post_feedback_new RENAME TO post_feedback;
 
 CREATE TABLE post_categories_new (
-    id INTEGER PRIMARY KEY,
     post_id INTEGER NOT NULL,
     category_id INTEGER NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
@@ -68,6 +67,7 @@ CREATE TABLE post_categories_new (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by INTEGER,
     updated_at DATETIME,
+    PRIMARY KEY (post_id, category_id),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES categories(id),
     FOREIGN KEY (created_by) REFERENCES users(id),

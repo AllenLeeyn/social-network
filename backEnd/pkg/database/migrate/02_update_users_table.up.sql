@@ -14,7 +14,7 @@ CREATE TABLE users_new (
     about_me TEXT,
     visibility TEXT NOT NULL DEFAULT 'private' CHECK(visibility IN ('private', 'public')),
     status TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
-    created_at DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by INTEGER,
     updated_at DATETIME,
     FOREIGN KEY (type_id) REFERENCES account_type(id),
