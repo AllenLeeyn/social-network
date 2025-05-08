@@ -20,10 +20,6 @@ func init() {
 		log.Fatal("Error opening database: ", err)
 	}
 
-	err = db.Migri()
-	if err != nil {
-		log.Fatal("Error migrating database: ", err)
-	}
 	db.Categories, _ = db.SelectFieldFromTable("name", "categories")
 	m = messenger.Start(db)
 	handlers.Init(db, m)

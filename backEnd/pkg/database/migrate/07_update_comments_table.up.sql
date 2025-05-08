@@ -1,7 +1,7 @@
 DROP TRIGGER IF EXISTS update_like_count_after_insert_in_comment_feedback;
-DROP TRIGGER IF EXISTS update_like_count_after_update_in_comment_feeback;
+DROP TRIGGER IF EXISTS update_like_count_after_update_in_comment_feedback;
 DROP TRIGGER IF EXISTS update_dislike_count_after_insert_in_comment_feedback;
-DROP TRIGGER IF EXISTS update_dislike_count_after_update_in_comment_feeback;
+DROP TRIGGER IF EXISTS update_dislike_count_after_update_in_comment_feedback;
 
 CREATE TABLE comments_new (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
