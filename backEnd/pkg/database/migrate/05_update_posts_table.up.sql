@@ -6,22 +6,24 @@ DROP TRIGGER IF EXISTS update_dislike_count_after_update_in_post_feedback;
 DROP TRIGGER IF EXISTS update_comment_count_after_insert;
 
 CREATE TABLE posts_new (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    group_id INTEGER,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    visibility TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'private', 'selected')),
-    like_count INTEGER NOT NULL DEFAULT 0,
-    dislike_count INTEGER NOT NULL DEFAULT 0,
-    comment_count INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by INTEGER,
-    updated_at DATETIME,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE SET NULL,
-    FOREIGN KEY (updated_by) REFERENCES users(id)
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL,
+    group_id        INTEGER,
+    title           TEXT NOT NULL,
+    content         TEXT NOT NULL,
+    visibility      TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'private', 'selected')),
+    like_count      INTEGER NOT NULL DEFAULT 0,
+    dislike_count   INTEGER NOT NULL DEFAULT 0,
+    comment_count   INTEGER NOT NULL DEFAULT 0,
+
+    status      TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by  INTEGER,
+    updated_at  DATETIME,
+
+    FOREIGN KEY (user_id)       REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id)      REFERENCES groups(id) ON DELETE SET NULL,
+    FOREIGN KEY (updated_by)    REFERENCES users(id)
 );
 
 INSERT INTO posts_new (
@@ -29,24 +31,27 @@ INSERT INTO posts_new (
     like_count, dislike_count, comment_count, updated_by, updated_at
 )
 SELECT
-    id, user_id, title, content, created_at, 'public', NULL, like_count, dislike_count, comment_count, 0, CURRENT_TIMESTAMP
+    id, user_id, title, content, created_at, 'public', NULL,
+    like_count, dislike_count, comment_count, 0, CURRENT_TIMESTAMP
 FROM posts;
 
 DROP TABLE posts;
 ALTER TABLE posts_new RENAME TO posts;
 
 CREATE TABLE post_feedback_new (
-    user_id INTEGER NOT NULL,
-    parent_id INTEGER NOT NULL,
-    rating INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
-    status TEXT NOT NULL CHECK ("status" IN ('enable', 'delete')) DEFAULT 'enable',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by INTEGER,
-    updated_at DATETIME,
+    user_id     INTEGER NOT NULL,
+    parent_id   INTEGER NOT NULL,
+    rating      INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
+
+    status      TEXT NOT NULL CHECK ("status" IN ('enable', 'delete')) DEFAULT 'enable',
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by  INTEGER,
+    updated_at  DATETIME,
+
     PRIMARY KEY (user_id, parent_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES posts(id) ON DELETE CASCADE,
-    FOREIGN KEY (updated_by) REFERENCES users(id)
+    FOREIGN KEY (user_id)       REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id)     REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (updated_by)    REFERENCES users(id)
 );
 
 INSERT INTO post_feedback_new (
@@ -60,18 +65,20 @@ DROP TABLE post_feedback;
 ALTER TABLE post_feedback_new RENAME TO post_feedback;
 
 CREATE TABLE post_categories_new (
-    post_id INTEGER NOT NULL,
+    post_id     INTEGER NOT NULL,
     category_id INTEGER NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
-    created_by INTEGER NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by INTEGER,
-    updated_at DATETIME,
+    
+    status      TEXT NOT NULL CHECK (status IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
+    created_by  INTEGER NOT NULL,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by  INTEGER,
+    updated_at  DATETIME,
+
     PRIMARY KEY (post_id, category_id),
-    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(id),
-    FOREIGN KEY (created_by) REFERENCES users(id),
-    FOREIGN KEY (updated_by) REFERENCES users(id)
+    FOREIGN KEY (post_id)       REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id)   REFERENCES categories(id),
+    FOREIGN KEY (created_by)    REFERENCES users(id),
+    FOREIGN KEY (updated_by)    REFERENCES users(id)
 );
 
 INSERT INTO post_categories_new (

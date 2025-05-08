@@ -6,14 +6,15 @@ DROP TRIGGER IF EXISTS update_dislike_count_after_update_in_post_feedback;
 DROP TRIGGER IF EXISTS update_comment_count_after_insert;
 
 CREATE TABLE posts_old (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    comment_count INTEGER NOT NULL DEFAULT 0,
-    like_count INTEGER NOT NULL DEFAULT 0,
-    dislike_count INTEGER NOT NULL DEFAULT 0,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL,
+    comment_count   INTEGER NOT NULL DEFAULT 0,
+    like_count      INTEGER NOT NULL DEFAULT 0,
+    dislike_count   INTEGER NOT NULL DEFAULT 0,
+    title           TEXT NOT NULL,
+    content         TEXT NOT NULL,
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -22,19 +23,21 @@ INSERT INTO posts_old (
     like_count, dislike_count, comment_count
 )
 SELECT
-    id, user_id, title, content, created_at, like_count, dislike_count, comment_count
+    id, user_id, title, content, created_at,
+    like_count, dislike_count, comment_count
 FROM posts;
 
 DROP TABLE posts;
 ALTER TABLE posts_old RENAME TO posts;
 
 CREATE TABLE post_feedback_old (
-    user_id INTEGER NOT NULL,
-    parent_id INTEGER NOT NULL,
-    rating INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    user_id     INTEGER NOT NULL,
+    parent_id   INTEGER NOT NULL,
+    rating      INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     PRIMARY KEY (user_id, parent_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id)   REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
@@ -49,11 +52,12 @@ DROP TABLE post_feedback;
 ALTER TABLE post_feedback_old RENAME TO post_feedback;
 
 CREATE TABLE post_categories_old (
-    post_id INTEGER NOT NULL,
+    post_id     INTEGER NOT NULL,
     category_id INTEGER NOT NULL,
+
     PRIMARY KEY (post_id, category_id),
-    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(id)
+    FOREIGN KEY (post_id)       REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id)   REFERENCES categories(id)
 );
 
 INSERT INTO post_categories_old (

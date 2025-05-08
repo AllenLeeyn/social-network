@@ -4,17 +4,18 @@ DROP TRIGGER IF EXISTS update_dislike_count_after_insert_in_comment_feedback;
 DROP TRIGGER IF EXISTS update_dislike_count_after_update_in_comment_feeback;
 
 CREATE TABLE comments_old (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    user_name TEXT NOT NULL,
-    post_id INTEGER NOT NULL,
-    parent_id INTEGER NULL,
-    content TEXT NOT NULL DEFAULT 0,
-    like_count INTEGER NOT NULL DEFAULT 0,
-    dislike_count INTEGER NOT NULL DEFAULT 0,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL,
+    user_name       TEXT NOT NULL,
+    post_id         INTEGER NOT NULL,
+    parent_id       INTEGER NULL,
+    content         TEXT NOT NULL DEFAULT 0,
+    like_count      INTEGER NOT NULL DEFAULT 0,
+    dislike_count   INTEGER NOT NULL DEFAULT 0,
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id)   REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id)   REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id) REFERENCES comments(id)
 );
 
@@ -39,12 +40,13 @@ DROP TABLE comments;
 ALTER TABLE comments_old RENAME TO comments;
 
 CREATE TABLE comment_feedback_old (
-    user_id INTEGER NOT NULL,
-    parent_id INTEGER NOT NULL,
-    rating INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    user_id     INTEGER NOT NULL,
+    parent_id   INTEGER NOT NULL,
+    rating      INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     PRIMARY KEY (user_id, parent_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id)   REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
 );
 

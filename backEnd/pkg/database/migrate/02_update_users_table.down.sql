@@ -1,17 +1,18 @@
 DROP VIEW IF EXISTS v_posts;
 
 CREATE TABLE users_old (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    type_id INTEGER NOT NULL,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    nick_name TEXT NOT NULL UNIQUE,
-    gender TEXT CHECK(gender IN ('Male', 'Female', 'Other')) NOT NULL,
-    birthday DATETIME NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    pw_hash TEXT NOT NULL,
-    reg_date DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    type_id     INTEGER NOT NULL,
+    first_name  TEXT NOT NULL,
+    last_name   TEXT NOT NULL,
+    nick_name   TEXT NOT NULL UNIQUE,
+    gender      TEXT CHECK(gender IN ('Male', 'Female', 'Other')) NOT NULL,
+    birthday    DATETIME NOT NULL,
+    email       TEXT NOT NULL UNIQUE,
+    pw_hash     TEXT NOT NULL,
+    reg_date    DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_login  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
     FOREIGN KEY (type_id) REFERENCES account_type(id)
 );
 

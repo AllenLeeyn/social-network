@@ -4,21 +4,23 @@ DROP TRIGGER IF EXISTS update_dislike_count_after_insert_in_comment_feedback;
 DROP TRIGGER IF EXISTS update_dislike_count_after_update_in_comment_feedback;
 
 CREATE TABLE comments_new (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    post_id INTEGER NOT NULL,
-    parent_id INTEGER,
-    content TEXT NOT NULL DEFAULT '',
-    like_count INTEGER NOT NULL DEFAULT 0,
-    dislike_count INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by INTEGER,
-    updated_at DATETIME,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES comments(id),
-    FOREIGN KEY (updated_by) REFERENCES users(id)
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL,
+    post_id         INTEGER NOT NULL,
+    parent_id       INTEGER,
+    content         TEXT NOT NULL DEFAULT '',
+    like_count      INTEGER NOT NULL DEFAULT 0,
+    dislike_count   INTEGER NOT NULL DEFAULT 0,
+
+    status          TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by      INTEGER,
+    updated_at      DATETIME,
+
+    FOREIGN KEY (user_id)       REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id)       REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id)     REFERENCES comments(id),
+    FOREIGN KEY (updated_by)    REFERENCES users(id)
 );
 
 INSERT INTO comments_new (
@@ -34,17 +36,19 @@ DROP TABLE comments;
 ALTER TABLE comments_new RENAME TO comments;
 
 CREATE TABLE comment_feedback_new (
-    user_id INTEGER NOT NULL,
-    parent_id INTEGER NOT NULL,
-    rating INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
-    status TEXT NOT NULL CHECK ("status" IN ('enable', 'delete')) DEFAULT 'enable',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by INTEGER,
-    updated_at DATETIME,
+    user_id     INTEGER NOT NULL,
+    parent_id   INTEGER NOT NULL,
+    rating      INTEGER NOT NULL CHECK (rating IN (-1, 0, 1)),
+    
+    status      TEXT NOT NULL CHECK ("status" IN ('enable', 'delete')) DEFAULT 'enable',
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by  INTEGER,
+    updated_at  DATETIME,
+
     PRIMARY KEY (user_id, parent_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
-    FOREIGN KEY (updated_by) REFERENCES users(id)
+    FOREIGN KEY (user_id)       REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id)     REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (updated_by)    REFERENCES users(id)
 );
 
 INSERT INTO comment_feedback_new (
