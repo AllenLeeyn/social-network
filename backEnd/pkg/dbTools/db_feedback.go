@@ -8,7 +8,7 @@ func (db *DBContainer) SelectFeedback(tgt string, userID, parentID int) (*Feedba
 	}
 	qry := `SELECT * FROM ` + tgt + `_feedback WHERE user_id = ? AND parent_id = ?`
 	var fb Feedback
-	err := db.conn.QueryRow(qry, userID, parentID).Scan(
+	err := db.Conn.QueryRow(qry, userID, parentID).Scan(
 		&fb.UserID,
 		&fb.ParentID,
 		&fb.Rating,
@@ -29,7 +29,7 @@ func (db *DBContainer) InsertFeedback(tgt string, fb *Feedback) error {
 	qry := `INSERT INTO ` + tgt + `_feedback 
 			(user_id, parent_id, rating) 
 			VALUES ( ?, ?, ?)`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		fb.UserID,
 		fb.ParentID,
 		fb.Rating)
@@ -45,7 +45,7 @@ func (db *DBContainer) UpdateFeedback(tgt string, fb *Feedback) error {
 	qry := `UPDATE ` + tgt + `_feedback
 			SET rating = ?, created_at = ? 
 			WHERE user_id = ? AND parent_id = ?`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		fb.Rating,
 		fb.CreatedAt,
 		fb.UserID,

@@ -3,15 +3,14 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	"sync"
 
 	"net/http"
 	userManagementModels "social-network/pkg/userManagement/models"
 	"social-network/pkg/utils"
-	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -19,63 +18,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const publicUrl = "modules/userManagement/views/"
-const forumPublicUrl = "modules/forumManagement/views/"
-
 var OnlineUsers = make(map[*websocket.Conn]string) // Map of online users (connected to WS) to usernames
 var Mutex = &sync.Mutex{}                          // Mutex to handle concurrent access to OnlineUsers
-
-//var u1 = uuid.Must(uuid.NewV4())
 
 type AuthPageErrorData struct {
 	ErrorMessage string
 }
 
-func AuthHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, _, _, checkLoginError := CheckLogin(w, r)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if loginStatus {
-		RedirectToIndex(w, r)
-		return
-	}
-
-	tmpl, err := template.ParseFiles(
-		publicUrl + "authPage.html",
-	)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	err = tmpl.Execute(w, nil)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-}
-
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
 	}
 
-	loginStatus, _, _, checkLoginError := CheckLogin(w, r)
+	loginStatus, _, _, checkLoginError := CheckLogin(w, r, db)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
-	// if loginStatus {
-	// 	RedirectToIndex(w, r)
-	// 	return
-	// }
 	if loginStatus {
 		res := utils.Result{
 			Success: true,
@@ -83,6 +43,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			Data:    nil,
 		}
 		utils.ReturnJson(w, res)
+		return
 	}
 
 	err := r.ParseMultipartForm(0)
@@ -90,19 +51,18 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
 		return
 	}
-	username := utils.SanitizeInput(r.FormValue("username"))
-	firstname := utils.SanitizeInput(r.FormValue("firstname"))
-	lastname := utils.SanitizeInput(r.FormValue("lastname"))
+
+	nick_name := utils.SanitizeInput(r.FormValue("nick_name"))
+	first_name := utils.SanitizeInput(r.FormValue("first_name"))
+	last_name := utils.SanitizeInput(r.FormValue("last_name"))
 	gender := utils.SanitizeInput(r.FormValue("gender"))
-	age := utils.SanitizeInput(r.FormValue("age"))
+	birth_date_str := utils.SanitizeInput(r.FormValue("birth_date"))
 	email := utils.SanitizeInput(r.FormValue("email"))
 	password := utils.SanitizeInput(r.FormValue("password"))
-	if len(username) == 0 || len(firstname) == 0 || len(lastname) == 0 || len(gender) == 0 || len(age) == 0 || len(email) == 0 || len(password) == 0 {
-		// errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
-		// renderAuthPage(w, "Username, email and password are required.")
+	if len(nick_name) == 0 || len(first_name) == 0 || len(last_name) == 0 || len(gender) == 0 || len(birth_date_str) == 0 || len(email) == 0 || len(password) == 0 {
 		res := utils.Result{
 			Success:    false,
-			Message:    "Username, firstname, lastname, gender, age, email and password are required.",
+			Message:    "nick_name, first_name, last_name, gender, birth_date, email and password are required.",
 			HttpStatus: http.StatusOK,
 			Data:       nil,
 		}
@@ -110,7 +70,6 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
-		// renderAuthPage(w, "Invalid email address!")
 		res := utils.Result{
 			Success:    false,
 			Message:    "Invalid email address!",
@@ -120,18 +79,18 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ReturnJson(w, res)
 		return
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	password_hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
 
-	ageInt, err := strconv.Atoi(age)
+	birth_date, err := time.Parse("2006-01-02", birth_date_str) // Adjust format as needed
 	if err != nil {
-		// renderAuthPage(w, "Invalid age format!")
 		res := utils.Result{
 			Success:    false,
-			Message:    "Invalid age format!",
+			Message:    "Invalid birth date format. Use YYYY-MM-DD.",
 			HttpStatus: http.StatusOK,
 			Data:       nil,
 		}
@@ -140,20 +99,19 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newUser := &userManagementModels.User{
-		Username:  username,
-		Firstname: firstname,
-		Lastname:  lastname,
-		Gender:    gender,
-		Age:       ageInt,
-		Email:     email,
-		Password:  string(hashedPassword),
+		NickName:     nick_name,
+		FirstName:    first_name,
+		LastName:     last_name,
+		Gender:       gender,
+		BirthDate:    birth_date,
+		Email:        email,
+		PasswordHash: string(password_hash),
 	}
 
 	// Insert a record while checking duplicates
-	userId, insertError := userManagementModels.InsertUser(newUser)
+	userId, insertError := userManagementModels.InsertUser(db, newUser)
 	if insertError != nil {
 		if insertError.Error() == "duplicateEmail" {
-			// renderAuthPage(w, "User with this email already exists!")
 			res := utils.Result{
 				Success:    false,
 				Message:    "User with this email already exists!",
@@ -162,8 +120,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			utils.ReturnJson(w, res)
 			return
-		} else if insertError.Error() == "duplicateUsername" {
-			// renderAuthPage(w, "User with this username already exists!")
+		} else if insertError.Error() == "duplicateNickName" {
 			res := utils.Result{
 				Success:    false,
 				Message:    "User with this username already exists!",
@@ -178,7 +135,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionGenerator(w, r, userId)
+	sessionGenerator(w, r, db, userId)
 
 	res := utils.Result{
 		Success: true,
@@ -186,23 +143,20 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		Data:    nil,
 	}
 	utils.ReturnJson(w, res)
+	return
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
 	}
 
-	loginStatus, _, _, checkLoginError := CheckLogin(w, r)
+	loginStatus, _, _, checkLoginError := CheckLogin(w, r, db)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
-	// if loginStatus {
-	// 	RedirectToIndex(w, r)
-	// 	return
-	// }
 	if loginStatus {
 		res := utils.Result{
 			Success: true,
@@ -210,6 +164,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			Data:    nil,
 		}
 		utils.ReturnJson(w, res)
+		return
 	}
 
 	err := r.ParseMultipartForm(0)
@@ -218,14 +173,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := utils.SanitizeInput(r.FormValue("username"))
+	nick_name := utils.SanitizeInput(r.FormValue("nick_name"))
 	password := utils.SanitizeInput(r.FormValue("password"))
-	if len(username) == 0 || len(password) == 0 {
-		// errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
-		// renderAuthPage(w, "Username and password are required.")
+	if len(nick_name) == 0 || len(password) == 0 {
 		res := utils.Result{
 			Success:    false,
-			Message:    "Username and password are required.",
+			Message:    "NickName and password are required.",
 			HttpStatus: http.StatusOK,
 			Data:       nil,
 		}
@@ -234,10 +187,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert a record while checking duplicates
-	authStatus, userId, authError := userManagementModels.AuthenticateUser(username, password)
+	authStatus, userId, authError := userManagementModels.AuthenticateUser(db, nick_name, password)
 	if authError != nil {
-		// errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		// renderAuthPage(w, authError.Error())
 		res := utils.Result{
 			Success:    false,
 			Message:    authError.Error(),
@@ -248,7 +199,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if authStatus {
-		sessionGenerator(w, r, userId)
+		sessionGenerator(w, r, db, userId)
 	}
 
 	res := utils.Result{
@@ -257,37 +208,33 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Data:    nil,
 	}
 	utils.ReturnJson(w, res)
+	return
 }
 
-// Render the login page with an optional error message
-func renderAuthPage(w http.ResponseWriter, errorMsg string) {
-	tmpl := template.Must(template.ParseFiles(publicUrl + "authPage.html"))
-	tmpl.Execute(w, AuthPageErrorData{ErrorMessage: errorMsg})
-}
-
-func sessionGenerator(w http.ResponseWriter, r *http.Request, userId int) {
+func sessionGenerator(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer, userId int) {
 	session := &userManagementModels.Session{
-		UserId: userId,
+		UserId:   userId,
+		IsActive: true,
 	}
-	session, insertError := userManagementModels.InsertSession(session)
+	session, insertError := userManagementModels.InsertSession(db, session)
 	if insertError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
-	UserSetCookie(w, session.SessionToken, session.ExpiresAt)
-	// Set the session token in a cookie
 
+	// Set the session token in a cookie
+	UserSetCookie(w, session.ID, session.ExpireTime)
 }
 
-// Middleware to check for valid user session in cookie
-func CheckLogin(w http.ResponseWriter, r *http.Request) (bool, userManagementModels.User, string, error) {
+// helper function to check for valid user session in cookie
+func CheckLogin(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) (bool, userManagementModels.User, string, error) {
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
 		return false, userManagementModels.User{}, "", nil
 	}
 
 	sessionToken := cookie.Value
-	user, expirationTime, selectError := userManagementModels.SelectSession(sessionToken)
+	user, expirationTime, selectError := userManagementModels.SelectSession(db, sessionToken)
 	if selectError != nil {
 		if selectError.Error() == "sql: no rows in result set" {
 			deleteCookie(w, "session_token")
@@ -306,15 +253,19 @@ func CheckLogin(w http.ResponseWriter, r *http.Request) (bool, userManagementMod
 	return true, user, sessionToken, nil
 }
 
-func Logout(w http.ResponseWriter, r *http.Request) {
-	loginStatus, loggedInUser, sessionToken, checkLoginError := CheckLogin(w, r)
+func Logout(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+	if r.Method != http.MethodGet {
+		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
+		return
+	}
+
+	loginStatus, loggedInUser, sessionToken, checkLoginError := CheckLogin(w, r, db)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
 
 	if !loginStatus {
-		// RedirectToIndex(w, r)
 		res := utils.Result{
 			Success: true,
 			Message: "You are not logged in",
@@ -324,7 +275,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := userManagementModels.DeleteSession(sessionToken)
+	err := userManagementModels.DeleteSession(db, sessionToken)
 	if err != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -335,62 +286,22 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	defer Mutex.Unlock()
 	SocketLogoutHandler(w, r, loggedInUser)
 
-	// RedirectToIndex(w, r)
 	res := utils.Result{
 		Success: true,
 		Message: "Logged out successfully",
 		Data:    nil,
 	}
 	utils.ReturnJson(w, res)
+	return
 }
 
-func EditUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := CheckLogin(w, r)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-		return
-	}
-
-	data_obj_sender := struct {
-		LoginUser userManagementModels.User
-	}{
-		LoginUser: loginUser,
-	}
-
-	tmpl, err := template.ParseFiles(
-		publicUrl+"edit_user.html",
-		forumPublicUrl+"templates/header.html",
-		forumPublicUrl+"templates/navbar.html",
-		forumPublicUrl+"templates/footer.html",
-	)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, data_obj_sender)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-}
-
-func UpdateUser(w http.ResponseWriter, r *http.Request) {
+func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := CheckLogin(w, r)
+	loginStatus, loginUser, _, checkLoginError := CheckLogin(w, r, db)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -405,15 +316,15 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Limit the request body size
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
 
-	firstname := utils.SanitizeInput(r.FormValue("firstname"))
-	lastname := utils.SanitizeInput(r.FormValue("lastname"))
-	age := utils.SanitizeInput(r.FormValue("age"))
+	first_name := utils.SanitizeInput(r.FormValue("first_name"))
+	last_name := utils.SanitizeInput(r.FormValue("last_name"))
+	birth_date_str := utils.SanitizeInput(r.FormValue("birth_date"))
 	gender := utils.SanitizeInput(r.FormValue("gender"))
 
-	if len(firstname) == 0 || len(lastname) == 0 || len(age) == 0 || len(gender) == 0 {
+	if len(first_name) == 0 || len(last_name) == 0 || len(birth_date_str) == 0 || len(gender) == 0 {
 		res := utils.Result{
 			Success:    false,
-			Message:    "firstname, lastname, gender and age are required.",
+			Message:    "first_name, last_name, birth_date, gender and age are required.",
 			HttpStatus: http.StatusOK,
 			Data:       nil,
 		}
@@ -421,12 +332,11 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ageInt, err := strconv.Atoi(age)
+	birth_date, err := time.Parse("2006-01-02", birth_date_str) // Adjust format as needed
 	if err != nil {
-		// renderAuthPage(w, "Invalid age format!")
 		res := utils.Result{
 			Success:    false,
-			Message:    "Invalid age format!",
+			Message:    "Invalid birth date format. Use YYYY-MM-DD.",
 			HttpStatus: http.StatusOK,
 			Data:       nil,
 		}
@@ -434,21 +344,20 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile_photo_file, handler, err := r.FormFile("profile_photo")
+	profile_image_file, handler, err := r.FormFile("profile_image")
 	if err != nil {
 		// "File is missing"
-
 		user := &userManagementModels.User{
 			ID:           loginUser.ID,
-			Firstname:    firstname,
-			Lastname:     lastname,
+			FirstName:    first_name,
+			LastName:     last_name,
 			Gender:       gender,
-			Age:          ageInt,
-			ProfilePhoto: "",
+			BirthDate:    birth_date,
+			ProfileImage: "",
 		}
 
 		// Update a record while checking duplicates
-		updateError := userManagementModels.UpdateUser(user)
+		updateError := userManagementModels.UpdateUser(db, user)
 		if updateError != nil {
 			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 			return
@@ -462,9 +371,9 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		utils.ReturnJson(w, res)
 		return
 	} else {
-		defer profile_photo_file.Close()
+		defer profile_image_file.Close()
 
-		profile_photo := ""
+		profile_image := ""
 		if handler.Size != 0 {
 			// Extra safety: check file size from the header
 			if handler.Size > maxUploadSize {
@@ -474,7 +383,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// Call your file upload function
-			profile_photo, err = utils.FileUpload(profile_photo_file, handler)
+			profile_image, err = utils.FileUpload(profile_image_file, handler)
 			if err != nil {
 				errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 				return
@@ -483,15 +392,15 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 		user := &userManagementModels.User{
 			ID:           loginUser.ID,
-			Firstname:    firstname,
-			Lastname:     lastname,
+			FirstName:    first_name,
+			LastName:     last_name,
 			Gender:       gender,
-			Age:          ageInt,
-			ProfilePhoto: profile_photo,
+			BirthDate:    birth_date,
+			ProfileImage: profile_image,
 		}
 
 		// Update a record while checking duplicates
-		updateError := userManagementModels.UpdateUser(user)
+		updateError := userManagementModels.UpdateUser(db, user)
 		if updateError != nil {
 			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 			return
@@ -506,24 +415,6 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-}
-
-func RedirectToIndex(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func RedirectToHome(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/home/", http.StatusFound)
-}
-
-func RedirectToPrevPage(w http.ResponseWriter, r *http.Request) {
-	referrer := r.Header.Get("Referer")
-	if referrer == "" {
-		referrer = "/"
-	}
-
-	// Redirect back to the original page to reload it
-	http.Redirect(w, r, referrer, http.StatusSeeOther)
 }
 
 func deleteCookie(w http.ResponseWriter, cookieName string) {
@@ -578,7 +469,7 @@ func UpdateOnlineUsers() {
 
 func SocketLogoutHandler(w http.ResponseWriter, r *http.Request, loggedInUser userManagementModels.User) {
 	for clientConn, clientUserName := range OnlineUsers {
-		if clientUserName == loggedInUser.Username {
+		if clientUserName == loggedInUser.NickName {
 			defer clientConn.Close() // close their websocket
 			delete(OnlineUsers, clientConn)
 			UpdateOnlineUsers() // Update the online users list

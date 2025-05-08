@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/utils"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // CheckSessionHandler checks if the user's session is active
-func CheckSessionHandler(w http.ResponseWriter, r *http.Request) {
+func CheckSessionHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	// Get the session token from cookies
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
@@ -18,13 +19,13 @@ func CheckSessionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the session is active
-	isActive, err := userManagementModels.IsSessionActive(cookie.Value)
+	isActive, err := userManagementModels.IsSessionActive(db, cookie.Value)
 	if err != nil {
 		//http.Error(w, "Error checking session status", http.StatusInternalServerError)
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := CheckLogin(w, r)
+	loginStatus, loginUser, _, checkLoginError := CheckLogin(w, r, db)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -49,4 +50,5 @@ func CheckSessionHandler(w http.ResponseWriter, r *http.Request) {
 		Data:    data_obj_sender,
 	}
 	utils.ReturnJson(w, res)
+	return
 }

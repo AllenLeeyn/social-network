@@ -7,6 +7,7 @@ import (
 	"social-network/pkg/dbTools"
 	"social-network/pkg/handlers"
 	"social-network/pkg/messenger"
+	"social-network/pkg/routes"
 	"time"
 )
 
@@ -15,7 +16,7 @@ var m messenger.Messenger
 
 func init() {
 	var err error
-	db, err = dbTools.OpenDB("sqlite3", "./database/forum.db")
+	db, err = dbTools.OpenDB("sqlite3", "./pkg/database/forum.db")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
@@ -28,8 +29,6 @@ func init() {
 }
 
 func main() {
-	http.HandleFunc("/ws", handlers.WS)
-
 	http.HandleFunc("/posts", handlers.Posts)
 	http.HandleFunc("/post", handlers.Post)
 	http.HandleFunc("/profile", handlers.Profile)
@@ -41,6 +40,8 @@ func main() {
 	http.HandleFunc("/create-post", handlers.CreatePost)
 	http.HandleFunc("/create-comment", handlers.CreateComment)
 	http.HandleFunc("/feedback", handlers.CreateFeedback)
+
+	routes.SetupRoutes(db)
 
 	fmt.Println("Starting Forum on http://localhost:8080/...")
 	log.Fatal(http.ListenAndServe(":8080", nil))

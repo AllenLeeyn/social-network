@@ -2,24 +2,21 @@ package models
 
 import (
 	"fmt"
-	"forum/db"
 	"net/http"
+	"social-network/pkg/dbTools"
 	"strings"
 )
 
-func GetActiveSessionUserIDs(r *http.Request) ([]int, error) {
-	db := db.OpenDBConnection()
-	defer db.Close() // Close the connection after the function finishes
-
+func GetActiveSessionUserIDs(db *dbTools.DBContainer, r *http.Request) ([]int, error) {
 	// Query to get unique user_ids with active sessions
-	rows, err := db.Query(`SELECT DISTINCT user_id FROM sessions WHERE expires_at > CURRENT_TIMESTAMP`)
+	rows, err := db.Conn.Query(`SELECT DISTINCT user_id FROM sessions WHERE expires_at > CURRENT_TIMESTAMP`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	// Get myUserID from session token
-	myUserID, _, err := GetUserIDFromCookie(r)
+	myUserID, _, err := GetUserIDFromCookie(db, r)
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +42,8 @@ func GetActiveSessionUserIDs(r *http.Request) ([]int, error) {
 	return userIds, nil
 }
 
-func GetActiveSessionUsernames(r *http.Request) ([]string, error) {
-	db := db.OpenDBConnection()
-	defer db.Close() // Close the connection after the function finishes
-
-	userIds, err := GetActiveSessionUserIDs(r)
+func GetActiveSessionUsernames(db *dbTools.DBContainer, r *http.Request) ([]string, error) {
+	userIds, err := GetActiveSessionUserIDs(db, r)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +64,7 @@ func GetActiveSessionUsernames(r *http.Request) ([]string, error) {
 		args[i] = id
 	}
 
-	userRows, err := db.Query(query, args...)
+	userRows, err := db.Conn.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -18,7 +18,7 @@ import (
 This should be easier to reference the database and call its functions.
 */
 type DBContainer struct {
-	conn       *sql.DB
+	Conn       *sql.DB
 	Categories []string // stores categories recorded in db.
 }
 
@@ -31,7 +31,7 @@ func OpenDB(driver, dataSource string) (*DBContainer, error) {
 		return nil, err
 	}
 	conn.Exec("PRAGMA foreign_keys = ON;")
-	return &DBContainer{conn: conn}, nil
+	return &DBContainer{Conn: conn}, nil
 }
 
 // checkErrNoRows() checks if no result from sql query.
@@ -44,7 +44,7 @@ func checkErrNoRows(err error) error {
 
 // db.selectFieldFromTable() is a generic function to grab a column of data from a table.
 func (db *DBContainer) SelectFieldFromTable(field, table string) ([]string, error) {
-	rows, err := db.conn.Query("SELECT " + field + " FROM " + table)
+	rows, err := db.Conn.Query("SELECT " + field + " FROM " + table)
 	if err != nil {
 		return nil, err
 	}
@@ -78,13 +78,13 @@ func (db *DBContainer) isValidCategories(categories []int) error {
 }
 
 func (db *DBContainer) Close() {
-	db.conn.Close()
+	db.Conn.Close()
 }
 
 // db.deleteAllusers() for testing purposes
 func (db *DBContainer) DeleteAllUsers() error {
 	query := "DELETE FROM users"
-	_, err := db.conn.Exec(query)
+	_, err := db.Conn.Exec(query)
 	db.vacuumDB()
 	return err
 }
@@ -92,7 +92,7 @@ func (db *DBContainer) DeleteAllUsers() error {
 // db.deleteAllSessions() for testing purposes
 func (db *DBContainer) DeleteAllSessions() error {
 	query := "DELETE FROM sessions"
-	_, err := db.conn.Exec(query)
+	_, err := db.Conn.Exec(query)
 	db.vacuumDB()
 	return err
 }
@@ -100,7 +100,7 @@ func (db *DBContainer) DeleteAllSessions() error {
 // db.deleteAllPosts() for testing purposes
 func (db *DBContainer) DeleteAllComments() error {
 	query := "DELETE FROM comments"
-	_, err := db.conn.Exec(query)
+	_, err := db.Conn.Exec(query)
 	db.vacuumDB()
 	return err
 }
@@ -108,7 +108,7 @@ func (db *DBContainer) DeleteAllComments() error {
 // db.deleteAllPosts() for testing purposes
 func (db *DBContainer) DeleteAllPosts() error {
 	query := "DELETE FROM posts"
-	_, err := db.conn.Exec(query)
+	_, err := db.Conn.Exec(query)
 	db.vacuumDB()
 	return err
 }
@@ -116,6 +116,6 @@ func (db *DBContainer) DeleteAllPosts() error {
 // db.vacuumDB) for testing purposes
 func (db *DBContainer) vacuumDB() error {
 	query := "VACUUM"
-	_, err := db.conn.Exec(query)
+	_, err := db.Conn.Exec(query)
 	return err
 }

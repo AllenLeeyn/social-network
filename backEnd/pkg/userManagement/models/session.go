@@ -4,53 +4,51 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"forum/db"
-	"forum/utils"
 	"log"
 	"net/http"
+	"social-network/pkg/dbTools"
+	"social-network/pkg/utils"
 	"time"
 )
 
 // User struct represents the user data model
 type Session struct {
-	ID           int       `json:"id"`
-	SessionToken string    `json:"session_token"`
-	UserId       int       `json:"user_id"`
-	CreatedAt    time.Time `json:"created_at"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	ID         string    `json:"id"`
+	UserId     int       `json:"user_id"`
+	IsActive   bool      `json:"is_active"`
+	StartTime  time.Time `json:"start_time"`
+	ExpireTime time.Time `json:"expire_time"`
+	LastAccess time.Time `json:"last_access"`
 }
 
-func InsertSession(session *Session) (*Session, error) {
-	db := db.OpenDBConnection()
-	defer db.Close() // Close the connection after the function finishes
-
+func InsertSession(db *dbTools.DBContainer, session *Session) (*Session, error) {
 	// Generate UUID for the user if not already set
-	if session.SessionToken == "" {
+	if session.ID == "" {
 		uuidSessionTokenid, err := utils.GenerateUuid()
 		if err != nil {
 			return nil, err
 		}
-		session.SessionToken = uuidSessionTokenid
+		session.ID = uuidSessionTokenid
 	}
 
 	// Set session expiration time to 1 hour
-	session.ExpiresAt = time.Now().Add(1 * time.Hour)
+	session.ExpireTime = time.Now().Add(1 * time.Hour)
 
 	// Start a transaction for atomicity
-	tx, err := db.Begin()
+	tx, err := db.Conn.Begin()
 	if err != nil {
 		return &Session{}, err
 	}
 
-	updateQuery := `UPDATE sessions SET expires_at = CURRENT_TIMESTAMP WHERE user_id = ? AND expires_at > CURRENT_TIMESTAMP;`
+	updateQuery := `UPDATE sessions SET expire_time = CURRENT_TIMESTAMP WHERE user_id = ? AND expire_time > CURRENT_TIMESTAMP;`
 	_, updateErr := tx.Exec(updateQuery, session.UserId)
 	if updateErr != nil {
 		tx.Rollback()
 		return nil, updateErr
 	}
 
-	insertQuery := `INSERT INTO sessions (session_token, user_id, expires_at) VALUES (?, ?, ?);`
-	_, insertErr := tx.Exec(insertQuery, session.SessionToken, session.UserId, session.ExpiresAt)
+	insertQuery := `INSERT INTO sessions (id, user_id, expire_time, is_active) VALUES (?, ?, ?, ?);`
+	_, insertErr := tx.Exec(insertQuery, session.ID, session.UserId, session.ExpireTime, session.IsActive)
 	if insertErr != nil {
 		tx.Rollback()
 		// Check if the error is a SQLite constraint violation
@@ -71,24 +69,23 @@ func InsertSession(session *Session) (*Session, error) {
 	return session, nil
 }
 
-func SelectSession(sessionToken string) (User, time.Time, error) {
-	db := db.OpenDBConnection()
-	defer db.Close() // Close the connection after the function finishes
-
+func SelectSession(db *dbTools.DBContainer, sessionToken string) (User, time.Time, error) {
 	var user User
 	var expirationTime time.Time
-	err := db.QueryRow(`SELECT 
-							u.id as user_id, u.type as user_type, u.firstname as user_firstname, u.lastname as user_lastname, u.age as user_age, u.gender as user_gender, u.username as username, u.email as user_email, IFNULL(u.profile_photo, '') as profile_photo,
-							expires_at 
+	// todo: fix type_id and age(birth_date), profile_image (, IFNULL(u.profile_image, '') as profile_image)
+	err := db.Conn.QueryRow(`SELECT 
+							u.id as user_id, u.type_id as user_type_id, u.first_name as user_first_name, u.last_name as user_last_name, u.gender as user_gender, u.nick_name as nick_name, u.email as user_email,
+							expire_time 
 						FROM sessions s
 							INNER JOIN users u
 								ON s.user_id = u.id
-						WHERE session_token = ?`, sessionToken).Scan(&user.ID, &user.Type, &user.Firstname, &user.Lastname, &user.Age, &user.Gender, &user.Username, &user.Email, &user.ProfilePhoto, &expirationTime)
+						WHERE s.id = ?`, sessionToken).Scan(&user.ID, &user.TypeId, &user.FirstName, &user.LastName, &user.Gender, &user.NickName, &user.Email, &expirationTime)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			// Handle other database errors
 			return User{}, time.Time{}, errors.New("sql: no rows in result set")
 		} else {
+			fmt.Println("error is:", err)
 			// Handle other database errors
 			return User{}, time.Time{}, errors.New("database error")
 		}
@@ -97,13 +94,10 @@ func SelectSession(sessionToken string) (User, time.Time, error) {
 	return user, expirationTime, nil
 }
 
-func DeleteSession(sessionToken string) error {
-
-	db := db.OpenDBConnection()
-	defer db.Close() // Close the connection after the function finishes
-	_, err := db.Exec(`UPDATE sessions
-					SET expires_at = CURRENT_TIMESTAMP
-					WHERE session_token = ?;`, sessionToken)
+func DeleteSession(db *dbTools.DBContainer, sessionToken string) error {
+	_, err := db.Conn.Exec(`UPDATE sessions
+					SET expire_time = CURRENT_TIMESTAMP
+					WHERE id = ?;`, sessionToken)
 	if err != nil {
 		// Handle other database errors
 		log.Fatal(err)
@@ -115,14 +109,11 @@ func DeleteSession(sessionToken string) error {
 }
 
 // IsSessionActive checks if a session is active based on the session token
-func IsSessionActive(sessionToken string) (bool, error) {
-	db := db.OpenDBConnection()
-	defer db.Close() // Close the connection after the function finishes
-
+func IsSessionActive(db *dbTools.DBContainer, sessionToken string) (bool, error) {
 	var expiresAt time.Time
 
 	// Query the database for the session's expiration time
-	err := db.QueryRow(`SELECT expires_at FROM sessions WHERE session_token = ?`, sessionToken).Scan(&expiresAt)
+	err := db.Conn.QueryRow(`SELECT expire_time FROM sessions WHERE id = ?`, sessionToken).Scan(&expiresAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// No session found for the given token
@@ -140,7 +131,7 @@ func IsSessionActive(sessionToken string) (bool, error) {
 	return false, nil // Session is expired
 }
 
-func GetUserIDFromCookie(r *http.Request) (int, string, error) {
+func GetUserIDFromCookie(db *dbTools.DBContainer, r *http.Request) (int, string, error) {
 	// Retrieve user data (e.g., from session or database)
 	sessionToken, err := r.Cookie("session_token")
 	if err != nil {
@@ -149,13 +140,13 @@ func GetUserIDFromCookie(r *http.Request) (int, string, error) {
 	}
 
 	// Fetch the user from the database using the session token
-	user, _, err := SelectSession(sessionToken.Value)
+	user, _, err := SelectSession(db, sessionToken.Value)
 	if err != nil {
 		return 0, "", fmt.Errorf("error retrieving session: %v", err)
 	}
 
 	myUserID := user.ID         // Get the ID field from the User struct
-	myUsername := user.Username // Use the Username field from the User struct
+	myUsername := user.NickName // Use the Username field from the User struct
 
 	return myUserID, myUsername, nil
 }

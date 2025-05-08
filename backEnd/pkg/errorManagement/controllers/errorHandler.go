@@ -84,4 +84,5 @@ func HandleErrorPage(w http.ResponseWriter, r *http.Request, errorPageData Error
 		HttpStatus: errorPageData.CodeNumber,
 	}
 	utils.ReturnJson(w, res)
+	return
 }
