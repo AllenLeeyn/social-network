@@ -22,6 +22,8 @@ type DBContainer struct {
 	Categories []string // stores categories recorded in db.
 }
 
+var DB *DBContainer
+
 // openDB() opens a sql database with the driver and dataSource given.
 func OpenDB(driver, dataSource string) (*DBContainer, error) {
 	conn, err := sql.Open(driver, dataSource)
