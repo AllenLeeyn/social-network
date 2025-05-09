@@ -3,7 +3,12 @@ package dbTools
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/sqlite"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -25,13 +30,66 @@ type DBContainer struct {
 var DB *DBContainer
 
 // openDB() opens a sql database with the driver and dataSource given.
-func OpenDB(driver, dataSource string) (*DBContainer, error) {
+func OpenDB(driver, dataSource, migrateSource string) (*DBContainer, error) {
+	if _, err := os.Stat(dataSource); os.IsNotExist(err) {
+		file, err := os.Create(dataSource)
+		if err != nil {
+			return nil, err
+		}
+		file.Close()
+	}
+
 	conn, err := sql.Open(driver, dataSource)
 	if err != nil {
 		return nil, err
 	}
-	conn.Exec("PRAGMA foreign_keys = ON;")
+
+	err = migrateDB(conn, migrateSource)
+	if err != nil {
+		log.Fatal("Error migrating database: ", err)
+	}
+
 	return &DBContainer{Conn: conn}, nil
+}
+
+func migrateDB(conn *sql.DB, migrateSource string) error {
+	conn.Exec("PRAGMA foreign_keys = OFF;")
+	driver, err := sqlite.WithInstance(conn, &sqlite.Config{})
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(migrateSource, "sqlite3", driver)
+	if err != nil {
+		return err
+	}
+
+	version, dirty, err := m.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		return err
+	}
+
+	if dirty {
+		log.Printf("Database is in a dirty state at version %d. Manual intervention may be required.", version)
+		return err
+	}
+
+	log.Printf("Current migration version: %d", version)
+
+	err = m.Up()
+	if err != nil {
+		if err == migrate.ErrNoChange {
+			log.Println("No new migrations to apply.")
+		} else {
+			return err
+		}
+	} else {
+		version, _, _ = m.Version()
+		log.Printf("Migrations applied successfully. New migration version: %d", version)
+	}
+
+	conn.Exec("PRAGMA foreign_keys = ON;")
+	return nil
 }
 
 // checkErrNoRows() checks if no result from sql query.

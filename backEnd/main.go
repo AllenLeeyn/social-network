@@ -16,7 +16,7 @@ var m messenger.Messenger
 
 func init() {
 	var err error
-	db, err = dbTools.OpenDB("sqlite3", "./pkg/database/forum.db")
+	db, err = dbTools.OpenDB("sqlite3", "./pkg/database/forum.db", "file://pkg/database/migrate")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
