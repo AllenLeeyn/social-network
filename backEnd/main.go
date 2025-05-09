@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,11 +9,11 @@ import (
 	"social-network/pkg/handlers"
 )
 
-var dbConn *db.DBContainer
+var sqlDB *sql.DB
 
 func init() {
 	var err error
-	dbConn, err = db.OpenDB("sqlite3", "./pkg/db/social_network.db", "file://pkg/db/migrate")
+	sqlDB, err = db.OpenDB("sqlite3", "./pkg/db/social_network.db", "file://pkg/db/migrate")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
@@ -35,5 +36,5 @@ func main() {
 
 	fmt.Println("Starting Forum on http://localhost:8080/...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-	dbConn.Close()
+	sqlDB.Close()
 }

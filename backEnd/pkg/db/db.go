@@ -17,13 +17,8 @@ import (
 // meaning they are not null when inserting to db.
 // This means the variables/fields will not be recognise as empty/null by sql.
 
-type DBContainer struct {
-	conn       *sql.DB
-	Categories []string // stores categories recorded in db.
-}
-
 // openDB() opens a sql database with the driver and dataSource given.
-func OpenDB(driver, dataSource, migrateSource string) (*DBContainer, error) {
+func OpenDB(driver, dataSource, migrateSource string) (*sql.DB, error) {
 	if _, err := os.Stat(dataSource); os.IsNotExist(err) {
 		file, err := os.Create(dataSource)
 		if err != nil {
@@ -32,23 +27,23 @@ func OpenDB(driver, dataSource, migrateSource string) (*DBContainer, error) {
 		file.Close()
 	}
 
-	conn, err := sql.Open(driver, dataSource)
+	sqlDB, err := sql.Open(driver, dataSource)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = migrateDB(conn, migrateSource); err != nil {
+	if err = migrateDB(sqlDB, migrateSource); err != nil {
 		log.Fatal("Error migrating database: ", err)
 	}
 
-	return &DBContainer{conn: conn}, nil
+	return sqlDB, nil
 }
 
-func migrateDB(conn *sql.DB, migrateSource string) error {
-	conn.Exec("PRAGMA foreign_keys = OFF;")
-	defer conn.Exec("PRAGMA foreign_keys = ON;")
+func migrateDB(sqlDB *sql.DB, migrateSource string) error {
+	sqlDB.Exec("PRAGMA foreign_keys = OFF;")
+	defer sqlDB.Exec("PRAGMA foreign_keys = ON;")
 
-	driver, err := sqlite.WithInstance(conn, &sqlite.Config{})
+	driver, err := sqlite.WithInstance(sqlDB, &sqlite.Config{})
 	if err != nil {
 		return err
 	}
@@ -69,7 +64,7 @@ func migrateDB(conn *sql.DB, migrateSource string) error {
 
 	log.Printf("Current migration version: %d", version)
 	if version == 0 || err == migrate.ErrNilVersion {
-		if err = generateUuidTables(conn); err != nil {
+		if err = generateUuidTables(sqlDB); err != nil {
 			return err
 		}
 	}
@@ -87,7 +82,7 @@ func migrateDB(conn *sql.DB, migrateSource string) error {
 	return err
 }
 
-func generateUuidTables(conn *sql.DB) error {
+func generateUuidTables(sqlDB *sql.DB) error {
 	log.Println("Initializing UUIDs for users and posts...")
 
 	// Create the UUID tables if not already present
@@ -103,20 +98,20 @@ func generateUuidTables(conn *sql.DB) error {
 		uuid TEXT NOT NULL UNIQUE,
 		FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 	);`
-	if _, err := conn.Exec(createTables); err != nil {
+	if _, err := sqlDB.Exec(createTables); err != nil {
 		return err
 	}
 
-	err := generateUuids(conn, "user")
+	err := generateUuids(sqlDB, "user")
 	if err == nil {
-		err = generateUuids(conn, "post")
+		err = generateUuids(sqlDB, "post")
 	}
 	return err
 }
 
-func generateUuids(conn *sql.DB, table string) error {
+func generateUuids(sqlDB *sql.DB, table string) error {
 	// Insert UUIDs for users
-	rows, err := conn.Query("SELECT id FROM " + table + "s")
+	rows, err := sqlDB.Query("SELECT id FROM " + table + "s")
 	if err != nil {
 		return checkErrNoRows(err)
 	}
@@ -134,7 +129,7 @@ func generateUuids(conn *sql.DB, table string) error {
 
 	query := "INSERT INTO " + table + "_uuids (" + table + "_id, uuid) VALUES (?, ?)"
 	for id, uuidStr := range uuidMap {
-		if _, err = conn.Exec(query, id, uuidStr); err != nil {
+		if _, err = sqlDB.Exec(query, id, uuidStr); err != nil {
 			return err
 		}
 	}
@@ -151,6 +146,6 @@ func checkErrNoRows(err error) error {
 	return err
 }
 
-func (db *DBContainer) Close() {
-	db.conn.Close()
+func Close(sqlDB *sql.DB) {
+	sqlDB.Close()
 }
