@@ -2,6 +2,7 @@ DROP VIEW IF EXISTS v_posts;
 
 CREATE TABLE users_new (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid            TEXT NOT NULL UNIQUE,
     type_id         INTEGER NOT NULL,
     first_name      TEXT NOT NULL,
     last_name       TEXT NOT NULL,
@@ -24,24 +25,27 @@ CREATE TABLE users_new (
 );
 
 INSERT INTO users_new (
-    id, type_id, first_name, last_name, nick_name, gender, birthday,
+    id, uuid, type_id, first_name, last_name, nick_name, gender, birthday,
     email, pw_hash, created_at, updated_by, updated_at
 )
 SELECT
-    id,
-    type_id,
-    first_name,
-    last_name,
-    nick_name,
-    gender,
-    DATE('now', '-' || age || ' years'),
-    email,
-    pw_hash,
-    reg_date,
+    u.id,
+    uu.uuid,
+    u.type_id,
+    u.first_name,
+    u.last_name,
+    u.nick_name,
+    u.gender,
+    DATE('now', '-' || u.age || ' years'),
+    u.email,
+    u.pw_hash,
+    u.reg_date,
     0,
     CURRENT_TIMESTAMP
-FROM users;
+FROM users u
+JOIN user_uuids uu ON uu.user_id = u.id;
 
+DROP TABLE user_uuids;
 DROP TABLE users;
 ALTER TABLE users_new RENAME TO users;
 

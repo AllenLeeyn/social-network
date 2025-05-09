@@ -7,6 +7,7 @@ DROP TRIGGER IF EXISTS update_comment_count_after_insert;
 
 CREATE TABLE posts_new (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid            TEXT NOT NULL UNIQUE,
     user_id         INTEGER NOT NULL,
     group_id        INTEGER,
     title           TEXT NOT NULL,
@@ -27,14 +28,16 @@ CREATE TABLE posts_new (
 );
 
 INSERT INTO posts_new (
-    id, user_id, title, content, created_at, visibility, group_id,
+    id, uuid, user_id, title, content, created_at, visibility, group_id,
     like_count, dislike_count, comment_count, updated_by, updated_at
 )
 SELECT
-    id, user_id, title, content, created_at, 'public', NULL,
-    like_count, dislike_count, comment_count, 0, CURRENT_TIMESTAMP
-FROM posts;
+    p.id, pu.uuid, p.user_id, p.title, p.content, p.created_at, 'public', NULL,
+    p.like_count, p.dislike_count, p.comment_count, 0, CURRENT_TIMESTAMP
+FROM posts p
+JOIN post_uuids pu ON pu.post_id = p.id;;
 
+DROP TABLE post_uuids;
 DROP TABLE posts;
 ALTER TABLE posts_new RENAME TO posts;
 
