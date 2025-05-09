@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
+	fileManagementControllers "social-network/pkg/fileManagement/controllers"
 	"sync"
 
 	"net/http"
@@ -327,6 +328,8 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 	last_name := utils.SanitizeInput(r.FormValue("last_name"))
 	birthday_str := utils.SanitizeInput(r.FormValue("birthday"))
 	gender := utils.SanitizeInput(r.FormValue("gender"))
+	about_me := utils.SanitizeInput(r.FormValue("about_me"))
+	visibility := utils.SanitizeInput(r.FormValue("visibility"))
 
 	if len(first_name) == 0 || len(last_name) == 0 || len(birthday_str) == 0 || len(gender) == 0 {
 		res := utils.Result{
@@ -337,6 +340,9 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 		}
 		utils.ReturnJson(w, res)
 		return
+	}
+	if len(visibility) == 0 {
+		visibility = "private"
 	}
 
 	birthday, err := time.Parse("2006-01-02", birthday_str) // Adjust format as needed
@@ -355,12 +361,13 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 	if err != nil {
 		// "File is missing"
 		user := &userManagementModels.User{
-			ID:           loginUser.ID,
-			FirstName:    first_name,
-			LastName:     last_name,
-			Gender:       gender,
-			BirthDay:     birthday,
-			ProfileImage: "",
+			ID:         loginUser.ID,
+			FirstName:  first_name,
+			LastName:   last_name,
+			Gender:     gender,
+			BirthDay:   birthday,
+			AboutMe:    about_me,
+			Visibility: visibility,
 		}
 
 		// Update a record while checking duplicates
@@ -390,7 +397,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 			}
 
 			// Call your file upload function
-			profile_image, err = utils.FileUpload(profile_image_file, handler)
+			profile_image, err = fileManagementControllers.FileUpload(profile_image_file, handler)
 			if err != nil {
 				errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 				return
@@ -403,6 +410,8 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 			LastName:     last_name,
 			Gender:       gender,
 			BirthDay:     birthday,
+			AboutMe:      about_me,
+			Visibility:   visibility,
 			ProfileImage: profile_image,
 		}
 

@@ -1,4 +1,4 @@
-package utils
+package controller
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"social-network/pkg/utils"
 	"strings"
 )
 
@@ -30,10 +31,10 @@ func FileUpload(file multipart.File, handler *multipart.FileHeader) (string, err
 		return "", fmt.Errorf("file type not allowed: %s", handler.Filename)
 	}
 
-	uploadDir := "static/uploads"
+	uploadDir := "./pkg/fileManagement/static/uploads"
 	os.MkdirAll(uploadDir, os.ModePerm) // Ensure directory exists
 
-	fileUUID, err := GenerateUuid()
+	fileUUID, err := utils.GenerateUuid()
 	if err != nil {
 		return "", err
 	}
