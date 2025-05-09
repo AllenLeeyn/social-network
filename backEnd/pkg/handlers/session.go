@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 func checkSessionValidity(w http.ResponseWriter, r *http.Request) (*http.Cookie, int) {
 	sessionCookie, err := r.Cookie("session-id")
 	if err != nil || sessionCookie == nil {
+		log.Println(err)
 		return nil, -1
 	}
 	sessionID := sessionCookie.Value

@@ -13,6 +13,7 @@ func Posts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	u, err := db.SelectUserByField("id", userID)
 	if err != nil || u == nil {
 		executeJSON(w, MsgData{"User not found"}, http.StatusNotFound)
