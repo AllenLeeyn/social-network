@@ -18,7 +18,7 @@ type User struct {
 	FirstName    string     `json:"first_name"`
 	LastName     string     `json:"last_name"`
 	Gender       string     `json:"gender"`
-	BirthDate    time.Time  `json:"birth_date"`
+	BirthDay     time.Time  `json:"birthday"`
 	Email        string     `json:"email"`
 	PasswordHash string     `json:"pw_hash"`
 	NickName     string     `json:"nick_name"`
@@ -45,9 +45,9 @@ func InsertUser(db *dbTools.DBContainer, user *User) (int, error) {
 		}
 	}
 
-	// todo: fix type_id and age(birth_date)
-	insertQuery := `INSERT INTO users (first_name, last_name, type_id, age, gender, nick_name, email, pw_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
-	result, insertErr := db.Conn.Exec(insertQuery, user.FirstName, user.LastName, 1, 30, user.Gender, user.NickName, user.Email, user.PasswordHash)
+	// todo: fix type_id
+	insertQuery := `INSERT INTO users (first_name, last_name, type_id, birthday, gender, nick_name, email, pw_hash, about_me, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+	result, insertErr := db.Conn.Exec(insertQuery, user.FirstName, user.LastName, 1, user.BirthDay, user.Gender, user.NickName, user.Email, user.PasswordHash, user.AboutMe, user.Visibility)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation (duplicate entry)
 		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
@@ -69,16 +69,18 @@ func InsertUser(db *dbTools.DBContainer, user *User) (int, error) {
 }
 
 func UpdateUser(db *dbTools.DBContainer, user *User) error {
-	// todo: fix age(birth_date), updated_at, updated_by
 	if user.ProfileImage == "" {
 		updateUser := `UPDATE users
 					SET first_name = ?,
 						last_name = ?,
 						gender = ?,
-						age = ?
+						birthday = ?,
+						about_me = ?,
+						visibility = ?,
+						updated_at = CURRENT_TIMESTAMP,
+						updated_by = ?
 					WHERE id = ?;`
-		// _, updateErr := db.Conn.Exec(updateUser, user.FirstName, user.LastName, user.Gender, 29, user.ID, user.ID)
-		_, updateErr := db.Conn.Exec(updateUser, user.FirstName, user.LastName, user.Gender, 29, user.ID)
+		_, updateErr := db.Conn.Exec(updateUser, user.FirstName, user.LastName, user.Gender, user.BirthDay, user.AboutMe, user.Visibility, user.ID, user.ID)
 
 		if updateErr != nil {
 			return updateErr
@@ -88,12 +90,14 @@ func UpdateUser(db *dbTools.DBContainer, user *User) error {
 		SET first_name = ?,
 			last_name = ?,
 			gender = ?,
-			age = ?,
+			birthday = ?,
+			about_me = ?,
+			visibility = ?,
 			profile_image = ?,
 			updated_at = CURRENT_TIMESTAMP,
 			updated_by = ?
 		WHERE id = ?;`
-		_, updateErr := db.Conn.Exec(updateUser, user.FirstName, user.LastName, user.Gender, 29, user.ProfileImage, user.ID, user.ID)
+		_, updateErr := db.Conn.Exec(updateUser, user.FirstName, user.LastName, user.Gender, user.BirthDay, user.AboutMe, user.Visibility, user.ProfileImage, user.ID, user.ID)
 
 		if updateErr != nil {
 			return updateErr
@@ -130,7 +134,7 @@ func AuthenticateUser(db *dbTools.DBContainer, nick_name, password string) (bool
 func ReadAllUsers(db *dbTools.DBContainer) ([]User, error) {
 	// Query the records
 	rows, selectError := db.Conn.Query(`
-        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, 
+        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility,
 		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at, 
 		u.updated_at as user_updated_at, u.updated_by as user_updated_by
 		FROM users u
@@ -150,7 +154,7 @@ func ReadAllUsers(db *dbTools.DBContainer) ([]User, error) {
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email,
+			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.AboutMe, &user.Visibility,
 			&user.ProfileImage, &user.Status, &user.CreatedAt,
 			&user.UpdatedAt, &user.UpdatedBy,
 		)
@@ -171,7 +175,7 @@ func ReadAllUsers(db *dbTools.DBContainer) ([]User, error) {
 
 func ReadAllChatUsers(db *dbTools.DBContainer, user_id int) ([]User, error) {
 	rows, selectError := db.Conn.Query(`
-        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, 
+        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility, 
 		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at, 
 		u.updated_at as user_updated_at, u.updated_by as user_updated_by
 			FROM users u
@@ -203,7 +207,7 @@ func ReadAllChatUsers(db *dbTools.DBContainer, user_id int) ([]User, error) {
 		var user User
 
 		err := rows.Scan(
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email,
+			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.AboutMe, &user.Visibility,
 			&user.ProfileImage, &user.Status, &user.CreatedAt,
 			&user.UpdatedAt, &user.UpdatedBy,
 		)
@@ -224,7 +228,7 @@ func ReadAllChatUsers(db *dbTools.DBContainer, user_id int) ([]User, error) {
 func ReadUserByID(db *dbTools.DBContainer, user_id int) (User, error) {
 	// Query the records
 	rows, selectError := db.Conn.Query(`
-        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, 
+        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility, 
 		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at, 
 		u.updated_at as user_updated_at, u.updated_by as user_updated_by
 		FROM users u
@@ -243,7 +247,7 @@ func ReadUserByID(db *dbTools.DBContainer, user_id int) (User, error) {
 	for rows.Next() {
 		// Scan the post and user data
 		err := rows.Scan(
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email,
+			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.AboutMe, &user.Visibility,
 			&user.ProfileImage, &user.Status, &user.CreatedAt,
 			&user.UpdatedAt, &user.UpdatedBy,
 		)

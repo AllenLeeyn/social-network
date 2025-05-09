@@ -72,14 +72,14 @@ func InsertSession(db *dbTools.DBContainer, session *Session) (*Session, error) 
 func SelectSession(db *dbTools.DBContainer, sessionToken string) (User, time.Time, error) {
 	var user User
 	var expirationTime time.Time
-	// todo: fix type_id and age(birth_date), profile_image (, IFNULL(u.profile_image, '') as profile_image)
+	// todo: fix type_id, profile_image (, IFNULL(u.profile_image, '') as profile_image)
 	err := db.Conn.QueryRow(`SELECT 
-							u.id as user_id, u.type_id as user_type_id, u.first_name as user_first_name, u.last_name as user_last_name, u.gender as user_gender, u.nick_name as nick_name, u.email as user_email,
+							u.id as user_id, u.type_id as user_type_id, u.first_name as user_first_name, u.last_name as user_last_name, u.gender as user_gender, u.birthday as user_birthday, u.nick_name as nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 							expire_time 
 						FROM sessions s
 							INNER JOIN users u
 								ON s.user_id = u.id
-						WHERE s.id = ?`, sessionToken).Scan(&user.ID, &user.TypeId, &user.FirstName, &user.LastName, &user.Gender, &user.NickName, &user.Email, &expirationTime)
+						WHERE s.id = ?`, sessionToken).Scan(&user.ID, &user.TypeId, &user.FirstName, &user.LastName, &user.Gender, &user.BirthDay, &user.NickName, &user.Email, &user.ProfileImage, &expirationTime)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			// Handle other database errors

@@ -56,13 +56,15 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 	first_name := utils.SanitizeInput(r.FormValue("first_name"))
 	last_name := utils.SanitizeInput(r.FormValue("last_name"))
 	gender := utils.SanitizeInput(r.FormValue("gender"))
-	birth_date_str := utils.SanitizeInput(r.FormValue("birth_date"))
+	birthday_str := utils.SanitizeInput(r.FormValue("birthday"))
 	email := utils.SanitizeInput(r.FormValue("email"))
 	password := utils.SanitizeInput(r.FormValue("password"))
-	if len(nick_name) == 0 || len(first_name) == 0 || len(last_name) == 0 || len(gender) == 0 || len(birth_date_str) == 0 || len(email) == 0 || len(password) == 0 {
+	about_me := utils.SanitizeInput(r.FormValue("about_me"))
+	visibility := utils.SanitizeInput(r.FormValue("visibility"))
+	if len(nick_name) == 0 || len(first_name) == 0 || len(last_name) == 0 || len(gender) == 0 || len(birthday_str) == 0 || len(email) == 0 || len(password) == 0 {
 		res := utils.Result{
 			Success:    false,
-			Message:    "nick_name, first_name, last_name, gender, birth_date, email and password are required.",
+			Message:    "nick_name, first_name, last_name, gender, birthday, email and password are required.",
 			HttpStatus: http.StatusOK,
 			Data:       nil,
 		}
@@ -79,6 +81,9 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 		utils.ReturnJson(w, res)
 		return
 	}
+	if len(visibility) == 0 {
+		visibility = "private"
+	}
 
 	password_hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -86,7 +91,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 		return
 	}
 
-	birth_date, err := time.Parse("2006-01-02", birth_date_str) // Adjust format as needed
+	birthday, err := time.Parse("2006-01-02", birthday_str) // Adjust format as needed
 	if err != nil {
 		res := utils.Result{
 			Success:    false,
@@ -103,9 +108,11 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 		FirstName:    first_name,
 		LastName:     last_name,
 		Gender:       gender,
-		BirthDate:    birth_date,
+		BirthDay:     birthday,
 		Email:        email,
 		PasswordHash: string(password_hash),
+		AboutMe:      about_me,
+		Visibility:   visibility,
 	}
 
 	// Insert a record while checking duplicates
@@ -318,13 +325,13 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 
 	first_name := utils.SanitizeInput(r.FormValue("first_name"))
 	last_name := utils.SanitizeInput(r.FormValue("last_name"))
-	birth_date_str := utils.SanitizeInput(r.FormValue("birth_date"))
+	birthday_str := utils.SanitizeInput(r.FormValue("birthday"))
 	gender := utils.SanitizeInput(r.FormValue("gender"))
 
-	if len(first_name) == 0 || len(last_name) == 0 || len(birth_date_str) == 0 || len(gender) == 0 {
+	if len(first_name) == 0 || len(last_name) == 0 || len(birthday_str) == 0 || len(gender) == 0 {
 		res := utils.Result{
 			Success:    false,
-			Message:    "first_name, last_name, birth_date, gender and age are required.",
+			Message:    "first_name, last_name, birthday, gender are required.",
 			HttpStatus: http.StatusOK,
 			Data:       nil,
 		}
@@ -332,7 +339,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 		return
 	}
 
-	birth_date, err := time.Parse("2006-01-02", birth_date_str) // Adjust format as needed
+	birthday, err := time.Parse("2006-01-02", birthday_str) // Adjust format as needed
 	if err != nil {
 		res := utils.Result{
 			Success:    false,
@@ -352,7 +359,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 			FirstName:    first_name,
 			LastName:     last_name,
 			Gender:       gender,
-			BirthDate:    birth_date,
+			BirthDay:     birthday,
 			ProfileImage: "",
 		}
 
@@ -395,7 +402,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 			FirstName:    first_name,
 			LastName:     last_name,
 			Gender:       gender,
-			BirthDate:    birth_date,
+			BirthDay:     birthday,
 			ProfileImage: profile_image,
 		}
 
