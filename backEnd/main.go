@@ -4,27 +4,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"social-network/pkg/dbTools"
+	"social-network/pkg/db"
 	"social-network/pkg/handlers"
-	"social-network/pkg/messenger"
-	"time"
 )
 
-var db *dbTools.DBContainer
-var m messenger.Messenger
+var dbConn *db.DBContainer
 
 func init() {
 	var err error
-	db, err = dbTools.OpenDB("sqlite3", "./pkg/database/forum.db", "file://pkg/database/migrate")
+	dbConn, err = db.OpenDB("sqlite3", "./pkg/db/social_network.db", "file://pkg/db/migrate")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
-
-	db.Categories, _ = db.SelectFieldFromTable("name", "categories")
-	m = messenger.Start(db)
-	handlers.Init(db, m)
-
-	go expireSessionsTask()
 }
 
 func main() {
@@ -44,35 +35,5 @@ func main() {
 
 	fmt.Println("Starting Forum on http://localhost:8080/...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-	db.Close()
-}
-
-func expireSessionsTask() {
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		sessions, err := db.SelectActiveSessions()
-		if err != nil {
-			fmt.Printf("Error selecting sessions: %v\n", err.Error())
-		}
-		for _, s := range *sessions {
-			if time.Now().After(s.ExpireTime) {
-				fmt.Printf("Expire session: %v\n", s.ID)
-
-				s.IsActive = false
-				err = db.UpdateSession(&s)
-				if err != nil {
-					break
-				}
-				err = m.CloseConn(&s)
-				if err != nil {
-					break
-				}
-			}
-		}
-		if err != nil {
-			log.Printf("Error expiring sessions: %v", err)
-		}
-	}
+	dbConn.Close()
 }
