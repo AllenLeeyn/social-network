@@ -1,0 +1,143 @@
+/* Container splits the screen */
+.auth-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+    transition: background 0.5s;
+}
+
+/* Left panel: Welcome/Join messages */
+.auth-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    transition: background 0.5s;
+}
+
+.auth-left-content {
+    text-align: center;
+}
+
+.auth-left h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.auth-left p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.auth-toggle-btn {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid #fff;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.auth-toggle-btn:hover {
+    background: #fff;
+    color: #1e293b;
+}
+
+  /* Right panel: Forms */
+.auth-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9fafb;
+    transition: background 0.5s;
+}
+
+.auth-form-container {
+    width: 100%;
+    max-width: 350px;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(30,41,59,0.08);
+}
+
+.auth-form h3 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #f3f4f6;
+    transition: border 0.2s;
+}
+
+.auth-form input:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+
+.auth-form fieldset {
+    border: none;
+    margin: 0 0 1.5rem 0;
+    padding: 0;
+}
+.auth-form legend {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+
+.auth-form button[type="submit"] {
+    width: 100%;
+    padding: 0.75rem;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.auth-form button[type="submit"]:hover {
+    background: #1e40af;
+}
+
+/* Error Message */
+.error-message {
+    color: #dc2626;
+    background: #fef2f2;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+
+  /* Responsive adjustments */
+@media (max-width: 900px) {
+    .auth-container {
+        flex-direction: column;
+    }
+
+    .auth-left, .auth-right {
+        flex: none;
+        width: 100%;
+        min-height: 40vh;
+    }
+
+    .auth-form-container {
+        max-width: 95vw;
+    }
+}
