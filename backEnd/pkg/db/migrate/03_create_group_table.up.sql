@@ -1,5 +1,6 @@
 CREATE TABLE groups (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid            TEXT NOT NULL UNIQUE,
     title           TEXT NOT NULL,
     description     TEXT,
     banner_image    TEXT,

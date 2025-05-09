@@ -1,9 +1,9 @@
 package controller
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	fileManagementControllers "social-network/pkg/fileManagement/controllers"
 	"sync"
@@ -26,13 +26,13 @@ type AuthPageErrorData struct {
 	ErrorMessage string
 }
 
-func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func RegisterHandler(w http.ResponseWriter, r *http.Request, sqlDB *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
 	}
 
-	loginStatus, _, _, checkLoginError := CheckLogin(w, r, db)
+	loginStatus, _, _, checkLoginError := CheckLogin(w, r, sqlDB)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -103,8 +103,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 		utils.ReturnJson(w, res)
 		return
 	}
+	newUuid, err := utils.GenerateUuid()
+	if err != nil {
+		return
+	}
 
 	newUser := &userManagementModels.User{
+		UUID:         newUuid,
 		NickName:     nick_name,
 		FirstName:    first_name,
 		LastName:     last_name,
@@ -117,8 +122,9 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 	}
 
 	// Insert a record while checking duplicates
-	userId, insertError := userManagementModels.InsertUser(db, newUser)
+	userId, insertError := userManagementModels.InsertUser(sqlDB, newUser)
 	if insertError != nil {
+		fmt.Println(insertError)
 		if insertError.Error() == "duplicateEmail" {
 			res := utils.Result{
 				Success:    false,
@@ -143,7 +149,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 		return
 	}
 
-	sessionGenerator(w, r, db, userId)
+	sessionGenerator(w, r, sqlDB, userId)
 
 	res := utils.Result{
 		Success: true,
@@ -154,13 +160,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 	return
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func LoginHandler(w http.ResponseWriter, r *http.Request, sqlDB *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
 	}
 
-	loginStatus, _, _, checkLoginError := CheckLogin(w, r, db)
+	loginStatus, _, _, checkLoginError := CheckLogin(w, r, sqlDB)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -195,7 +201,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContaine
 	}
 
 	// Insert a record while checking duplicates
-	authStatus, userId, authError := userManagementModels.AuthenticateUser(db, nick_name, password)
+	authStatus, userId, authError := userManagementModels.AuthenticateUser(sqlDB, nick_name, password)
 	if authError != nil {
 		res := utils.Result{
 			Success:    false,
@@ -207,7 +213,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContaine
 		return
 	}
 	if authStatus {
-		sessionGenerator(w, r, db, userId)
+		sessionGenerator(w, r, sqlDB, userId)
 	}
 
 	res := utils.Result{
@@ -219,55 +225,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContaine
 	return
 }
 
-func sessionGenerator(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer, userId int) {
-	session := &userManagementModels.Session{
-		UserId:   userId,
-		IsActive: true,
-	}
-	session, insertError := userManagementModels.InsertSession(db, session)
-	if insertError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-
-	// Set the session token in a cookie
-	UserSetCookie(w, session.ID, session.ExpireTime)
-}
-
-// helper function to check for valid user session in cookie
-func CheckLogin(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) (bool, userManagementModels.User, string, error) {
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		return false, userManagementModels.User{}, "", nil
-	}
-
-	sessionToken := cookie.Value
-	user, expirationTime, selectError := userManagementModels.SelectSession(db, sessionToken)
-	if selectError != nil {
-		if selectError.Error() == "sql: no rows in result set" {
-			deleteCookie(w, "session_token")
-			return false, userManagementModels.User{}, "", nil
-		} else {
-			return false, userManagementModels.User{}, "", selectError
-		}
-	}
-
-	// Check if the cookie has expired
-	if time.Now().After(expirationTime) {
-		// Cookie expired, redirect to login
-		return false, userManagementModels.User{}, "", nil
-	}
-
-	return true, user, sessionToken, nil
-}
-
-func Logout(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func Logout(w http.ResponseWriter, r *http.Request, sqlDB *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
 	}
 
-	loginStatus, loggedInUser, sessionToken, checkLoginError := CheckLogin(w, r, db)
+	loginStatus, loggedInUser, sessionToken, checkLoginError := CheckLogin(w, r, sqlDB)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -283,7 +247,7 @@ func Logout(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 		return
 	}
 
-	err := userManagementModels.DeleteSession(db, sessionToken)
+	err := userManagementModels.DeleteSession(sqlDB, sessionToken)
 	if err != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -303,13 +267,13 @@ func Logout(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	return
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func UpdateUser(w http.ResponseWriter, r *http.Request, sqlDB *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := CheckLogin(w, r, db)
+	loginStatus, loginUser, _, checkLoginError := CheckLogin(w, r, sqlDB)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -371,7 +335,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 		}
 
 		// Update a record while checking duplicates
-		updateError := userManagementModels.UpdateUser(db, user)
+		updateError := userManagementModels.UpdateUser(sqlDB, user)
 		if updateError != nil {
 			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 			return
@@ -416,7 +380,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 		}
 
 		// Update a record while checking duplicates
-		updateError := userManagementModels.UpdateUser(db, user)
+		updateError := userManagementModels.UpdateUser(sqlDB, user)
 		if updateError != nil {
 			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 			return
@@ -431,29 +395,6 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 		return
 	}
 
-}
-
-func deleteCookie(w http.ResponseWriter, cookieName string) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     cookieName,
-		Value:    "",              // Optional but recommended
-		Expires:  time.Unix(0, 0), // Set expiration to a past date
-		MaxAge:   -1,              // Ensure immediate removal
-		Path:     "/",             // Must match the original cookie path
-		HttpOnly: true,
-		Secure:   false,
-	})
-}
-
-func UserSetCookie(w http.ResponseWriter, sessionToken string, expiresAt time.Time) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_token",
-		Value:    sessionToken,
-		Expires:  expiresAt,
-		HttpOnly: true,
-		Secure:   false,
-		Path:     "/",
-	})
 }
 
 // Helper function to broadcast the list of online users

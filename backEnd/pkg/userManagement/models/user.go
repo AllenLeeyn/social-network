@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"social-network/pkg/dbTools"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -14,6 +13,7 @@ import (
 // User struct represents the user data model
 type User struct {
 	ID           int        `json:"id"`
+	UUID         string     `json: "uuid"`
 	TypeId       int        `json:"type_id"`
 	FirstName    string     `json:"first_name"`
 	LastName     string     `json:"last_name"`
@@ -31,11 +31,11 @@ type User struct {
 	UpdatedAt    *time.Time `json:"updated_at"`
 }
 
-func InsertUser(db *dbTools.DBContainer, user *User) (int, error) {
+func InsertUser(sqlDB *sql.DB, user *User) (int, error) {
 	var existingEmail string
 	var existingUsername string
 	emailCheckQuery := `SELECT email, nick_name FROM users WHERE email = ? OR nick_name = ? LIMIT 1;`
-	err := db.Conn.QueryRow(emailCheckQuery, user.Email, user.NickName).Scan(&existingEmail, &existingUsername)
+	err := sqlDB.QueryRow(emailCheckQuery, user.Email, user.NickName).Scan(&existingEmail, &existingUsername)
 	if err == nil {
 		if existingEmail == user.Email {
 			return -1, errors.New("duplicateEmail")
@@ -46,8 +46,8 @@ func InsertUser(db *dbTools.DBContainer, user *User) (int, error) {
 	}
 
 	// todo: fix type_id
-	insertQuery := `INSERT INTO users (first_name, last_name, type_id, birthday, gender, nick_name, email, pw_hash, about_me, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
-	result, insertErr := db.Conn.Exec(insertQuery, user.FirstName, user.LastName, 1, user.BirthDay, user.Gender, user.NickName, user.Email, user.PasswordHash, user.AboutMe, user.Visibility)
+	insertQuery := `INSERT INTO users (uuid, first_name, last_name, type_id, birthday, gender, nick_name, email, pw_hash, about_me, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+	result, insertErr := sqlDB.Exec(insertQuery, user.UUID, user.FirstName, user.LastName, 1, user.BirthDay, user.Gender, user.NickName, user.Email, user.PasswordHash, user.AboutMe, user.Visibility)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation (duplicate entry)
 		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
@@ -68,7 +68,7 @@ func InsertUser(db *dbTools.DBContainer, user *User) (int, error) {
 	return int(userId), nil
 }
 
-func UpdateUser(db *dbTools.DBContainer, user *User) error {
+func UpdateUser(sqlDB *sql.DB, user *User) error {
 	if user.ProfileImage == "" {
 		updateUser := `UPDATE users
 					SET first_name = ?,
@@ -80,7 +80,7 @@ func UpdateUser(db *dbTools.DBContainer, user *User) error {
 						updated_at = CURRENT_TIMESTAMP,
 						updated_by = ?
 					WHERE id = ?;`
-		_, updateErr := db.Conn.Exec(updateUser, user.FirstName, user.LastName, user.Gender, user.BirthDay, user.AboutMe, user.Visibility, user.ID, user.ID)
+		_, updateErr := sqlDB.Exec(updateUser, user.FirstName, user.LastName, user.Gender, user.BirthDay, user.AboutMe, user.Visibility, user.ID, user.ID)
 
 		if updateErr != nil {
 			return updateErr
@@ -97,7 +97,7 @@ func UpdateUser(db *dbTools.DBContainer, user *User) error {
 			updated_at = CURRENT_TIMESTAMP,
 			updated_by = ?
 		WHERE id = ?;`
-		_, updateErr := db.Conn.Exec(updateUser, user.FirstName, user.LastName, user.Gender, user.BirthDay, user.AboutMe, user.Visibility, user.ProfileImage, user.ID, user.ID)
+		_, updateErr := sqlDB.Exec(updateUser, user.FirstName, user.LastName, user.Gender, user.BirthDay, user.AboutMe, user.Visibility, user.ProfileImage, user.ID, user.ID)
 
 		if updateErr != nil {
 			return updateErr
@@ -106,11 +106,11 @@ func UpdateUser(db *dbTools.DBContainer, user *User) error {
 	return nil
 }
 
-func AuthenticateUser(db *dbTools.DBContainer, nick_name, password string) (bool, int, error) {
+func AuthenticateUser(sqlDB *sql.DB, nick_name, password string) (bool, int, error) {
 	// Query to retrieve the hashed password stored in the database for the given nick_name
 	var userId int
 	var storedHashedPassword string
-	err := db.Conn.QueryRow("SELECT id, pw_hash FROM users WHERE nick_name = ? or email = ?", nick_name, nick_name).Scan(&userId, &storedHashedPassword)
+	err := sqlDB.QueryRow("SELECT id, pw_hash FROM users WHERE nick_name = ? or email = ?", nick_name, nick_name).Scan(&userId, &storedHashedPassword)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// NickName not found
@@ -131,9 +131,9 @@ func AuthenticateUser(db *dbTools.DBContainer, nick_name, password string) (bool
 	return true, userId, nil
 }
 
-func ReadAllUsers(db *dbTools.DBContainer) ([]User, error) {
+func ReadAllUsers(sqlDB *sql.DB) ([]User, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility,
 		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at, 
 		u.updated_at as user_updated_at, u.updated_by as user_updated_by
@@ -173,8 +173,8 @@ func ReadAllUsers(db *dbTools.DBContainer) ([]User, error) {
 	return users, nil
 }
 
-func ReadAllChatUsers(db *dbTools.DBContainer, user_id int) ([]User, error) {
-	rows, selectError := db.Conn.Query(`
+func ReadAllChatUsers(sqlDB *sql.DB, user_id int) ([]User, error) {
+	rows, selectError := sqlDB.Query(`
         SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility, 
 		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at, 
 		u.updated_at as user_updated_at, u.updated_by as user_updated_by
@@ -225,9 +225,9 @@ func ReadAllChatUsers(db *dbTools.DBContainer, user_id int) ([]User, error) {
 	return users, nil
 }
 
-func ReadUserByID(db *dbTools.DBContainer, user_id int) (User, error) {
+func ReadUserByID(sqlDB *sql.DB, user_id int) (User, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility, 
 		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at, 
 		u.updated_at as user_updated_at, u.updated_by as user_updated_by
@@ -265,13 +265,13 @@ func ReadUserByID(db *dbTools.DBContainer, user_id int) (User, error) {
 	return user, nil
 }
 
-func UpdateStatusUser(db *dbTools.DBContainer, user_id int, status string, login_user_id int) error {
+func UpdateStatusUser(sqlDB *sql.DB, user_id int, status string, login_user_id int) error {
 	updateQuery := `UPDATE users
 					SET status = ?,
 						updated_at = CURRENT_TIMESTAMP,
 						updated_by = ?
 					WHERE id = ?;`
-	_, updateErr := db.Conn.Exec(updateQuery, status, login_user_id, user_id)
+	_, updateErr := sqlDB.Exec(updateQuery, status, login_user_id, user_id)
 	if updateErr != nil {
 		return updateErr
 	}
@@ -279,9 +279,9 @@ func UpdateStatusUser(db *dbTools.DBContainer, user_id int, status string, login
 	return nil
 }
 
-func GetUserIDByUsername(db *dbTools.DBContainer, nick_name string) (int, error) {
+func GetUserIDByUsername(sqlDB *sql.DB, nick_name string) (int, error) {
 	var userID int
-	err := db.Conn.QueryRow("SELECT id FROM users WHERE nick_name = ?", nick_name).Scan(&userID)
+	err := sqlDB.QueryRow("SELECT id FROM users WHERE nick_name = ?", nick_name).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return -1, errors.New("user not found")
