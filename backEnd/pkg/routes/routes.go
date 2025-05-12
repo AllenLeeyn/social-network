@@ -5,6 +5,7 @@ import (
 	"social-network/pkg/dbTools"
 
 	// socialMediaManagementControllers "social-network/pkg/socialMediaManagement/controllers"
+	forumManagementControllers "social-network/pkg/forumManagement/controllers"
 	userManagementControllers "social-network/pkg/userManagement/controllers"
 )
 
@@ -25,4 +26,9 @@ func SetupRoutes(db *dbTools.DBContainer) {
 	http.HandleFunc("/api/check-session", func(w http.ResponseWriter, r *http.Request) {
 		userManagementControllers.CheckSessionHandler(w, r, db)
 	})
+
+	// ---------------------------- forum management controller APIs ---------------------------- //
+	http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
+		forumManagementControllers.ReadAllCategories(w, r, db)
+	}) /*get method*/
 }

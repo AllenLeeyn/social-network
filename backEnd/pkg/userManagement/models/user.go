@@ -14,6 +14,7 @@ import (
 // User struct represents the user data model
 type User struct {
 	ID           int        `json:"id"`
+	UUID         string     `json:"uuid"`
 	TypeId       int        `json:"type_id"`
 	FirstName    string     `json:"first_name"`
 	LastName     string     `json:"last_name"`
