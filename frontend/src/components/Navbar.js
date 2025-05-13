@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import '../styles/Navbar.css';
 
-
 export default function Navbar() {
 
 return (
@@ -23,7 +22,7 @@ return (
 
             <div className="center-links">
                 <Link href="/" className="nav-link">Home</Link>
-                <Link href="/followers" className="nav-link">My Followers</Link>
+                <Link href="/followers" className="nav-link">Groups</Link>
                 <Link href="/messages" className="nav-link">Messages</Link>
                 <Link href="/notification" className="nav-link">Notification</Link>
             </div>
