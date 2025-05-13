@@ -1,8 +1,8 @@
 "use client"; // Required to use hooks like useParams
 
 import { useParams } from 'next/navigation';
-import SidebarSection from '../components/sidebarSection/SidebarSection';
-import CommentsSection from '../components/comments/CommentSection';
+import SidebarSection from '../../components/SidebarSection/SidebarSection';
+import CommentsSection from '../../components/Comments/CommentSection';
 import "./post.css";
 
 import {
@@ -12,7 +12,7 @@ import {
     sampleGroups,
     sampleConnections,
     sampleComments,
-} from '../data/mockData';
+} from '../../data/mockData';
 
 
 export default function PostPage() {
