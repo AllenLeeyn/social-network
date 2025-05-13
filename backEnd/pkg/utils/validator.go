@@ -1,8 +1,29 @@
 package utils
 
 import (
+	"html"
 	"regexp"
+	"strings"
 )
+
+// SanitizeInput removes HTML tags, scripts, and trims spaces
+func SanitizeInput(input string) string {
+	// Decode HTML entities to prevent encoded attacks
+	input = html.UnescapeString(input)
+
+	// Remove script tags and content inside
+	re := regexp.MustCompile(`(?i)<script.*?>.*?</script>`)
+	input = re.ReplaceAllString(input, "")
+
+	// Remove all other HTML tags
+	re = regexp.MustCompile(`(?i)<.*?>`)
+	input = re.ReplaceAllString(input, "")
+
+	// Trim extra spaces
+	input = strings.TrimSpace(input)
+
+	return input
+}
 
 func IsValidRegex(input, pattern string) (string, bool) {
 	input = SanitizeInput(input)
@@ -15,12 +36,12 @@ func IsValidEmail(input string) (string, bool) {
 	return IsValidRegex(input, regex)
 }
 
-func IsValidUseName(input string) (string, bool) {
+func IsValidUserName(input string) (string, bool) {
 	regex := `^[a-zA-Z0-9_-]{3,16}$`
 	return IsValidRegex(input, regex)
 }
 
-func IsValidPsswrd(password string) (string, bool) {
+func IsValidPassword(password string) (string, bool) {
 	password = SanitizeInput(password)
 	hasLowercase := regexp.MustCompile(`[a-z]`).MatchString
 	hasUppercase := regexp.MustCompile(`[A-Z]`).MatchString

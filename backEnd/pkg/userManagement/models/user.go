@@ -31,14 +31,6 @@ type User struct {
 	UpdatedAt       *time.Time     `json:"updated_at"`
 }
 
-// checkErrNoRows() checks if no result from sql query.
-func checkErrNoRows(err error) error {
-	if err == sql.ErrNoRows {
-		return nil
-	}
-	return err
-}
-
 func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) {
 	if fieldName != "id" && fieldName != "nick_name" && fieldName != "email" {
 		return nil, fmt.Errorf("invalid field")
@@ -54,7 +46,7 @@ func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) 
 		&u.Status, &u.CreatedAt,
 		&u.UpdatedBy, &u.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, checkErrNoRows(err)
 	}
 	return &u, nil
 }
@@ -122,30 +114,21 @@ func InsertUser(user *User) (int, error) {
 	return int(userId), nil
 }
 
+// add update status?
 func UpdateUser(user *User) error {
 	updateQuery := `
 		UPDATE users
-		SET first_name = ?,
-			last_name = ?,
-			gender = ?,
-			birthday = ?,
-			about_me = ?,
-			visibility = ?,
-			profile_image = ?,
-			updated_at = CURRENT_TIMESTAMP,
-			updated_by = ?
+		SET first_name = ?,	last_name = ?, nick_name =?,
+			gender = ?, birthday = ?, about_me = ?,
+			visibility = ?, profile_image = ?,
+			status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
 		WHERE id = ?;`
 
-	_, err := sqlDB.Exec(
-		updateQuery,
-		user.FirstName,
-		user.LastName,
-		user.Gender,
-		user.BirthDay,
-		user.AboutMe,
-		user.Visibility,
-		user.ProfileImage,
-		user.ID,
+	_, err := sqlDB.Exec(updateQuery,
+		user.FirstName, user.LastName, user.NickName,
+		user.Gender, user.BirthDay, user.AboutMe,
+		user.Visibility, user.ProfileImage,
+		user.Status, user.UpdatedBy,
 		user.ID,
 	)
 

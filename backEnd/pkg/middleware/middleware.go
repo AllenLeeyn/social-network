@@ -14,9 +14,9 @@ import (
 type contextKey string
 
 const (
-	ctxUserID              contextKey = "userID"
-	ctxSessionID           contextKey = "sessionID"
-	ContextKeyProfileImage contextKey = "profileImage"
+	ctxUserID       contextKey = "userID"
+	ctxSessionID    contextKey = "sessionID"
+	ctxProfileImage contextKey = "profileImage"
 )
 
 func CheckHttpRequest(checkFor, method string, next http.HandlerFunc) http.HandlerFunc {
@@ -91,7 +91,7 @@ func HandleProfileImageUpload(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), ContextKeyProfileImage, profileImage)
+		ctx := context.WithValue(r.Context(), ctxProfileImage, profileImage)
 		next(w, r.WithContext(ctx))
 	}
 }

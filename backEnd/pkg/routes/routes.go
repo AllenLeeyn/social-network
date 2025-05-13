@@ -12,8 +12,7 @@ import (
 func SetupRoutes(sqlDB *sql.DB) {
 	// ---------------------------- user management controller APIs ---------------------------- //
 	http.HandleFunc("/api/register",
-		middleware.CheckHttpRequest("guest", http.MethodPost,
-			middleware.HandleProfileImageUpload(userContollers.RegisterHandler))) /*post method*/
+		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.RegisterHandler)) /*post method*/
 
 	http.HandleFunc("/api/login",
 		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.LoginHandler)) /*post method*/
@@ -22,6 +21,5 @@ func SetupRoutes(sqlDB *sql.DB) {
 		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.Logout))
 
 	http.HandleFunc("/api/updateUser",
-		middleware.CheckHttpRequest("user", http.MethodPost,
-			middleware.HandleProfileImageUpload(userContollers.UpdateUser))) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUser)) /*post method*/
 }

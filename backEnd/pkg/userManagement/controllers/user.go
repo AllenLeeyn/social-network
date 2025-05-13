@@ -20,16 +20,16 @@ type session = userModel.Session
 func isValidUserInfo(u *user) error {
 	isValid := false
 
-	if u.FirstName, isValid = utils.IsValidUseName(u.FirstName); !isValid {
+	if u.FirstName, isValid = utils.IsValidUserName(u.FirstName); !isValid {
 		return errors.New("First name must be between 3 to 16 alphanumeric characters, '_' or '-'")
 	}
-	if u.LastName, isValid = utils.IsValidUseName(u.LastName); !isValid {
+	if u.LastName, isValid = utils.IsValidUserName(u.LastName); !isValid {
 		return errors.New("First name must be between 3 to 16 alphanumeric characters, '_' or '-'")
 	}
-	if u.NickName, isValid = utils.IsValidUseName(u.NickName); !isValid && u.NickName != "" {
+	if u.NickName, isValid = utils.IsValidUserName(u.NickName); !isValid && u.NickName != "" {
 		return errors.New("Nick name must be between 3 to 16 alphanumeric characters, '_' or '-'")
 	}
-	if u.Password, isValid = utils.IsValidPsswrd(u.Password); !isValid {
+	if u.Password, isValid = utils.IsValidUserName(u.Password); !isValid {
 		return errors.New("password must be 8 characters or longer.\n" +
 			"Include at least a lower case character, an upper case character, a number and one of '@$!%*?&'")
 	}
@@ -69,7 +69,7 @@ func isValidRegistration(u *user) error {
 // need to handle image uploaded on registration
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
-	if err := utils.GetJSON(w, r, u); err != nil {
+	if err := utils.ReadJSON(w, r, u); err != nil {
 		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -125,14 +125,14 @@ func isValidLogin(u *user) error {
 			return errors.New("invalid email")
 		}
 	} else if u.NickName != "" {
-		if u.NickName, isValid = utils.IsValidUseName(u.NickName); !isValid {
+		if u.NickName, isValid = utils.IsValidUserName(u.NickName); !isValid {
 			return errors.New("invalid user name")
 		}
 	} else {
 		return errors.New("Email or user name is required")
 	}
 
-	if u.Password, isValid = utils.IsValidPsswrd(u.Password); !isValid {
+	if u.Password, isValid = utils.IsValidPassword(u.Password); !isValid {
 		return errors.New("password must be 8 characters or longer.\n" +
 			"Include at least a lower case character, an upper case character, a number and one of '@$!%*?&'")
 	}
@@ -141,7 +141,7 @@ func isValidLogin(u *user) error {
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
-	if err := utils.GetJSON(w, r, u); err != nil {
+	if err := utils.ReadJSON(w, r, u); err != nil {
 		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -216,7 +216,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := &user{}
-	if err := utils.GetJSON(w, r, u); err != nil {
+	if err := utils.ReadJSON(w, r, u); err != nil {
 		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -230,7 +230,6 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
 	curUserInfo.FirstName = u.FirstName
 	curUserInfo.LastName = u.LastName
 	curUserInfo.NickName = u.NickName

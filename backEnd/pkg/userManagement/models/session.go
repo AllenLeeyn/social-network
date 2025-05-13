@@ -23,6 +23,15 @@ func Initialize(dbMain *sql.DB) {
 	sqlDB = dbMain
 }
 
+// checkErrNoRows() checks if no result from sql query.
+func checkErrNoRows(err error) error {
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	return err
+}
+
+// to check and remove expired sessions
 func SelectActiveSessionBy(field string, id interface{}) (*Session, error) {
 	if field != "id" && field != "user_id" {
 		return nil, fmt.Errorf("invalid field")
@@ -39,6 +48,7 @@ func SelectActiveSessionBy(field string, id interface{}) (*Session, error) {
 	return &s, err
 }
 
+// to do update then insert?
 func InsertSession(session *Session) (*Session, error) {
 	// Generate UUID for the user if not already set
 	sessionId, err := utils.GenerateUuid()
