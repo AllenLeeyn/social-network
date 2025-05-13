@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { useAuth } from "../hooks/useAuth"; // Import the useAuth hook
-import "./Login.css";
+import { useAuth } from "../../hooks/useAuth"; // Import the useAuth hook
+import "./login.css";
 
 export default function AuthPage() {
     const { handleLogin, error, loading } = useAuth(); // Use the hook for login logic

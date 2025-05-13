@@ -1,4 +1,4 @@
-import { usePosts } from "../hooks/usePosts";
+import { usePosts } from "../../hooks/usePosts";
 
 export default function PostsPage() {
   const { posts, error, loading } = usePosts();
