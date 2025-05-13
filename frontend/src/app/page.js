@@ -1,6 +1,7 @@
 // This is our homepage
 import React from 'react';
 import SidebarSection from '../components/SidebarSection/SidebarSection';
+import PostList from '../components/PostList';
 
 import {
     samplePosts,
@@ -46,19 +47,9 @@ return (
                         </ul>
                     </SidebarSection>
                 </aside>
-
-                {/* Main Feed */}
                 <section className="main-feed post-list-section">
                     <h2>Latest Posts</h2>
-                    <div>
-                        {samplePosts.map(post => (
-                        <div key={post.id} className="post-item">
-                            <h3>{post.title}</h3>
-                            <p><em>by {post.author}</em></p>
-                            <p>{post.snippet}</p>
-                        </div>
-                        ))}
-                    </div>
+                    <PostList posts={samplePosts} />
                 </section>
 
             {/* Right Sidebar */}
@@ -79,4 +70,5 @@ return (
 
     );
 }
+
 
