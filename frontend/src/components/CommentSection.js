@@ -2,7 +2,7 @@
 // src/components/comments/CommentSection.js
 
 import CommentForm from './CommentForm';
-import './Comments.css'; 
+import '../styles/Comments.css'; 
 
 export default function CommentSection({ comments = [], title = "Comments" }) {
     return (

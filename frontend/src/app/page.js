@@ -1,7 +1,13 @@
 // This is our homepage
-import React from 'react';
-import SidebarSection from '../components/SidebarSection/SidebarSection';
+
+'use client';
+
+import React,  { useState } from 'react';
+import SidebarSection from '../components/SidebarSection';
 import PostList from '../components/PostList';
+import CreatePost from '../components/CreatePost'
+import Modal from '../components/Modal'
+
 
 import {
     samplePosts,
@@ -13,6 +19,8 @@ import {
 
 
 export default function HomePage() {
+
+    const [showModal, setShowModal] = useState(false);
 
 return (
         <main>
@@ -50,8 +58,24 @@ return (
 
                 {/* Center / Main View */}
                 <section className="main-feed post-list-section">
-                    <h2>Latest Posts</h2>
-                    <PostList posts={samplePosts} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h2>Latest Posts</h2>
+                        <button
+                            className="create-post-btn"
+                            onClick={() => setShowModal(true)}
+                            aria-label="Create a new post"
+                        >
+                            + Create Post
+                        </button>
+                    </div>
+                        <PostList posts={samplePosts} />
+
+                        {showModal && (
+                            <Modal onClose={() => setShowModal(false)} title="Create Post">
+                            {/* Post creation form goes here */}
+                            <CreatePost categories={sampleCategories} onClose={() => setShowModal(false)} />
+                            </Modal>
+                        )}
                 </section>
 
                 {/* Right Sidebar */}

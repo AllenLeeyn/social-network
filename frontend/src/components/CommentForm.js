@@ -2,7 +2,7 @@
 'use clients';
 import { useState } from "react";
 
-import "./Comments.css"
+import "../styles/Comments.css"
 
 export default function CommentForm() {
     const [author, setAuthor] = useState("");
