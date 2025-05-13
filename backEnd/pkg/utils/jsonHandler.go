@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 )
 
@@ -28,4 +29,15 @@ func ReturnJson(w http.ResponseWriter, outputData Result) {
 		}
 		json.NewEncoder(w).Encode(errorResponse)
 	}
+}
+
+func GetJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	if err = json.Unmarshal(body, data); err != nil {
+		return err
+	}
+	return nil
 }

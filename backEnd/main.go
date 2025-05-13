@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"social-network/pkg/db"
 	"social-network/pkg/routes"
+
+	userModel "social-network/pkg/userManagement/models"
 )
 
 var sqlDB *sql.DB
@@ -17,6 +19,8 @@ func init() {
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
+
+	userModel.Initialize(sqlDB)
 }
 
 func main() {

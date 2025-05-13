@@ -2,439 +2,259 @@ package controller
 
 import (
 	"database/sql"
-	"encoding/json"
+	"errors"
 	"fmt"
-	errorManagementControllers "social-network/pkg/errorManagement/controllers"
-	fileManagementControllers "social-network/pkg/fileManagement/controllers"
-	"sync"
-
 	"net/http"
-	userManagementModels "social-network/pkg/userManagement/models"
-	"social-network/pkg/utils"
-	"strings"
-	"time"
 
-	"github.com/gorilla/websocket"
+	errorControllers "social-network/pkg/errorManagement/controllers"
+	userModel "social-network/pkg/userManagement/models"
+	"social-network/pkg/utils"
+
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var OnlineUsers = make(map[*websocket.Conn]string) // Map of online users (connected to WS) to usernames
-var Mutex = &sync.Mutex{}                          // Mutex to handle concurrent access to OnlineUsers
+type user = userModel.User
+type session = userModel.Session
 
-type AuthPageErrorData struct {
-	ErrorMessage string
+func isValidUserInfo(u *user) error {
+	isValid := false
+
+	if u.FirstName, isValid = utils.IsValidUseName(u.FirstName); !isValid {
+		return errors.New("First name must be between 3 to 16 alphanumeric characters, '_' or '-'")
+	}
+	if u.LastName, isValid = utils.IsValidUseName(u.LastName); !isValid {
+		return errors.New("First name must be between 3 to 16 alphanumeric characters, '_' or '-'")
+	}
+	if u.NickName, isValid = utils.IsValidUseName(u.NickName); !isValid && u.NickName != "" {
+		return errors.New("Nick name must be between 3 to 16 alphanumeric characters, '_' or '-'")
+	}
+	if u.Password, isValid = utils.IsValidPsswrd(u.Password); !isValid {
+		return errors.New("password must be 8 characters or longer.\n" +
+			"Include at least a lower case character, an upper case character, a number and one of '@$!%*?&'")
+	}
+	if u.Password != u.ConfirmPassword {
+		return errors.New("passwords do not match")
+	}
+	if u.Email, isValid = utils.IsValidEmail(u.Email); !isValid {
+		return errors.New("invalid email")
+	}
+	if u.Visibility != "public" {
+		u.Visibility = "private"
+	}
+	if u.Gender != "Male" && u.Gender != "Female" {
+		u.Visibility = "Other"
+	}
+	if u.AboutMe, isValid = utils.IsValidContent(u.AboutMe, 0, 500); !isValid {
+		return errors.New("About me is limited to 500 characters.")
+	}
+
+	return nil
 }
 
-func RegisterHandler(w http.ResponseWriter, r *http.Request, sqlDB *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
+func isValidRegistration(u *user) error {
+	if err := isValidUserInfo(u); err != nil {
+		return err
+	}
+	if user, _ := userModel.SelectUserByField("email", u.Email); user != nil {
+		return errors.New("email is already used")
+	}
+	if user, _ := userModel.SelectUserByField("nick_name", u.NickName); user != nil {
+		return errors.New("name is already used")
+	}
+
+	return nil
+}
+
+// need to handle image uploaded on registration
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	u := &user{}
+	if err := utils.GetJSON(w, r, u); err != nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	loginStatus, _, _, checkLoginError := CheckLogin(w, r, sqlDB)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if loginStatus {
-		res := utils.Result{
-			Success: true,
-			Message: "You are logged in",
-			Data:    nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-
-	err := r.ParseMultipartForm(0)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
-		return
-	}
-
-	nick_name := utils.SanitizeInput(r.FormValue("nick_name"))
-	first_name := utils.SanitizeInput(r.FormValue("first_name"))
-	last_name := utils.SanitizeInput(r.FormValue("last_name"))
-	gender := utils.SanitizeInput(r.FormValue("gender"))
-	birthday_str := utils.SanitizeInput(r.FormValue("birthday"))
-	email := utils.SanitizeInput(r.FormValue("email"))
-	password := utils.SanitizeInput(r.FormValue("password"))
-	about_me := utils.SanitizeInput(r.FormValue("about_me"))
-	visibility := utils.SanitizeInput(r.FormValue("visibility"))
-	if len(nick_name) == 0 || len(first_name) == 0 || len(last_name) == 0 || len(gender) == 0 || len(birthday_str) == 0 || len(email) == 0 || len(password) == 0 {
-		res := utils.Result{
+	if err := isValidRegistration(u); err != nil {
+		utils.ReturnJson(w, utils.Result{
 			Success:    false,
-			Message:    "nick_name, first_name, last_name, gender, birthday, email and password are required.",
-			HttpStatus: http.StatusOK,
+			Message:    err.Error(),
+			HttpStatus: http.StatusBadRequest,
 			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
-		res := utils.Result{
-			Success:    false,
-			Message:    "Invalid email address!",
-			HttpStatus: http.StatusOK,
-			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-	if len(visibility) == 0 {
-		visibility = "private"
-	}
-
-	password_hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		})
 		return
 	}
 
-	birthday, err := time.Parse("2006-01-02", birthday_str) // Adjust format as needed
+	password_hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		res := utils.Result{
-			Success:    false,
-			Message:    "Invalid birth date format. Use YYYY-MM-DD.",
-			HttpStatus: http.StatusOK,
-			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-	newUuid, err := utils.GenerateUuid()
-	if err != nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	newUser := &userManagementModels.User{
-		UUID:         newUuid,
-		NickName:     nick_name,
-		FirstName:    first_name,
-		LastName:     last_name,
-		Gender:       gender,
-		BirthDay:     birthday,
-		Email:        email,
-		PasswordHash: string(password_hash),
-		AboutMe:      about_me,
-		Visibility:   visibility,
+	u.TypeId = 1
+	u.PasswordHash = string(password_hash)
+
+	profileImageRaw := r.Context().Value("profileImage")
+	profileImagePath, isOk := profileImageRaw.(string)
+	if isOk && profileImagePath != "" {
+		u.ProfileImage = sql.NullString{String: profileImagePath, Valid: true}
 	}
 
 	// Insert a record while checking duplicates
-	userId, insertError := userManagementModels.InsertUser(sqlDB, newUser)
-	if insertError != nil {
-		fmt.Println(insertError)
-		if insertError.Error() == "duplicateEmail" {
-			res := utils.Result{
-				Success:    false,
-				Message:    "User with this email already exists!",
-				HttpStatus: http.StatusOK,
-				Data:       nil,
-			}
-			utils.ReturnJson(w, res)
-			return
-		} else if insertError.Error() == "duplicateNickName" {
-			res := utils.Result{
-				Success:    false,
-				Message:    "User with this username already exists!",
-				HttpStatus: http.StatusOK,
-				Data:       nil,
-			}
-			utils.ReturnJson(w, res)
-			return
-		} else {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		}
+	userId, err := userModel.InsertUser(u)
+	if err != nil {
+		fmt.Println(err.Error())
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	sessionGenerator(w, r, sqlDB, userId)
+	generateSession(w, r, userId)
 
-	res := utils.Result{
+	utils.ReturnJson(w, utils.Result{
 		Success: true,
 		Message: "Logged in successfully",
 		Data:    nil,
-	}
-	utils.ReturnJson(w, res)
+	})
 	return
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request, sqlDB *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
+func isValidLogin(u *user) error {
+	isValid := false
 
-	loginStatus, _, _, checkLoginError := CheckLogin(w, r, sqlDB)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if loginStatus {
-		res := utils.Result{
-			Success: true,
-			Message: "You are logged in",
-			Data:    nil,
+	if u.Email != "" {
+		if u.Email, isValid = utils.IsValidEmail(u.Email); !isValid {
+			return errors.New("invalid email")
 		}
-		utils.ReturnJson(w, res)
+	} else if u.NickName != "" {
+		if u.NickName, isValid = utils.IsValidUseName(u.NickName); !isValid {
+			return errors.New("invalid user name")
+		}
+	} else {
+		return errors.New("Email or user name is required")
+	}
+
+	if u.Password, isValid = utils.IsValidPsswrd(u.Password); !isValid {
+		return errors.New("password must be 8 characters or longer.\n" +
+			"Include at least a lower case character, an upper case character, a number and one of '@$!%*?&'")
+	}
+	return nil
+}
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	u := &user{}
+	if err := utils.GetJSON(w, r, u); err != nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	err := r.ParseMultipartForm(0)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+	if err := isValidLogin(u); err != nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
-	nick_name := utils.SanitizeInput(r.FormValue("nick_name"))
-	password := utils.SanitizeInput(r.FormValue("password"))
-	if len(nick_name) == 0 || len(password) == 0 {
-		res := utils.Result{
+	user := &user{}
+	if u.Email != "" {
+		user, _ = userModel.SelectUserByField("email", u.Email)
+	} else {
+		user, _ = userModel.SelectUserByField("nick_name", u.NickName)
+	}
+
+	if user == nil || bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(u.Password)) != nil {
+		utils.ReturnJson(w, utils.Result{
 			Success:    false,
-			Message:    "NickName and password are required.",
-			HttpStatus: http.StatusOK,
+			Message:    "Incorrect username and/or password",
+			HttpStatus: http.StatusBadRequest,
 			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
+		})
 		return
 	}
 
-	// Insert a record while checking duplicates
-	authStatus, userId, authError := userManagementModels.AuthenticateUser(sqlDB, nick_name, password)
-	if authError != nil {
-		res := utils.Result{
-			Success:    false,
-			Message:    authError.Error(),
-			HttpStatus: http.StatusOK,
-			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-	if authStatus {
-		sessionGenerator(w, r, sqlDB, userId)
+	session, err := userModel.SelectActiveSessionBy("user_id", user.ID)
+	if err == nil {
+		ExpireSession(w, session.ID)
 	}
 
-	res := utils.Result{
+	generateSession(w, r, user.ID)
+	utils.ReturnJson(w, utils.Result{
 		Success: true,
 		Message: "Logged in successfully",
 		Data:    nil,
-	}
-	utils.ReturnJson(w, res)
-	return
+	})
 }
 
-func Logout(w http.ResponseWriter, r *http.Request, sqlDB *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
+func Logout(w http.ResponseWriter, r *http.Request) {
+	sessionIdRaw := r.Context().Value("sessionID")
+	sessionId, isOk := sessionIdRaw.(string)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		return
+	}
+	if err := ExpireSession(w, sessionId); err != nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	loginStatus, loggedInUser, sessionToken, checkLoginError := CheckLogin(w, r, sqlDB)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-
-	if !loginStatus {
-		res := utils.Result{
-			Success: true,
-			Message: "You are not logged in",
-			Data:    nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-
-	err := userManagementModels.DeleteSession(sqlDB, sessionToken)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-
-	deleteCookie(w, "session_token") // Deleting a cookie named "session_token"
-	Mutex.Lock()
-	defer Mutex.Unlock()
-	SocketLogoutHandler(w, r, loggedInUser)
-
-	res := utils.Result{
+	utils.ReturnJson(w, utils.Result{
 		Success: true,
 		Message: "Logged out successfully",
 		Data:    nil,
-	}
-	utils.ReturnJson(w, res)
+	})
 	return
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request, sqlDB *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := CheckLogin(w, r, sqlDB)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+	curUserInfo, _ := userModel.SelectUserByField("id", userID)
+	if curUserInfo == nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	const maxUploadSize = 2 << 20 // 2 MB
+	u := &user{}
+	if err := utils.GetJSON(w, r, u); err != nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		return
+	}
 
-	// Limit the request body size
-	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
-
-	first_name := utils.SanitizeInput(r.FormValue("first_name"))
-	last_name := utils.SanitizeInput(r.FormValue("last_name"))
-	birthday_str := utils.SanitizeInput(r.FormValue("birthday"))
-	gender := utils.SanitizeInput(r.FormValue("gender"))
-	about_me := utils.SanitizeInput(r.FormValue("about_me"))
-	visibility := utils.SanitizeInput(r.FormValue("visibility"))
-
-	if len(first_name) == 0 || len(last_name) == 0 || len(birthday_str) == 0 || len(gender) == 0 {
-		res := utils.Result{
+	if err := isValidUserInfo(u); err != nil {
+		utils.ReturnJson(w, utils.Result{
 			Success:    false,
-			Message:    "first_name, last_name, birthday, gender are required.",
-			HttpStatus: http.StatusOK,
+			Message:    err.Error(),
+			HttpStatus: http.StatusBadRequest,
 			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-	if len(visibility) == 0 {
-		visibility = "private"
-	}
-
-	birthday, err := time.Parse("2006-01-02", birthday_str) // Adjust format as needed
-	if err != nil {
-		res := utils.Result{
-			Success:    false,
-			Message:    "Invalid birth date format. Use YYYY-MM-DD.",
-			HttpStatus: http.StatusOK,
-			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-
-	profile_image_file, handler, err := r.FormFile("profile_image")
-	if err != nil {
-		// "File is missing"
-		user := &userManagementModels.User{
-			ID:         loginUser.ID,
-			FirstName:  first_name,
-			LastName:   last_name,
-			Gender:     gender,
-			BirthDay:   birthday,
-			AboutMe:    about_me,
-			Visibility: visibility,
-		}
-
-		// Update a record while checking duplicates
-		updateError := userManagementModels.UpdateUser(sqlDB, user)
-		if updateError != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-			return
-		}
-
-		res := utils.Result{
-			Success: true,
-			Message: "Profile updated successfully",
-			Data:    nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	} else {
-		defer profile_image_file.Close()
-
-		profile_image := ""
-		if handler.Size != 0 {
-			// Extra safety: check file size from the header
-			if handler.Size > maxUploadSize {
-				// "File is too large or missing"
-				errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
-				return
-			}
-
-			// Call your file upload function
-			profile_image, err = fileManagementControllers.FileUpload(profile_image_file, handler)
-			if err != nil {
-				errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-				return
-			}
-		}
-
-		user := &userManagementModels.User{
-			ID:           loginUser.ID,
-			FirstName:    first_name,
-			LastName:     last_name,
-			Gender:       gender,
-			BirthDay:     birthday,
-			AboutMe:      about_me,
-			Visibility:   visibility,
-			ProfileImage: profile_image,
-		}
-
-		// Update a record while checking duplicates
-		updateError := userManagementModels.UpdateUser(sqlDB, user)
-		if updateError != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-			return
-		}
-
-		res := utils.Result{
-			Success: true,
-			Message: "Profile updated successfully",
-			Data:    nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-
-}
-
-// Helper function to broadcast the list of online users
-func UpdateOnlineUsers() {
-	usernames := make([]string, 0, len(OnlineUsers))
-	for _, username := range OnlineUsers {
-		usernames = append(usernames, username)
-	}
-
-	// Encode the list of usernames as JSON
-	userListJSON, err := json.Marshal(usernames)
-	if err != nil {
-		fmt.Println("Error encoding online users:", err)
-		return
-	}
-
-	// Send the list to all online clients
-	for client := range OnlineUsers {
-		err := client.WriteMessage(websocket.TextMessage, userListJSON)
-		if err != nil {
-			Mutex.Lock()
-			defer Mutex.Unlock()
-			client.Close()
-			delete(OnlineUsers, client)
-
-		}
-	}
-}
-
-func SocketLogoutHandler(w http.ResponseWriter, r *http.Request, loggedInUser userManagementModels.User) {
-	for clientConn, clientUserName := range OnlineUsers {
-		if clientUserName == loggedInUser.NickName {
-			defer clientConn.Close() // close their websocket
-			delete(OnlineUsers, clientConn)
-			UpdateOnlineUsers() // Update the online users list
-			fmt.Println("User logged out:", clientUserName, "| OnlineUsers:", OnlineUsers)
-		}
-		clientConn.WriteJSON(map[string]string{
-			"type":    "logout",
-			"message": "You have been logged out.",
 		})
+		return
 	}
+
+	curUserInfo.FirstName = u.FirstName
+	curUserInfo.LastName = u.LastName
+	curUserInfo.NickName = u.NickName
+	curUserInfo.BirthDay = u.BirthDay
+	curUserInfo.AboutMe = u.AboutMe
+	curUserInfo.Visibility = u.Visibility
+
+	profileImageRaw := r.Context().Value("profileImage")
+	profileImagePath, isOk := profileImageRaw.(string)
+	if isOk && profileImagePath != "" {
+		curUserInfo.ProfileImage = sql.NullString{String: profileImagePath, Valid: true}
+	}
+
+	// Update a record while checking duplicates
+	updateError := userModel.UpdateUser(curUserInfo)
+	if updateError != nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	utils.ReturnJson(w, utils.Result{
+		Success: true,
+		Message: "Profile updated successfully",
+		Data:    nil,
+	})
+	return
 }

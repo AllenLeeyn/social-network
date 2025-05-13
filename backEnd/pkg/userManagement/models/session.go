@@ -2,10 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
-	"log"
-	"net/http"
 	"social-network/pkg/utils"
 	"time"
 )
@@ -20,61 +17,71 @@ type Session struct {
 	LastAccess time.Time `json:"last_access"`
 }
 
-func InsertSession(sqlDB *sql.DB, session *Session) (*Session, error) {
-	// Generate UUID for the user if not already set
-	if session.ID == "" {
-		uuidSessionTokenid, err := utils.GenerateUuid()
-		if err != nil {
-			return nil, err
-		}
-		session.ID = uuidSessionTokenid
+var sqlDB *sql.DB
+
+func Initialize(dbMain *sql.DB) {
+	sqlDB = dbMain
+}
+
+func SelectActiveSessionBy(field string, id interface{}) (*Session, error) {
+	if field != "id" && field != "user_id" {
+		return nil, fmt.Errorf("invalid field")
 	}
+	var s Session
+	qry := `SELECT * FROM sessions WHERE ` + field + ` = ? AND is_active = 1`
+	err := sqlDB.QueryRow(qry, id).Scan(
+		&s.ID,
+		&s.UserId,
+		&s.IsActive,
+		&s.StartTime,
+		&s.ExpireTime,
+		&s.LastAccess)
+	return &s, err
+}
+
+func InsertSession(session *Session) (*Session, error) {
+	// Generate UUID for the user if not already set
+	sessionId, err := utils.GenerateUuid()
+	if err != nil {
+		return nil, err
+	}
+	session.ID = sessionId
 
 	// Set session expiration time to 1 hour
 	session.ExpireTime = time.Now().Add(1 * time.Hour)
 
-	// Start a transaction for atomicity
-	tx, err := sqlDB.Begin()
-	if err != nil {
-		return &Session{}, err
-	}
+	qry := `INSERT INTO sessions
+			(id, user_id, is_active, expire_time)
+			VALUES ( ?, ?, ?, ?)`
+	_, err = sqlDB.Exec(qry,
+		session.ID,
+		session.UserId,
+		session.IsActive,
+		session.ExpireTime)
 
-	updateQuery := `UPDATE sessions SET expire_time = CURRENT_TIMESTAMP WHERE user_id = ? AND expire_time > CURRENT_TIMESTAMP;`
-	_, updateErr := tx.Exec(updateQuery, session.UserId)
-	if updateErr != nil {
-		tx.Rollback()
-		return nil, updateErr
-	}
-
-	insertQuery := `INSERT INTO sessions (id, user_id, expire_time, is_active) VALUES (?, ?, ?, ?);`
-	_, insertErr := tx.Exec(insertQuery, session.ID, session.UserId, session.ExpireTime, session.IsActive)
-	if insertErr != nil {
-		tx.Rollback()
-		// Check if the error is a SQLite constraint violation
-		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
-			if sqliteErr.ErrorCode() == 19 { // SQLite constraint violation error code
-				return nil, sql.ErrNoRows // Return custom error to indicate a duplicate
-			}
-		}
-		return nil, insertErr
-	}
-
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		tx.Rollback() // Rollback on error
-		return nil, err
-	}
-
-	return session, nil
+	return session, err
 }
 
-func SelectSession(sqlDB *sql.DB, sessionToken string) (User, time.Time, error) {
+// UpdateSession() for when Session is expired, logout or refreshed
+func UpdateSession(s *Session) error {
+	qry := `UPDATE sessions
+			SET is_active = ?, expire_time = ?, last_access= ?
+			WHERE id = ?`
+	_, err := sqlDB.Exec(qry,
+		s.IsActive,
+		s.ExpireTime,
+		s.LastAccess,
+		s.ID)
+	return err
+}
+
+/* func SelectSession(sessionToken string) (User, time.Time, error) {
 	var user User
 	var expirationTime time.Time
 	// todo: fix type_id, profile_image (, IFNULL(u.profile_image, '') as profile_image)
-	err := sqlDB.QueryRow(`SELECT 
+	err := sqlDB.QueryRow(`SELECT
 							u.id as user_id, u.type_id as user_type_id, u.first_name as user_first_name, u.last_name as user_last_name, u.gender as user_gender, u.birthday as user_birthday, u.nick_name as nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
-							expire_time 
+							expire_time
 						FROM sessions s
 							INNER JOIN users u
 								ON s.user_id = u.id
@@ -93,22 +100,8 @@ func SelectSession(sqlDB *sql.DB, sessionToken string) (User, time.Time, error) 
 	return user, expirationTime, nil
 }
 
-func DeleteSession(sqlDB *sql.DB, sessionToken string) error {
-	_, err := sqlDB.Exec(`UPDATE sessions
-					SET expire_time = CURRENT_TIMESTAMP
-					WHERE id = ?;`, sessionToken)
-	if err != nil {
-		// Handle other database errors
-		log.Fatal(err)
-		return errors.New("database error")
-	}
-
-	return nil
-
-}
-
 // IsSessionActive checks if a session is active based on the session token
-func IsSessionActive(sqlDB *sql.DB, sessionToken string) (bool, error) {
+func IsSessionActive(sessionToken string) (bool, error) {
 	var expiresAt time.Time
 
 	// Query the database for the session's expiration time
@@ -129,23 +122,4 @@ func IsSessionActive(sqlDB *sql.DB, sessionToken string) (bool, error) {
 
 	return false, nil // Session is expired
 }
-
-func GetUserIDFromCookie(sqlDB *sql.DB, r *http.Request) (int, string, error) {
-	// Retrieve user data (e.g., from session or database)
-	sessionToken, err := r.Cookie("session_token")
-	if err != nil {
-		// Return an error if the session token is not found
-		return 0, "", fmt.Errorf("error retrieving session token: %v", err)
-	}
-
-	// Fetch the user from the database using the session token
-	user, _, err := SelectSession(sqlDB, sessionToken.Value)
-	if err != nil {
-		return 0, "", fmt.Errorf("error retrieving session: %v", err)
-	}
-
-	myUserID := user.ID         // Get the ID field from the User struct
-	myUsername := user.NickName // Use the Username field from the User struct
-
-	return myUserID, myUsername, nil
-}
+*/
