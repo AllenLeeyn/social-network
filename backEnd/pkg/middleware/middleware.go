@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
@@ -17,9 +18,19 @@ const (
 	CtxProfileImage contextKey = "profileImage"
 )
 
-func CheckHttpRequest(checkFor, method string, next http.HandlerFunc) http.HandlerFunc {
+type Middleware struct {
+	um *userModel.UserModel
+}
+
+func SetUpMiddleware(sqlDB *sql.DB) *Middleware {
+	return &Middleware{
+		um: userModel.NewUserModel(sqlDB),
+	}
+}
+
+func (mw *Middleware) CheckHttpRequest(checkFor, method string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sessionID, userID := checkSessionValidity(r)
+		sessionID, userID := mw.checkSessionValidity(r)
 		if checkFor == "guest" && sessionID != "" {
 			errorControllers.CustomErrorHandler(w, r, "You are logged in", http.StatusBadRequest)
 			return
@@ -41,14 +52,14 @@ func CheckHttpRequest(checkFor, method string, next http.HandlerFunc) http.Handl
 	}
 }
 
-func checkSessionValidity(r *http.Request) (string, int) {
+func (mw *Middleware) checkSessionValidity(r *http.Request) (string, int) {
 	sessionCookie, err := r.Cookie("session-id")
 	if err != nil || sessionCookie == nil {
 		return "", -1
 	}
 	sessionID := sessionCookie.Value
 
-	s, err := userModel.SelectActiveSessionBy("id", sessionID)
+	s, err := mw.um.SelectActiveSessionBy("id", sessionID)
 	if err != nil {
 		return "", -1
 	}

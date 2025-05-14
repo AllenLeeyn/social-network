@@ -10,16 +10,21 @@ import (
 )
 
 func SetupRoutes(sqlDB *sql.DB) {
+
+	// Create controller instance
+	uc := userContollers.NewUserController(sqlDB)
+	mw := middleware.SetUpMiddleware(sqlDB)
+
 	// ---------------------------- user management controller APIs ---------------------------- //
 	http.HandleFunc("/api/register",
-		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.RegisterHandler)) /*post method*/
+		mw.CheckHttpRequest("guest", http.MethodPost, uc.RegisterHandler)) /*post method*/
 
 	http.HandleFunc("/api/login",
-		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.LoginHandler)) /*post method*/
+		mw.CheckHttpRequest("guest", http.MethodPost, uc.LoginHandler)) /*post method*/
 
 	http.HandleFunc("/api/logout/",
-		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.LogoutHandler))
+		mw.CheckHttpRequest("user", http.MethodGet, uc.LogoutHandler))
 
 	http.HandleFunc("/api/updateUser",
-		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUserHandler)) /*post method*/
+		mw.CheckHttpRequest("user", http.MethodPost, uc.UpdateUserHandler)) /*post method*/
 }

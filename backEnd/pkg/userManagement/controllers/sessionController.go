@@ -10,7 +10,7 @@ import (
 
 type session = userModel.Session
 
-func ExpireSession(w http.ResponseWriter, sessionId string) error {
+func (uc *UserController) ExpireSession(w http.ResponseWriter, sessionId string) error {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session-id",
 		Value:    "",         // Empty the cookie's value
@@ -21,7 +21,7 @@ func ExpireSession(w http.ResponseWriter, sessionId string) error {
 		SameSite: http.SameSiteStrictMode,
 	})
 
-	return userModel.UpdateSession(&session{
+	return uc.um.UpdateSession(&session{
 		IsActive:   false,
 		ExpireTime: time.Now(),
 		LastAccess: time.Now(),
@@ -32,8 +32,8 @@ func ExpireSession(w http.ResponseWriter, sessionId string) error {
 	//m.CloseConn(s)
 }
 
-func generateSession(w http.ResponseWriter, r *http.Request, userId int) {
-	session, err := userModel.InsertSession(&session{
+func (uc *UserController) generateSession(w http.ResponseWriter, r *http.Request, userId int) {
+	session, err := uc.um.InsertSession(&session{
 		UserId:   userId,
 		IsActive: true,
 	})

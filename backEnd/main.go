@@ -20,23 +20,10 @@ func init() {
 		log.Fatal("Error opening database: ", err)
 	}
 
-	userModel.Initialize(sqlDB)
+	userModel.NewUserModel(sqlDB)
 }
 
 func main() {
-	/*
-		http.HandleFunc("/posts", handlers.Posts)
-		http.HandleFunc("/post", handlers.Post)
-		http.HandleFunc("/profile", handlers.Profile)
-
-		http.HandleFunc("/signup", handlers.Signup)
-		http.HandleFunc("/login", handlers.Login)
-		http.HandleFunc("/logout", handlers.LogOut)
-
-		http.HandleFunc("/create-post", handlers.CreatePost)
-		http.HandleFunc("/create-comment", handlers.CreateComment)
-		http.HandleFunc("/feedback", handlers.CreateFeedback)
-	*/
 	routes.SetupRoutes(sqlDB)
 
 	fmt.Println("Starting Forum on http://localhost:8080/...")
