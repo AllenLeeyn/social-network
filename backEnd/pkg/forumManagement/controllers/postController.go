@@ -719,24 +719,30 @@ func LikePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	// } else if dislike == "dislike" {
 	// 	Type = dislike
 	// }
-	Type := r.FormValue("actionType")
+	ratingStr := r.FormValue("rating")
 
-	existingLikeId, existingLikeType := models.PostHasLiked(db, loginUser.ID, postIDInt)
+	existingLikeId, existingFeedbackRating := models.PostHasFeedbacked(db, loginUser.ID, postIDInt)
 
 	var resMessage string
-	if Type == "like" {
+	if ratingStr == "1" {
 		resMessage = "You liked successfully"
 	} else {
 		resMessage = "You disliked successfully"
 	}
 
+	rating, err := strconv.Atoi(ratingStr)
+	if err != nil {
+		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		return
+	}
+
 	if existingLikeId == -1 {
-		post := &models.PostLike{
-			Type:   Type,
+		post := &models.PostFeedback{
+			Rating: rating,
 			PostId: postIDInt,
 			UserId: loginUser.ID,
 		}
-		_, insertError := models.InsertPostLike(db, post)
+		_, insertError := models.InsertPostFeedback(db, post)
 		if insertError != nil {
 			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 			return
@@ -750,25 +756,25 @@ func LikePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 		utils.ReturnJson(w, res)
 		return
 	} else {
-		updateError := models.UpdateStatusPostLike(db, existingLikeId, "delete", loginUser.ID)
+		updateError := models.UpdateStatusFeedback(db, existingLikeId, "delete", loginUser.ID)
 		if updateError != nil {
 			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 			return
 		}
 
-		if existingLikeType != Type { //this is duplicated like or duplicated dislike so we should update it to disable
-			post := &models.PostLike{
-				Type:   Type,
+		if existingFeedbackRating != ratingStr { //this is duplicated like or duplicated dislike so we should update it to disable
+			post := &models.PostFeedback{
+				Rating: rating,
 				PostId: postIDInt,
 				UserId: loginUser.ID,
 			}
-			_, insertError := models.InsertPostLike(db, post)
+			_, insertError := models.InsertPostFeedback(db, post)
 			if insertError != nil {
 				errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 				return
 			}
 		} else {
-			if Type == "like" {
+			if ratingStr == "1" {
 				resMessage = "You removed like successfully"
 			} else {
 				resMessage = "You removed dislike successfully"

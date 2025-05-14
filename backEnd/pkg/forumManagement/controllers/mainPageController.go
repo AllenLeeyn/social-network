@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
 	"social-network/pkg/utils"
@@ -29,7 +30,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func MainPageHandler(w http.ResponseWriter, r *http.Request) {
+func MainPageHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -41,19 +42,19 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r)
+	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
 	if loginStatus {
-		categories, err := models.ReadAllCategories()
+		categories, err := models.ReadAllCategories(db)
 		if err != nil {
 			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 			return
 		}
 
-		posts, err := models.ReadAllPosts(loginUser.ID)
+		posts, err := models.ReadAllPosts(db, loginUser.ID)
 		if err != nil {
 			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 			return
@@ -69,13 +70,13 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 			Categories: categories,
 		}
 
-		if loginStatus {
-			if loginUser.Type == "admin" {
-				userManagementControllers.RedirectToAdminIndex(w, r)
-				return
-			}
-			data_obj_sender.LoginUser = loginUser
-		}
+		// if loginStatus {
+		// 	if loginUser.Type == "admin" {
+		// 		userManagementControllers.RedirectToAdminIndex(w, r)
+		// 		return
+		// 	}
+		// 	data_obj_sender.LoginUser = loginUser
+		// }
 
 		// jsonData, err := json.Marshal(data_obj_sender)
 		// if err != nil {
@@ -125,7 +126,7 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func AdminMainPageHandler(w http.ResponseWriter, r *http.Request) {
+func AdminMainPageHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -137,7 +138,7 @@ func AdminMainPageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r)
+	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
 	if checkLoginError != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -147,31 +148,31 @@ func AdminMainPageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	categories, err := models.AdminReadAllCategories()
+	categories, err := models.AdminReadAllCategories(db)
 	if err != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
 
-	posts, err := models.ReadAllPosts(loginUser.ID)
+	posts, err := models.ReadAllPosts(db, loginUser.ID)
 	if err != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
 
-	comments, err := models.ReadAllComments()
+	comments, err := models.ReadAllComments(db)
 	if err != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
 
-	users, err := userManagementModels.ReadAllUsers()
+	users, err := userManagementModels.ReadAllUsers(db)
 	if err != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
 	}
 
-	postLikes, err := models.ReadAllPostsLikes()
+	postLikes, err := models.ReadAllPostsFeedbacks(db)
 	if err != nil {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
 		return
@@ -182,7 +183,7 @@ func AdminMainPageHandler(w http.ResponseWriter, r *http.Request) {
 		Posts      []models.Post
 		Comments   []models.Comment
 		Users      []userManagementModels.User
-		PostLikes  []models.PostLike
+		PostLikes  []models.PostFeedback
 		Categories []models.Category
 	}{
 		LoginUser:  userManagementModels.User{},

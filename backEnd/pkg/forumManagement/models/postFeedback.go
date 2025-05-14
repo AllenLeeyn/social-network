@@ -11,7 +11,7 @@ import (
 
 type PostFeedback struct {
 	ID        int                       `json:"id"`
-	Type      string                    `json:"Type"`
+	Rating    int                       `json:"rating"`
 	PostId    int                       `json:"post_id"`
 	UserId    int                       `json:"user_id"`
 	Status    string                    `json:"status"`
@@ -22,18 +22,18 @@ type PostFeedback struct {
 	Post      Post                      `json:"post"`
 }
 
-func InsertPostFeedback(db *dbTools.DBContainer, postLike *PostLike) (int, error) {
-	insertQuery := `INSERT INTO post_feedback (type, post_id, user_id) VALUES (?, ?, ?);`
-	result, insertErr := db.Conn.Exec(insertQuery, postLike.Type, postLike.PostId, postLike.UserId)
+func InsertPostFeedback(db *dbTools.DBContainer, postFeedback *PostFeedback) (int, error) {
+	insertQuery := `INSERT INTO post_feedback (rating, post_id, user_id) VALUES (?, ?, ?);`
+	result, insertErr := db.Conn.Exec(insertQuery, postFeedback.Rating, postFeedback.PostId, postFeedback.UserId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
-		var ErrDuplicatePostLike = errors.New("duplicate post like")
+		var ErrDuplicatePostFeedback = errors.New("duplicate post like")
 		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
 			// if sqliteErr.ErrorCode() == 19 { // SQLite constraint violation error code
 			// 	return -1, sql.ErrNoRows // Return custom error to indicate a duplicate
 			// }
 			if sqliteErr.ErrorCode() == 19 {
-				return -1, ErrDuplicatePostLike
+				return -1, ErrDuplicatePostFeedback
 			}
 		}
 
@@ -50,33 +50,33 @@ func InsertPostFeedback(db *dbTools.DBContainer, postLike *PostLike) (int, error
 	return int(lastInsertID), nil
 }
 
-func UpdateStatusFeedback(db *dbTools.DBContainer, post_like_id int, status string, user_id int) error {
+func UpdateStatusFeedback(db *dbTools.DBContainer, post_feedback_id int, status string, user_id int) error {
 	updateQuery := `UPDATE post_feedback
 		               SET status = ?,
 			           updated_at = CURRENT_TIMESTAMP,
 			           updated_by = ?
 		               WHERE id = ?;`
-	_, updateErr := db.Conn.Exec(updateQuery, status, user_id, post_like_id)
+	_, updateErr := db.Conn.Exec(updateQuery, status, user_id, post_feedback_id)
 	if updateErr != nil {
 		return updateErr
 	}
 	return nil
 }
 
-func ReadAllPostsFeedbacks(db *dbTools.DBContainer) ([]PostLike, error) {
+func ReadAllPostsFeedbacks(db *dbTools.DBContainer) ([]PostFeedback, error) {
 	// Query the records
 	rows, selectError := db.Conn.Query(`
         SELECT 
-			pl.id as post_like_id, pl.type, pl.status as post_like_status, pl.created_at as post_like_created_at, pl.updated_at as post_like_updated_at, pl.updated_by as post_like_updated_by,
+			pf.id as post_feedback_id, pf.rating, pf.status as post_feedback_status, pf.created_at as post_feedback_created_at, pf.updated_at as post_feedback_updated_at, pf.updated_by as post_feedback_updated_by,
 			p.id as post_id, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name
-		FROM post_feedback pl
+		FROM post_feedback pf
 			INNER JOIN posts p
-				ON pl.post_id = p.id	
+				ON pf.post_id = p.id	
 				AND p.status != 'delete'
 			INNER JOIN users u
-				ON pl.user_id = u.id
+				ON pf.user_id = u.id
 				AND u.status != 'delete'
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
@@ -84,7 +84,7 @@ func ReadAllPostsFeedbacks(db *dbTools.DBContainer) ([]PostLike, error) {
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
 				AND c.status = 'enable'
-		WHERE pl.status != 'delete'
+		WHERE pf.status != 'delete'
 			;
     `)
 	if selectError != nil {
@@ -92,19 +92,19 @@ func ReadAllPostsFeedbacks(db *dbTools.DBContainer) ([]PostLike, error) {
 	}
 	defer rows.Close()
 
-	var postLikes []PostLike
-	// Map to track postLikes by their ID to avoid duplicates
-	postLikeMap := make(map[int]*PostLike)
+	var postFeedbacks []PostFeedback
+	// Map to track postFeedbacks by their ID to avoid duplicates
+	postFeedbackMap := make(map[int]*PostFeedback)
 
 	for rows.Next() {
-		var postLike PostLike
+		var postFeedback PostFeedback
 		var post Post
 		var user userManagementModels.User
 		var category Category
 
-		// Scan the post_like, post, user, and category data
+		// Scan the post_feedback, post, user, and category data
 		err := rows.Scan(
-			&postLike.ID, &postLike.Type, &postLike.Status, &postLike.CreatedAt, &postLike.UpdatedAt, &postLike.UpdatedBy,
+			&postFeedback.ID, &postFeedback.Rating, &postFeedback.Status, &postFeedback.CreatedAt, &postFeedback.UpdatedAt, &postFeedback.UpdatedBy,
 			&post.ID, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
@@ -113,16 +113,16 @@ func ReadAllPostsFeedbacks(db *dbTools.DBContainer) ([]PostLike, error) {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		// Check if the post_like already exists in the postLikeMap
-		if existingPostLike, found := postLikeMap[postLike.ID]; found {
-			// If the post_like exists, append the category to the existing post's Categories
-			existingPostLike.Post.Categories = append(existingPostLike.Post.Categories, category)
+		// Check if the post_feedback already exists in the postFeedbackMap
+		if existingPostFeedback, found := postFeedbackMap[postFeedback.ID]; found {
+			// If the post_feedback exists, append the category to the existing post's Categories
+			existingPostFeedback.Post.Categories = append(existingPostFeedback.Post.Categories, category)
 		} else {
-			// If the post_like doesn't exist in the map, add it and initialize the Categories field
-			postLike.Post = post
-			postLike.User = user
-			postLike.Post.Categories = []Category{category}
-			postLikeMap[postLike.ID] = &postLike
+			// If the post_feedback doesn't exist in the map, add it and initialize the Categories field
+			postFeedback.Post = post
+			postFeedback.User = user
+			postFeedback.Post.Categories = []Category{category}
+			postFeedbackMap[postFeedback.ID] = &postFeedback
 		}
 	}
 
@@ -131,28 +131,28 @@ func ReadAllPostsFeedbacks(db *dbTools.DBContainer) ([]PostLike, error) {
 		return nil, fmt.Errorf("row iteration error: %v", err)
 	}
 
-	// Convert the map of postLikes into a slice
-	for _, postLike := range postLikeMap {
-		postLikes = append(postLikes, *postLike)
+	// Convert the map of postFeedbacks into a slice
+	for _, postFeedback := range postFeedbackMap {
+		postFeedbacks = append(postFeedbacks, *postFeedback)
 	}
 
-	return postLikes, nil
+	return postFeedbacks, nil
 }
 
-func ReadPostsFeedbacksByUserId(db *dbTools.DBContainer, userId int) ([]PostLike, error) {
+func ReadPostsFeedbacksByUserId(db *dbTools.DBContainer, userId int) ([]PostFeedback, error) {
 	// Query the records
 	rows, selectError := db.Conn.Query(`
         SELECT 
-			pl.id as post_like_id, pl.type, pl.status as post_like_status, pl.created_at as post_like_created_at, pl.updated_at as post_like_updated_at, pl.updated_by as post_like_updated_by,
+			pf.id as post_feedback_id, pf.rating, pf.status as post_feedback_status, pf.created_at as post_feedback_created_at, pf.updated_at as post_feedback_updated_at, pf.updated_by as post_feedback_updated_by,
 			p.id as post_id, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image, 
 			c.id as category_id, c.name as category_name
-		FROM post_feedback pl
+		FROM post_feedback pf
 			INNER JOIN posts p
-				ON pl.post_id = p.id	
+				ON pf.post_id = p.id	
 				AND p.status != 'delete'
 			INNER JOIN users u
-				ON pl.user_id = u.id
+				ON pf.user_id = u.id
 				AND u.status != 'delete'
 				AND u.id = ?
 			LEFT JOIN post_categories pc
@@ -161,7 +161,7 @@ func ReadPostsFeedbacksByUserId(db *dbTools.DBContainer, userId int) ([]PostLike
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
 				AND c.status = 'enable'
-		WHERE pl.status != 'delete'
+		WHERE pf.status != 'delete'
 			;
     `, userId)
 	if selectError != nil {
@@ -169,19 +169,19 @@ func ReadPostsFeedbacksByUserId(db *dbTools.DBContainer, userId int) ([]PostLike
 	}
 	defer rows.Close()
 
-	var postLikes []PostLike
-	// Map to track postLikes by their ID to avoid duplicates
-	postLikeMap := make(map[int]*PostLike)
+	var postFeedbacks []PostFeedback
+	// Map to track postFeedbacks by their ID to avoid duplicates
+	postFeedbackMap := make(map[int]*PostFeedback)
 
 	for rows.Next() {
-		var postLike PostLike
+		var postFeedback PostFeedback
 		var post Post
 		var user userManagementModels.User
 		var category Category
 
-		// Scan the post_like, post, user, and category data
+		// Scan the post_feedback, post, user, and category data
 		err := rows.Scan(
-			&postLike.ID, &postLike.Type, &postLike.Status, &postLike.CreatedAt, &postLike.UpdatedAt, &postLike.UpdatedBy,
+			&postFeedback.ID, &postFeedback.Rating, &postFeedback.Status, &postFeedback.CreatedAt, &postFeedback.UpdatedAt, &postFeedback.UpdatedBy,
 			&post.ID, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
@@ -190,16 +190,16 @@ func ReadPostsFeedbacksByUserId(db *dbTools.DBContainer, userId int) ([]PostLike
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		// Check if the post_like already exists in the postLikeMap
-		if existingPostLike, found := postLikeMap[postLike.ID]; found {
-			// If the post_like exists, append the category to the existing post's Categories
-			existingPostLike.Post.Categories = append(existingPostLike.Post.Categories, category)
+		// Check if the post_feedback already exists in the postFeedbackMap
+		if existingPostFeedback, found := postFeedbackMap[postFeedback.ID]; found {
+			// If the post_feedback exists, append the category to the existing post's Categories
+			existingPostFeedback.Post.Categories = append(existingPostFeedback.Post.Categories, category)
 		} else {
-			// If the post_like doesn't exist in the map, add it and initialize the Categories field
-			postLike.Post = post
-			postLike.User = user
-			postLike.Post.Categories = []Category{category}
-			postLikeMap[postLike.ID] = &postLike
+			// If the post_feedback doesn't exist in the map, add it and initialize the Categories field
+			postFeedback.Post = post
+			postFeedback.User = user
+			postFeedback.Post.Categories = []Category{category}
+			postFeedbackMap[postFeedback.ID] = &postFeedback
 		}
 	}
 
@@ -208,29 +208,29 @@ func ReadPostsFeedbacksByUserId(db *dbTools.DBContainer, userId int) ([]PostLike
 		return nil, fmt.Errorf("row iteration error: %v", err)
 	}
 
-	// Convert the map of postLikes into a slice
-	for _, postLike := range postLikeMap {
-		postLikes = append(postLikes, *postLike)
+	// Convert the map of postFeedbacks into a slice
+	for _, postFeedback := range postFeedbackMap {
+		postFeedbacks = append(postFeedbacks, *postFeedback)
 	}
 
-	return postLikes, nil
+	return postFeedbacks, nil
 }
 
-func ReadPostsFeedbacksByPostId(db *dbTools.DBContainer, postId int) ([]PostLike, error) {
+func ReadPostsFeedbacksByPostId(db *dbTools.DBContainer, postId int) ([]PostFeedback, error) {
 	// Query the records
 	rows, selectError := db.Conn.Query(`
         SELECT 
-			pl.id as post_like_id, pl.type, pl.status as post_like_status, pl.created_at as post_like_created_at, pl.updated_at as post_like_updated_at, pl.updated_by as post_like_updated_by,
+			pf.id as post_feedback_id, pf.rating, pf.status as post_feedback_status, pf.created_at as post_feedback_created_at, pf.updated_at as post_feedback_updated_at, pf.updated_by as post_feedback_updated_by,
 			p.id as post_id, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image, 
 			c.id as category_id, c.name as category_name
-		FROM post_feedback pl
+		FROM post_feedback pf
 			INNER JOIN posts p
-				ON pl.post_id = p.id	
+				ON pf.post_id = p.id	
 				AND p.status != 'delete'
 				AND p.id = ?
 			INNER JOIN users u
-				ON pl.user_id = u.id
+				ON pf.user_id = u.id
 				AND u.status != 'delete'
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
@@ -238,7 +238,7 @@ func ReadPostsFeedbacksByPostId(db *dbTools.DBContainer, postId int) ([]PostLike
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
 				AND c.status = 'enable'
-		WHERE pl.status != 'delete'
+		WHERE pf.status != 'delete'
 			;
     `, postId)
 	if selectError != nil {
@@ -246,19 +246,19 @@ func ReadPostsFeedbacksByPostId(db *dbTools.DBContainer, postId int) ([]PostLike
 	}
 	defer rows.Close()
 
-	var postLikes []PostLike
-	// Map to track postLikes by their ID to avoid duplicates
-	postLikeMap := make(map[int]*PostLike)
+	var postFeedbacks []PostFeedback
+	// Map to track postFeedbacks by their ID to avoid duplicates
+	postFeedbackMap := make(map[int]*PostFeedback)
 
 	for rows.Next() {
-		var postLike PostLike
+		var postFeedback PostFeedback
 		var post Post
 		var user userManagementModels.User
 		var category Category
 
-		// Scan the post_like, post, user, and category data
+		// Scan the post_feedback, post, user, and category data
 		err := rows.Scan(
-			&postLike.ID, &postLike.Type, &postLike.Status, &postLike.CreatedAt, &postLike.UpdatedAt, &postLike.UpdatedBy,
+			&postFeedback.ID, &postFeedback.Rating, &postFeedback.Status, &postFeedback.CreatedAt, &postFeedback.UpdatedAt, &postFeedback.UpdatedBy,
 			&post.ID, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
@@ -267,16 +267,16 @@ func ReadPostsFeedbacksByPostId(db *dbTools.DBContainer, postId int) ([]PostLike
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		// Check if the post_like already exists in the postLikeMap
-		if existingPostLike, found := postLikeMap[postLike.ID]; found {
-			// If the post_like exists, append the category to the existing post's Categories
-			existingPostLike.Post.Categories = append(existingPostLike.Post.Categories, category)
+		// Check if the post_feedback already exists in the postFeedbackMap
+		if existingPostFeedback, found := postFeedbackMap[postFeedback.ID]; found {
+			// If the post_feedback exists, append the category to the existing post's Categories
+			existingPostFeedback.Post.Categories = append(existingPostFeedback.Post.Categories, category)
 		} else {
-			// If the post_like doesn't exist in the map, add it and initialize the Categories field
-			postLike.Post = post
-			postLike.User = user
-			postLike.Post.Categories = []Category{category}
-			postLikeMap[postLike.ID] = &postLike
+			// If the post_feedback doesn't exist in the map, add it and initialize the Categories field
+			postFeedback.Post = post
+			postFeedback.User = user
+			postFeedback.Post.Categories = []Category{category}
+			postFeedbackMap[postFeedback.ID] = &postFeedback
 		}
 	}
 
@@ -285,20 +285,20 @@ func ReadPostsFeedbacksByPostId(db *dbTools.DBContainer, postId int) ([]PostLike
 		return nil, fmt.Errorf("row iteration error: %v", err)
 	}
 
-	// Convert the map of postLikes into a slice
-	for _, postLike := range postLikeMap {
-		postLikes = append(postLikes, *postLike)
+	// Convert the map of postFeedbacks into a slice
+	for _, postFeedback := range postFeedbackMap {
+		postFeedbacks = append(postFeedbacks, *postFeedback)
 	}
 
-	return postLikes, nil
+	return postFeedbacks, nil
 }
 
 func PostHasFeedbacked(db *dbTools.DBContainer, userId int, postID int) (int, string) {
 	var existingLikeId int
 	var existingLikeType string
-	likeCheckQuery := `SELECT id, type
-		FROM post_feedback pl
-		WHERE pl.user_id = ? AND pl.post_id = ?
+	likeCheckQuery := `SELECT id, rating
+		FROM post_feedback pf
+		WHERE pf.user_id = ? AND pf.post_id = ?
 		AND status = 'enable'
 	`
 	err := db.Conn.QueryRow(likeCheckQuery, userId, postID).Scan(&existingLikeId, &existingLikeType)
