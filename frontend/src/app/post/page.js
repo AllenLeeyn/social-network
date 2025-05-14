@@ -1,8 +1,8 @@
-"use client"; // Required to use hooks like useParams
+"use client"; 
 
 import { useParams } from 'next/navigation';
-import SidebarSection from '../../components/SidebarSection/SidebarSection';
-import CommentsSection from '../../components/Comments/CommentSection';
+import SidebarSection from '../../components/SidebarSection';
+import CommentsSection from '../../components/CommentSection';
 import "./post.css";
 
 import {

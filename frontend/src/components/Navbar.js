@@ -23,13 +23,13 @@ return (
 
             <div className="center-links">
                 <Link href="/" className="nav-link">Home</Link>
-                <Link href="/followers" className="nav-link">My Followers</Link>
+                <Link href="/groups" className="nav-link">Connections</Link>
                 <Link href="/messages" className="nav-link">Messages</Link>
-                <Link href="/notification" className="nav-link">Notification</Link>
+                <Link href="/notifications" className="nav-link">Notifications</Link>
             </div>
             <div className="right-links">
                 <Link href="/profile" className="nav-link">Profile</Link>
-                <Link href="/" className="nav-link">Login/Logout</Link>
+                <Link href="/" className="nav-link">Logout</Link>
             </div>
         </div>
     );
