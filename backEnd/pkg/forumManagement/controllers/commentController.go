@@ -10,26 +10,21 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ReadAllComments(w http.ResponseWriter, r *http.Request) {
+func ReadAllCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	comments, err := models.ReadAllComments()
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	res := utils.Result{
-		Success: true,
-		Message: "Comments fetched successfully",
-		Data:    comments,
-	}
-	utils.ReturnJson(w, res)
+	utils.ReturnJsonSuccess(w, "Comments fetched successfully", comments)
 }
 
-func ReadPostComments(w http.ResponseWriter, r *http.Request) {
+func ReadPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value("userID")
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -48,35 +43,30 @@ func ReadPostComments(w http.ResponseWriter, r *http.Request) {
 	//todo get post id from url end
 	postId, err := strconv.Atoi(postIdStr)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 	comments, err := models.ReadAllCommentsOfUserForPost(postId, userID)
 	// comments, err := models.ReadAllCommentsForPost(userID)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	res := utils.Result{
-		Success: true,
-		Message: "Comments fetched successfully",
-		Data:    comments,
-	}
-	utils.ReturnJson(w, res)
+	utils.ReturnJsonSuccess(w, "Comments fetched successfully", comments)
 }
 
-func SubmitComment(w http.ResponseWriter, r *http.Request) {
+func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value("userID")
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -95,37 +85,32 @@ func SubmitComment(w http.ResponseWriter, r *http.Request) {
 
 	post_id, err := strconv.Atoi(post_id_str)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// Insert a record while checking duplicates
 	_, insertError := models.InsertComment(post_id, userID, content)
 	if insertError != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	res := utils.Result{
-		Success: true,
-		Message: "Comment submitted successfully",
-		Data:    nil,
-	}
-	utils.ReturnJson(w, res)
+	utils.ReturnJsonSuccess(w, "Comment submitted successfully", nil)
 }
 
-func FeedbackComment(w http.ResponseWriter, r *http.Request) {
+func FeedbackCommentHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value("userID")
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// err := r.ParseForm()
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
 	parentID := r.FormValue("parent_id")
@@ -134,7 +119,7 @@ func FeedbackComment(w http.ResponseWriter, r *http.Request) {
 
 	rating, err := strconv.Atoi(ratingStr)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -150,28 +135,23 @@ func FeedbackComment(w http.ResponseWriter, r *http.Request) {
 	if existingFeedbackId == -1 {
 		insertError := models.InsertCommentFeedback(ratingStr, parentIDInt, userID)
 		if insertError != nil {
-			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 			return
 		}
 
-		res := utils.Result{
-			Success: true,
-			Message: resMessage,
-			Data:    nil,
-		}
-		utils.ReturnJson(w, res)
+		utils.ReturnJsonSuccess(w, resMessage, nil)
 		return
 	} else {
 		updateError := models.UpdateCommentFeedbackStatus(existingFeedbackId, "delete", userID)
 		if updateError != nil {
-			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 			return
 		}
 
 		if existingFeedbackRating != rating { //this is duplicated like or duplicated dislike so we should update it to disable
 			insertError := models.InsertCommentFeedback(ratingStr, parentIDInt, userID)
 			if insertError != nil {
-				errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+				errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 				return
 			}
 		} else {
@@ -181,27 +161,23 @@ func FeedbackComment(w http.ResponseWriter, r *http.Request) {
 				resMessage = "You removed dislike successfully"
 			}
 		}
-		res := utils.Result{
-			Success: true,
-			Message: resMessage,
-			Data:    nil,
-		}
-		utils.ReturnJson(w, res)
+
+		utils.ReturnJsonSuccess(w, resMessage, nil)
 		return
 	}
 }
 
-func UpdateComment(w http.ResponseWriter, r *http.Request) {
+func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value("userID")
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -222,7 +198,7 @@ func UpdateComment(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -235,29 +211,24 @@ func UpdateComment(w http.ResponseWriter, r *http.Request) {
 	// Update a record while checking duplicates
 	updateError := models.UpdateComment(comment, userID, content)
 	if updateError != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	res := utils.Result{
-		Success: true,
-		Message: "Comment updated successfully",
-		Data:    nil,
-	}
-	utils.ReturnJson(w, res)
+	utils.ReturnJsonSuccess(w, "Comment updated successfully", nil)
 }
 
-func DeleteComment(w http.ResponseWriter, r *http.Request) {
+func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value("userID")
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -265,27 +236,22 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 	post_uuid := utils.SanitizeInput(r.FormValue("post_uuid"))
 
 	if len(idStr) == 0 || len(post_uuid) == 0 {
-		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
 
 	comment_id, err := strconv.Atoi(idStr)
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// Update a record while checking duplicates
 	updateError := models.UpdateCommentStatus(comment_id, "delete", userID)
 	if updateError != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	res := utils.Result{
-		Success: true,
-		Message: "Comment removed successfully",
-		Data:    nil,
-	}
-	utils.ReturnJson(w, res)
+	utils.ReturnJsonSuccess(w, "Comment removed successfully", nil)
 }

@@ -9,17 +9,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ReadAllCategories(w http.ResponseWriter, r *http.Request) {
+func ReadAllCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 	categories, err := models.ReadAllCategories()
 	if err != nil {
-		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	res := utils.Result{
-		Success: true,
-		Message: "Post submitted successfully",
-		Data:    categories,
-	}
-	utils.ReturnJson(w, res)
+	utils.ReturnJsonSuccess(w, "Post submitted successfully", categories)
 }

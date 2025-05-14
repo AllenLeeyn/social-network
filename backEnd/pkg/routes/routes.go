@@ -19,55 +19,55 @@ func SetupRoutes(sqlDB *sql.DB) {
 		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.LoginHandler)) /*post method*/
 
 	http.HandleFunc("/api/logout/",
-		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.Logout))
+		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.LogoutHandler))
 
 	http.HandleFunc("/api/updateUser",
-		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUser)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUserHandler)) /*post method*/
 
 	http.HandleFunc("/api/categories/",
-		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadAllCategories))
+		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadAllCategoriesHandler))
 
 	http.HandleFunc("/api/allPosts/",
-		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadAllPosts))
+		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadAllPostsHandler))
 
 	http.HandleFunc("/api/submitPost",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.SubmitPost)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.SubmitPostHandler)) /*post method*/
 
 	http.HandleFunc("/api/myCreatedPosts/",
-		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadMyCreatedPosts))
+		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadMyCreatedPostsHandler))
 
 	http.HandleFunc("/api/myLikedPosts/",
-		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadMyLikedPosts))
+		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadMyLikedPostsHandler))
 
 	// router.HandleFunc("/post/{id}", forumControllers.ReadPost).Methods("GET")
 	http.HandleFunc("/api/post/",
-		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadPost))
+		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadPostHandler))
 
 	// router.HandleFunc("/posts/{categoryName}", forumControllers.ReadPostsByCategory).Methods("GET")
 	http.HandleFunc("/api/posts/",
-		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadPostsByCategory))
+		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadPostsByCategoryHandler))
 
 	http.HandleFunc("/api/filterPosts/",
-		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.FilterPosts))
+		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.FilterPostsHandler))
 
 	http.HandleFunc("/api/postFeedback",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.PostFeedback)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.PostFeedbackHandler)) /*post method*/
 
 	http.HandleFunc("/api/updatePost",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.UpdatePost)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.UpdatePostHandler)) /*post method*/
 
 	http.HandleFunc("/api/deletePost",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.DeletePost)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.DeletePostHandler)) /*post method*/
 
 	http.HandleFunc("/api/likeComment",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.FeedbackComment)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.FeedbackCommentHandler)) /*post method*/
 
 	http.HandleFunc("/api/submitComment",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.SubmitComment)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.SubmitCommentHandler)) /*post method*/
 
 	http.HandleFunc("/api/updateComment",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.UpdateComment)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.UpdateCommentHandler)) /*post method*/
 
 	http.HandleFunc("/api/deleteComment",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.DeleteComment)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.DeleteCommentHandler)) /*post method*/
 }
