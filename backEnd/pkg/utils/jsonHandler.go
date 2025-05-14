@@ -31,6 +31,14 @@ func ReturnJson(w http.ResponseWriter, outputData Result) {
 	}
 }
 
+func ReturnJsonSuccess(w http.ResponseWriter, message string, data interface{}) {
+	ReturnJson(w, Result{
+		Success: true,
+		Message: message,
+		Data:    nil,
+	})
+}
+
 func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

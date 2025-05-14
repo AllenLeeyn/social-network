@@ -76,7 +76,7 @@ var (
 	InternalServerError   = PredefinedErrors["InternalServerError"]
 )
 
-func HandleErrorPage(w http.ResponseWriter, r *http.Request, errorPageData ErrorPageData) {
+func ErrorHandler(w http.ResponseWriter, r *http.Request, errorPageData ErrorPageData) {
 	res := utils.Result{
 		Success:    false,
 		Message:    errorPageData.Info,
@@ -84,5 +84,14 @@ func HandleErrorPage(w http.ResponseWriter, r *http.Request, errorPageData Error
 		HttpStatus: errorPageData.CodeNumber,
 	}
 	utils.ReturnJson(w, res)
-	return
+}
+
+func CustomErrorHandler(w http.ResponseWriter, r *http.Request, message string, errorCode int) {
+	res := utils.Result{
+		Success:    false,
+		Message:    message,
+		Data:       nil,
+		HttpStatus: errorCode,
+	}
+	utils.ReturnJson(w, res)
 }

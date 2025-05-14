@@ -18,8 +18,8 @@ func SetupRoutes(sqlDB *sql.DB) {
 		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.LoginHandler)) /*post method*/
 
 	http.HandleFunc("/api/logout/",
-		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.Logout))
+		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.LogoutHandler))
 
 	http.HandleFunc("/api/updateUser",
-		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUser)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUserHandler)) /*post method*/
 }

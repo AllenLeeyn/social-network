@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// User struct represents the user data model
 type Session struct {
 	ID         string    `json:"id"`
 	UserId     int       `json:"user_id"`
@@ -16,6 +15,8 @@ type Session struct {
 	ExpireTime time.Time `json:"expire_time"`
 	LastAccess time.Time `json:"last_access"`
 }
+
+const sessionDuration = time.Hour
 
 var sqlDB *sql.DB
 
@@ -31,13 +32,13 @@ func checkErrNoRows(err error) error {
 	return err
 }
 
-// to check and remove expired sessions
 func SelectActiveSessionBy(field string, id interface{}) (*Session, error) {
 	if field != "id" && field != "user_id" {
 		return nil, fmt.Errorf("invalid field")
 	}
 	var s Session
-	qry := `SELECT * FROM sessions WHERE ` + field + ` = ? AND is_active = 1`
+	qry := `SELECT * FROM sessions 
+			WHERE ` + field + ` = ? AND is_active = 1 AND expire_time > CURRENT_TIMESTAMP`
 	err := sqlDB.QueryRow(qry, id).Scan(
 		&s.ID,
 		&s.UserId,
@@ -48,9 +49,7 @@ func SelectActiveSessionBy(field string, id interface{}) (*Session, error) {
 	return &s, err
 }
 
-// to do update then insert?
 func InsertSession(session *Session) (*Session, error) {
-	// Generate UUID for the user if not already set
 	sessionId, err := utils.GenerateUuid()
 	if err != nil {
 		return nil, err
@@ -58,7 +57,7 @@ func InsertSession(session *Session) (*Session, error) {
 	session.ID = sessionId
 
 	// Set session expiration time to 1 hour
-	session.ExpireTime = time.Now().Add(1 * time.Hour)
+	session.ExpireTime = time.Now().Add(sessionDuration)
 
 	qry := `INSERT INTO sessions
 			(id, user_id, is_active, expire_time)
