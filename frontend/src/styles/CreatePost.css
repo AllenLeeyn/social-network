@@ -1,0 +1,83 @@
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group label {
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.input-group input[type="text"],
+.input-group textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: #fafbfc;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.input-group input[type="text"]:focus,
+.input-group textarea:focus {
+    border-color: #5b6dcd;
+    outline: none;
+    background: #fff;
+}
+
+.input-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.checkbox-item input[type="checkbox"] {
+    accent-color: #5b6dcd;
+}
+
+.new-post {
+    background: #5b6dcd;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 0.5rem;
+}
+
+.new-post:hover,
+.new-post:focus {
+    background: #3b4db7;
+    outline: none;
+}
+
+@media (max-width: 600px) {
+    .checkbox-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}

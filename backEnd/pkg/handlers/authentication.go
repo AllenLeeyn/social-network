@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -51,6 +52,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if !getJSON(w, r, u) {
 		return
 	}
+
+	fmt.Println(u.Email)
+	fmt.Println(u.NickName)
+	fmt.Println(u.Passwd)
 
 	if err := checkLoginCredentials(u); err != nil {
 		executeJSON(w, MsgData{err.Error()}, http.StatusBadRequest)

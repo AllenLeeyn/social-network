@@ -15,7 +15,7 @@ var m messenger.Messenger
 
 func init() {
 	var err error
-	db, err = dbTools.OpenDB("sqlite3", "./database/forum.db")
+	db, err = dbTools.OpenDB("sqlite3", "./pkg/database/forum.db")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
