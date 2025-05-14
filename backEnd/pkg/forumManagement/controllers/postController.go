@@ -2,40 +2,28 @@ package controller
 
 import (
 	// "forum/middlewares"
-	"database/sql"
+
 	"net/http"
-	errorManagementControllers "social-network/pkg/errorManagement/controllers"
-	fileManagementControllers "social-network/pkg/fileManagement/controllers"
+	errorControllers "social-network/pkg/errorManagement/controllers"
+	fileControllers "social-network/pkg/fileManagement/controllers"
 	"social-network/pkg/forumManagement/models"
 	"social-network/pkg/utils"
 	"strconv"
-	"text/template"
-
-	userManagementControllers "social-network/pkg/userManagement/controllers"
-	userManagementModels "social-network/pkg/userManagement/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ReadAllPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
+func ReadAllPosts(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-		return
-	}
-
-	posts, err := models.ReadAllPosts(db, loginUser.ID)
+	posts, err := models.ReadAllPosts(userID)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -47,115 +35,41 @@ func ReadAllPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func AdminReadAllPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-		return
-	}
-
-	posts, err := models.ReadAllPosts(db, loginUser.ID)
+func ReadPostsByCategory(w http.ResponseWriter, r *http.Request) {
+	categories, err := models.ReadAllCategories()
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-
-	data_obj_sender := struct {
-		LoginUser userManagementModels.User
-		Posts     []models.Post
-	}{
-		LoginUser: userManagementModels.User{},
-		Posts:     posts,
-	}
-
-	if loginStatus {
-		data_obj_sender.LoginUser = loginUser
-	}
-
-	// Create a template with a function map
-	tmpl, err := template.New("admin_posts.html").Funcs(template.FuncMap{
-		"formatDate": utils.FormatDate, // Register function globally
-	}).ParseFiles(
-		publicUrl+"admin_posts.html",
-		publicUrl+"templates/footer.html",
-	)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, data_obj_sender)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-}
-
-func ReadPostsByCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-		return
-	}
-
-	categories, err := models.ReadAllCategories(db)
-	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	categoryName, errUrl := utils.ExtractFromUrl(r.URL.Path, "api/posts")
 	if errUrl == "not found" {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.NotFoundError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.NotFoundError)
 		return
 	}
 
-	filteredCategory, errCategory := models.ReadCategoryByName(db, categoryName)
+	filteredCategory, errCategory := models.ReadCategoryByName(categoryName)
 	if errCategory != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.NotFoundError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.NotFoundError)
 		return
 	}
 
-	posts, err := models.ReadPostsByCategoryId(db, filteredCategory.ID)
+	posts, err := models.ReadPostsByCategoryId(filteredCategory.ID)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	data_obj_sender := struct {
-		LoginUser            userManagementModels.User
 		Posts                []models.Post
 		Categories           []models.Category
 		SelectedCategoryName string
 	}{
-		LoginUser:            userManagementModels.User{},
 		Posts:                posts,
 		Categories:           categories,
 		SelectedCategoryName: categoryName,
 	}
 
-	if loginStatus {
-		data_obj_sender.LoginUser = loginUser
-	}
-
 	res := utils.Result{
 		Success: true,
 		Message: "Posts fetched successfully",
@@ -164,56 +78,35 @@ func ReadPostsByCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func FilterPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-		return
-	}
-
+func FilterPosts(w http.ResponseWriter, r *http.Request) {
 	searchTerm, errUrl := utils.ExtractFromUrl(r.URL.Path, "api/filterPosts")
 	if errUrl == "not found" {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.NotFoundError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.NotFoundError)
 		return
 	}
 
-	categories, err := models.ReadAllCategories(db)
+	categories, err := models.ReadAllCategories()
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	posts, err := models.FilterPosts(db, searchTerm)
+	posts, err := models.FilterPosts(searchTerm)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	data_obj_sender := struct {
-		LoginUser  userManagementModels.User
 		Posts      []models.Post
 		Categories []models.Category
 		SearchTerm string
 	}{
-		LoginUser:  userManagementModels.User{},
 		Posts:      posts,
 		Categories: categories,
 		SearchTerm: searchTerm,
 	}
 
-	if loginStatus {
-		data_obj_sender.LoginUser = loginUser
-	}
-
 	res := utils.Result{
 		Success: true,
 		Message: "Posts fetched successfully",
@@ -222,40 +115,30 @@ func FilterPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func ReadMyCreatedPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
+func ReadMyCreatedPosts(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-		return
-	}
-
-	categories, err := models.ReadAllCategories(db)
+	categories, err := models.ReadAllCategories()
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	posts, err := models.ReadPostsByUserId(db, loginUser.ID)
+	posts, err := models.ReadPostsByUserId(userID)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	data_obj_sender := struct {
-		LoginUser  userManagementModels.User
 		Posts      []models.Post
 		Categories []models.Category
 	}{
-		LoginUser:  loginUser,
 		Posts:      posts,
 		Categories: categories,
 	}
@@ -268,40 +151,30 @@ func ReadMyCreatedPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func ReadMyLikedPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
+func ReadMyLikedPosts(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-		return
-	}
-
-	categories, err := models.ReadAllCategories(db)
+	categories, err := models.ReadAllCategories()
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	posts, err := models.ReadPostsLikedByUserId(db, loginUser.ID)
+	posts, err := models.ReadPostsLikedByUserId(userID)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	data_obj_sender := struct {
-		LoginUser  userManagementModels.User
 		Posts      []models.Post
 		Categories []models.Category
 	}{
-		LoginUser:  loginUser,
 		Posts:      posts,
 		Categories: categories,
 	}
@@ -314,57 +187,41 @@ func ReadMyLikedPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func ReadPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+func ReadPost(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	uuid, errUrl := utils.ExtractUUIDFromUrl(r.URL.Path, "api/post")
 	if errUrl == "not found" {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.NotFoundError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.NotFoundError)
 		return
 	}
 
-	post, err := models.ReadPostByUUID(db, uuid, loginUser.ID)
+	post, err := models.ReadPostByUUID(uuid, userID)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	data_obj_sender := struct {
-		LoginUser userManagementModels.User
-		Post      models.Post
-		Comments  []models.Comment
+		Post     models.Post
+		Comments []models.Comment
 	}{
-		LoginUser: loginUser,
-		Post:      post,
-		Comments:  nil,
+		Post:     post,
+		Comments: nil,
 	}
 
-	if loginStatus {
-		comments, err := models.ReadAllCommentsForPostByUserID(db, post.ID, loginUser.ID)
-		if err != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-			return
-		}
-
-		data_obj_sender.Comments = comments
-	} else {
-		comments, err := models.ReadAllCommentsForPost(db, post.ID)
-		if err != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-			return
-		}
-
-		data_obj_sender.Comments = comments
+	comments, err := models.ReadAllCommentsForPostByUserID(post.ID, userID)
+	if err != nil {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
+		return
 	}
+
+	data_obj_sender.Comments = comments
 
 	// // Create a template with a function map
 	// tmpl, err := template.New("post_details.html").Funcs(template.FuncMap{
@@ -376,14 +233,14 @@ func ReadPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// 	publicUrl+"templates/footer.html",
 	// )
 	// if err != nil {
-	// 	errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+	// 	errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 	// 	return
 	// }
 
 	// // Execute template with data
 	// err = tmpl.Execute(w, data_obj_sender)
 	// if err != nil {
-	// 	errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+	// 	errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 	// }
 
 	res := utils.Result{
@@ -394,26 +251,18 @@ func ReadPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func SubmitPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func SubmitPost(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// Parse the multipart form with a max memory of 10MB
 	err := r.ParseMultipartForm(10 << 20) // 10 MB limit
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -439,15 +288,15 @@ func SubmitPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	for _, handler := range files {
 		file, err := handler.Open()
 		if err != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 			return
 		}
 		defer file.Close()
 
 		// Call your file upload function
-		uploadedFile, err := fileManagementControllers.FileUpload(file, handler)
+		uploadedFile, err := fileControllers.FileUpload(file, handler)
 		if err != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 			return
 		}
 
@@ -457,7 +306,7 @@ func SubmitPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	post := &models.Post{
 		Title:   title,
 		Content: content,
-		UserId:  loginUser.ID,
+		UserId:  userID,
 	}
 
 	// Convert the string slice to an int slice
@@ -467,15 +316,15 @@ func SubmitPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			categoryIds = append(categoryIds, id)
 		} else {
 			// Handle error if conversion fails (for example, invalid input)
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 			return
 		}
 	}
 
 	// Insert a record while checking duplicates
-	_, insertError := models.InsertPost(db, post, categoryIds, uploadedFiles)
+	_, insertError := models.InsertPost(post, categoryIds, uploadedFiles)
 	if insertError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -487,26 +336,18 @@ func SubmitPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func UpdatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func UpdatePost(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// Parse the multipart form with a max memory of 10MB
 	err := r.ParseMultipartForm(10 << 20) // 10 MB limit
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -529,7 +370,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -541,15 +382,15 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	for _, handler := range files {
 		file, err := handler.Open()
 		if err != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 			return
 		}
 		defer file.Close()
 
 		// Call your file upload function
-		uploadedFile, err := fileManagementControllers.FileUpload(file, handler)
+		uploadedFile, err := fileControllers.FileUpload(file, handler)
 		if err != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 			return
 		}
 
@@ -560,7 +401,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		ID:      id,
 		Title:   title,
 		Content: content,
-		UserId:  loginUser.ID,
+		UserId:  userID,
 	}
 
 	// Convert the string slice to an int slice
@@ -576,9 +417,9 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	// Update a record while checking duplicates
-	updateError := models.UpdatePost(db, post, categoryIds, uploadedFiles, loginUser.ID)
+	updateError := models.UpdatePost(post, categoryIds, uploadedFiles, userID)
 	if updateError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -590,45 +431,37 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func DeletePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func DeletePost(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
 	idStr := r.FormValue("id")
 
 	if len(idStr) == 0 {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
 	post_id, err := strconv.Atoi(idStr)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// Update a record while checking duplicates
-	updateError := models.UpdateStatusPost(db, post_id, "delete", loginUser.ID)
+	updateError := models.UpdateStatusPost(post_id, "delete", userID)
 	if updateError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -640,73 +473,18 @@ func DeletePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-// func AdminDeletePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-// 	if r.Method != http.MethodPost {
-// 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-// 		return
-// 	}
-
-// 	loginUser, ok := r.Context().Value(middlewares.AdminKey).(userManagementModels.User)
-// 	if !ok {
-// 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-// 		return
-// 	}
-
-// 	err := r.ParseForm()
-// 	if err != nil {
-// 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
-// 		return
-// 	}
-
-// 	idStr := r.FormValue("id")
-
-// 	if len(idStr) == 0 {
-// 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
-// 		return
-// 	}
-
-// 	post_id, err := strconv.Atoi(idStr)
-// 	if err != nil {
-// 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-// 		return
-// 	}
-
-// 	// Update a record while checking duplicates
-// 	updateError := models.UpdateStatusPost(db, post_id, "delete", loginUser.ID)
-// 	if updateError != nil {
-// 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-// 		return
-// 	}
-
-// 	//todo
-// 	// userManagementControllers.RedirectToAdminIndex(w, r)
-// }
-
-func LikePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	// loginUser, ok := r.Context().Value(middlewares.UserContextKey).(userManagementModels.User)
-	// if !ok {
-	// 	errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-	// 	return
-	// }
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func PostFeedback(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// err := r.ParseForm()
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 	postID := r.FormValue("post_id")
@@ -721,7 +499,7 @@ func LikePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// }
 	ratingStr := r.FormValue("rating")
 
-	existingLikeId, existingFeedbackRating := models.PostHasFeedbacked(db, loginUser.ID, postIDInt)
+	existingLikeId, existingFeedbackRating := models.PostHasFeedbacked(userID, postIDInt)
 
 	var resMessage string
 	if ratingStr == "1" {
@@ -732,7 +510,7 @@ func LikePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	rating, err := strconv.Atoi(ratingStr)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -740,11 +518,11 @@ func LikePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		post := &models.PostFeedback{
 			Rating: rating,
 			PostId: postIDInt,
-			UserId: loginUser.ID,
+			UserId: userID,
 		}
-		_, insertError := models.InsertPostFeedback(db, post)
+		_, insertError := models.InsertPostFeedback(post)
 		if insertError != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 			return
 		}
 
@@ -756,9 +534,9 @@ func LikePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.ReturnJson(w, res)
 		return
 	} else {
-		updateError := models.UpdateStatusFeedback(db, existingLikeId, "delete", loginUser.ID)
+		updateError := models.UpdateStatusFeedback(existingLikeId, "delete", userID)
 		if updateError != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 			return
 		}
 
@@ -766,11 +544,11 @@ func LikePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			post := &models.PostFeedback{
 				Rating: rating,
 				PostId: postIDInt,
-				UserId: loginUser.ID,
+				UserId: userID,
 			}
-			_, insertError := models.InsertPostFeedback(db, post)
+			_, insertError := models.InsertPostFeedback(post)
 			if insertError != nil {
-				errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+				errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 				return
 			}
 		} else {

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -22,9 +21,9 @@ type PostFeedback struct {
 	Post      Post                      `json:"post"`
 }
 
-func InsertPostFeedback(db *sql.DB, postFeedback *PostFeedback) (int, error) {
+func InsertPostFeedback(postFeedback *PostFeedback) (int, error) {
 	insertQuery := `INSERT INTO post_feedback (rating, post_id, user_id) VALUES (?, ?, ?);`
-	result, insertErr := db.Exec(insertQuery, postFeedback.Rating, postFeedback.PostId, postFeedback.UserId)
+	result, insertErr := sqlDB.Exec(insertQuery, postFeedback.Rating, postFeedback.PostId, postFeedback.UserId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		var ErrDuplicatePostFeedback = errors.New("duplicate post like")
@@ -50,22 +49,22 @@ func InsertPostFeedback(db *sql.DB, postFeedback *PostFeedback) (int, error) {
 	return int(lastInsertID), nil
 }
 
-func UpdateStatusFeedback(db *sql.DB, post_feedback_id int, status string, user_id int) error {
+func UpdateStatusFeedback(post_feedback_id int, status string, user_id int) error {
 	updateQuery := `UPDATE post_feedback
 		               SET status = ?,
 			           updated_at = CURRENT_TIMESTAMP,
 			           updated_by = ?
 		               WHERE id = ?;`
-	_, updateErr := db.Exec(updateQuery, status, user_id, post_feedback_id)
+	_, updateErr := sqlDB.Exec(updateQuery, status, user_id, post_feedback_id)
 	if updateErr != nil {
 		return updateErr
 	}
 	return nil
 }
 
-func ReadAllPostsFeedbacks(db *sql.DB) ([]PostFeedback, error) {
+func ReadAllPostsFeedbacks() ([]PostFeedback, error) {
 	// Query the records
-	rows, selectError := db.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT 
 			pf.id as post_feedback_id, pf.rating, pf.status as post_feedback_status, pf.created_at as post_feedback_created_at, pf.updated_at as post_feedback_updated_at, pf.updated_by as post_feedback_updated_by,
 			p.id as post_id, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
@@ -139,9 +138,9 @@ func ReadAllPostsFeedbacks(db *sql.DB) ([]PostFeedback, error) {
 	return postFeedbacks, nil
 }
 
-func ReadPostsFeedbacksByUserId(db *sql.DB, userId int) ([]PostFeedback, error) {
+func ReadPostsFeedbacksByUserId(userId int) ([]PostFeedback, error) {
 	// Query the records
-	rows, selectError := db.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT 
 			pf.id as post_feedback_id, pf.rating, pf.status as post_feedback_status, pf.created_at as post_feedback_created_at, pf.updated_at as post_feedback_updated_at, pf.updated_by as post_feedback_updated_by,
 			p.id as post_id, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
@@ -216,9 +215,9 @@ func ReadPostsFeedbacksByUserId(db *sql.DB, userId int) ([]PostFeedback, error) 
 	return postFeedbacks, nil
 }
 
-func ReadPostsFeedbacksByPostId(db *sql.DB, postId int) ([]PostFeedback, error) {
+func ReadPostsFeedbacksByPostId(postId int) ([]PostFeedback, error) {
 	// Query the records
-	rows, selectError := db.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT 
 			pf.id as post_feedback_id, pf.rating, pf.status as post_feedback_status, pf.created_at as post_feedback_created_at, pf.updated_at as post_feedback_updated_at, pf.updated_by as post_feedback_updated_by,
 			p.id as post_id, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
@@ -293,7 +292,7 @@ func ReadPostsFeedbacksByPostId(db *sql.DB, postId int) ([]PostFeedback, error) 
 	return postFeedbacks, nil
 }
 
-func PostHasFeedbacked(db *sql.DB, userId int, postID int) (int, string) {
+func PostHasFeedbacked(userId int, postID int) (int, string) {
 	var existingLikeId int
 	var existingLikeType string
 	likeCheckQuery := `SELECT id, rating
@@ -301,7 +300,7 @@ func PostHasFeedbacked(db *sql.DB, userId int, postID int) (int, string) {
 		WHERE pf.user_id = ? AND pf.post_id = ?
 		AND status = 'enable'
 	`
-	err := db.QueryRow(likeCheckQuery, userId, postID).Scan(&existingLikeId, &existingLikeType)
+	err := sqlDB.QueryRow(likeCheckQuery, userId, postID).Scan(&existingLikeId, &existingLikeType)
 
 	if err == nil { //it means that post has like or dislike
 		return existingLikeId, existingLikeType

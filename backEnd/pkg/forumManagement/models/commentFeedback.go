@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	userManagementModels "social-network/pkg/userManagement/models"
 	"time"
 )
@@ -20,9 +19,9 @@ type CommentFeedback struct {
 	Comment   Comment                   `json:"comment"`
 }
 
-func InsertCommentFeedback(db *sql.DB, Rating string, parentId int, userId int) error {
+func InsertCommentFeedback(Rating string, parentId int, userId int) error {
 	insertQuery := `INSERT INTO comment_feedback (rating, user_id, parent_id) VALUES (?, ?, ?);`
-	_, insertErr := db.Exec(insertQuery, Rating, userId, parentId)
+	_, insertErr := sqlDB.Exec(insertQuery, Rating, userId, parentId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		return insertErr
@@ -30,13 +29,13 @@ func InsertCommentFeedback(db *sql.DB, Rating string, parentId int, userId int) 
 	return nil
 }
 
-func UpdateCommentFeedback(db *sql.DB, Rating string, commentFeedback CommentFeedback) error {
+func UpdateCommentFeedback(Rating string, commentFeedback CommentFeedback) error {
 	updateQuery := `UPDATE comment_feedback
 	SET rating = ?,
 		updated_at = CURRENT_TIMESTAMP,
 		updated_by = ?
 	WHERE id = ?;`
-	_, insertErr := db.Exec(updateQuery, Rating, commentFeedback.UserId, commentFeedback.ID)
+	_, insertErr := sqlDB.Exec(updateQuery, Rating, commentFeedback.UserId, commentFeedback.ID)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		return insertErr
@@ -44,13 +43,13 @@ func UpdateCommentFeedback(db *sql.DB, Rating string, commentFeedback CommentFee
 	return nil
 }
 
-func UpdateCommentFeedbackStatus(db *sql.DB, commentFeedbackId int, status string, user_id int) error {
+func UpdateCommentFeedbackStatus(commentFeedbackId int, status string, user_id int) error {
 	updateQuery := `UPDATE comment_feedback
 	SET status = ?,
 		updated_at = CURRENT_TIMESTAMP,
 		updated_by = ?
 	WHERE id = ?;`
-	_, insertErr := db.Exec(updateQuery, status, user_id, commentFeedbackId)
+	_, insertErr := sqlDB.Exec(updateQuery, status, user_id, commentFeedbackId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		return insertErr
@@ -58,7 +57,7 @@ func UpdateCommentFeedbackStatus(db *sql.DB, commentFeedbackId int, status strin
 	return nil
 }
 
-func ReadAllCommentsFeedbackdByUserId(db *sql.DB, userId int, Rating string) ([]CommentFeedback, error) {
+func ReadAllCommentsFeedbackdByUserId(userId int, Rating string) ([]CommentFeedback, error) {
 	selectQuery := `SELECT 
 			p.id AS post_id, p.uuid AS post_uuid, p.title AS post_title, p.content AS post_content, 
 			p.status AS post_status, p.created_at AS post_created_at, p.updated_at AS post_updated_at, p.updated_by AS post_updated_by,
@@ -78,7 +77,7 @@ func ReadAllCommentsFeedbackdByUserId(db *sql.DB, userId int, Rating string) ([]
 			INNER JOIN users u 
 				ON cf.user_id = u.id AND u.status != 'delete;'		
 	`
-	rows, insertErr := db.Query(selectQuery, userId, Rating)
+	rows, insertErr := sqlDB.Query(selectQuery, userId, Rating)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		return nil, insertErr
@@ -152,7 +151,7 @@ func ReadAllCommentsFeedbackdByUserId(db *sql.DB, userId int, Rating string) ([]
 
 }
 
-func CommentHasFeedback(db *sql.DB, userId int, parentIdID int) (int, int) {
+func CommentHasFeedback(userId int, parentIdID int) (int, int) {
 	var existingFeedbackId int
 	var existingFeedbackRating int
 	feedbackCheckQuery := `SELECT id, rating
@@ -160,7 +159,7 @@ func CommentHasFeedback(db *sql.DB, userId int, parentIdID int) (int, int) {
 		WHERE cf.user_id = ? AND cf.parent_id = ?
 		AND status = 'enable'
 	`
-	err := db.QueryRow(feedbackCheckQuery, userId, parentIdID).Scan(&existingFeedbackId, &existingFeedbackRating)
+	err := sqlDB.QueryRow(feedbackCheckQuery, userId, parentIdID).Scan(&existingFeedbackId, &existingFeedbackRating)
 
 	if err == nil { //it means that post has feedback
 		return existingFeedbackId, existingFeedbackRating

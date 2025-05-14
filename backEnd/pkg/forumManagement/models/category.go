@@ -15,9 +15,15 @@ type Category struct {
 	PostLikesCount *int   `json:"post_likes_count"`
 }
 
-func InsertCategory(db *sql.DB, category *Category) (int, error) {
+var sqlDB *sql.DB
+
+func Initialize(dbMain *sql.DB) {
+	sqlDB = dbMain
+}
+
+func InsertCategory(category *Category) (int, error) {
 	insertQuery := `INSERT INTO categories (name) VALUES (?);`
-	result, insertErr := db.Exec(insertQuery, category.Name)
+	result, insertErr := sqlDB.Exec(insertQuery, category.Name)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
@@ -38,13 +44,13 @@ func InsertCategory(db *sql.DB, category *Category) (int, error) {
 	return int(lastInsertID), nil
 }
 
-func UpdateCategory(db *sql.DB, category *Category, userId int) error {
+func UpdateCategory(category *Category, userId int) error {
 	updateQuery := `UPDATE categories
 					SET name = ?,
 						updated_at = CURRENT_TIMESTAMP,
 						updated_by = ?
 					WHERE id = ?;`
-	_, updateErr := db.Exec(updateQuery, category.Name, userId, category.ID)
+	_, updateErr := sqlDB.Exec(updateQuery, category.Name, userId, category.ID)
 	if updateErr != nil {
 		// Check if the error is a SQLite constraint violation
 		if sqliteErr, ok := updateErr.(interface{ ErrorCode() int }); ok {
@@ -58,9 +64,9 @@ func UpdateCategory(db *sql.DB, category *Category, userId int) error {
 	return nil
 }
 
-func AdminReadAllCategories(db *sql.DB) ([]Category, error) {
+func AdminReadAllCategories() ([]Category, error) {
 	// Query the records
-	rows, selectError := db.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT c.id as category_id, c.name as category_name,
 			   (SELECT COUNT(DISTINCT p.id) 
 			   	FROM post_categories pc
@@ -126,9 +132,9 @@ func AdminReadAllCategories(db *sql.DB) ([]Category, error) {
 	return categories, nil
 }
 
-func ReadAllCategories(db *sql.DB) ([]Category, error) {
+func ReadAllCategories() ([]Category, error) {
 	// Query the records
-	rows, selectError := db.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT c.id as category_id, c.name as category_name
         FROM categories c
         WHERE c.status != 'delete';
@@ -163,9 +169,9 @@ func ReadAllCategories(db *sql.DB) ([]Category, error) {
 	return categories, nil
 }
 
-func ReadCategoryById(db *sql.DB, categoryId int) (Category, error) {
+func ReadCategoryById(categoryId int) (Category, error) {
 	// Query the records
-	rows, selectError := db.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT c.id as category_id, c.name as category_name
         FROM categories c
         WHERE c.id = ?;
@@ -199,9 +205,9 @@ func ReadCategoryById(db *sql.DB, categoryId int) (Category, error) {
 	return category, nil
 }
 
-func ReadCategoryByName(db *sql.DB, categoryName string) (Category, error) {
+func ReadCategoryByName(categoryName string) (Category, error) {
 	// Query the records
-	rows, selectError := db.Query(`
+	rows, selectError := sqlDB.Query(`
         SELECT c.id as category_id, c.name as category_name, c.color as category_color
         FROM categories c
         WHERE c.name = ?;

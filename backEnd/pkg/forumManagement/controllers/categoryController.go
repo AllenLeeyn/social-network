@@ -1,24 +1,18 @@
 package controller
 
 import (
-	"database/sql"
 	"net/http"
-	errorManagementControllers "social-network/pkg/errorManagement/controllers"
+	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
 	"social-network/pkg/utils"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ReadAllCategories(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	categories, err := models.ReadAllCategories(db)
+func ReadAllCategories(w http.ResponseWriter, r *http.Request) {
+	categories, err := models.ReadAllCategories()
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 

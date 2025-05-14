@@ -8,6 +8,7 @@ import (
 	"social-network/pkg/db"
 	"social-network/pkg/routes"
 
+	categoryModel "social-network/pkg/forumManagement/models"
 	userModel "social-network/pkg/userManagement/models"
 )
 
@@ -20,7 +21,12 @@ func init() {
 		log.Fatal("Error opening database: ", err)
 	}
 
-	userModel.Initialize(sqlDB)
+	modaelsInitDb(sqlDB)
+}
+
+func modaelsInitDb(db *sql.DB) {
+	userModel.Initialize(db)
+	categoryModel.Initialize(db)
 }
 
 func main() {

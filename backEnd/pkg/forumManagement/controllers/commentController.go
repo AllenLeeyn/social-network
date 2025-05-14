@@ -1,37 +1,19 @@
 package controller
 
 import (
-	"database/sql"
 	"net/http"
-	errorManagementControllers "social-network/pkg/errorManagement/controllers"
+	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
 	"social-network/pkg/utils"
 	"strconv"
 
-	userManagementControllers "social-network/pkg/userManagement/controllers"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ReadAllComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, _, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
-		return
-	}
-
-	comments, err := models.ReadAllComments(db)
+func ReadAllComments(w http.ResponseWriter, r *http.Request) {
+	comments, err := models.ReadAllComments()
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -43,19 +25,11 @@ func ReadAllComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func ReadPostComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodGet {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func ReadPostComments(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -74,13 +48,13 @@ func ReadPostComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	//todo get post id from url end
 	postId, err := strconv.Atoi(postIdStr)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
-	comments, err := models.ReadAllCommentsOfUserForPost(db, postId, loginUser.ID)
-	// comments, err := models.ReadAllCommentsForPost(db, loginUser.ID)
+	comments, err := models.ReadAllCommentsOfUserForPost(postId, userID)
+	// comments, err := models.ReadAllCommentsForPost(userID)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -92,25 +66,17 @@ func ReadPostComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func SubmitComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func SubmitComment(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -129,14 +95,14 @@ func SubmitComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	post_id, err := strconv.Atoi(post_id_str)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// Insert a record while checking duplicates
-	_, insertError := models.InsertComment(db, post_id, loginUser.ID, content)
+	_, insertError := models.InsertComment(post_id, userID, content)
 	if insertError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -148,26 +114,18 @@ func SubmitComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func FeedbackComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func FeedbackComment(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// err := r.ParseForm()
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 	parentID := r.FormValue("parent_id")
@@ -176,11 +134,11 @@ func FeedbackComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	rating, err := strconv.Atoi(ratingStr)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
-	existingFeedbackId, existingFeedbackRating := models.CommentHasFeedback(db, loginUser.ID, parentIDInt)
+	existingFeedbackId, existingFeedbackRating := models.CommentHasFeedback(userID, parentIDInt)
 
 	var resMessage string
 	if ratingStr == "1" {
@@ -190,9 +148,9 @@ func FeedbackComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	if existingFeedbackId == -1 {
-		insertError := models.InsertCommentFeedback(db, ratingStr, parentIDInt, loginUser.ID)
+		insertError := models.InsertCommentFeedback(ratingStr, parentIDInt, userID)
 		if insertError != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 			return
 		}
 
@@ -204,16 +162,16 @@ func FeedbackComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.ReturnJson(w, res)
 		return
 	} else {
-		updateError := models.UpdateCommentFeedbackStatus(db, existingFeedbackId, "delete", loginUser.ID)
+		updateError := models.UpdateCommentFeedbackStatus(existingFeedbackId, "delete", userID)
 		if updateError != nil {
-			errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+			errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 			return
 		}
 
 		if existingFeedbackRating != rating { //this is duplicated like or duplicated dislike so we should update it to disable
-			insertError := models.InsertCommentFeedback(db, ratingStr, parentIDInt, loginUser.ID)
+			insertError := models.InsertCommentFeedback(ratingStr, parentIDInt, userID)
 			if insertError != nil {
-				errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+				errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 				return
 			}
 		} else {
@@ -233,25 +191,17 @@ func FeedbackComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 }
 
-func UpdateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func UpdateComment(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -272,20 +222,20 @@ func UpdateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	comment := &models.Comment{
 		ID:      id,
 		Content: content,
-		UserId:  loginUser.ID,
+		UserId:  userID,
 	}
 
 	// Update a record while checking duplicates
-	updateError := models.UpdateComment(db, comment, loginUser.ID, content)
+	updateError := models.UpdateComment(comment, userID, content)
 	if updateError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
@@ -297,25 +247,17 @@ func UpdateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.ReturnJson(w, res)
 }
 
-func DeleteComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	if r.Method != http.MethodPost {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
-		return
-	}
-
-	loginStatus, loginUser, _, checkLoginError := userManagementControllers.CheckLogin(w, r, db)
-	if checkLoginError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
-		return
-	}
-	if !loginStatus {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.UnauthorizedError)
+func DeleteComment(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("userID")
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	err := r.ParseMultipartForm(0)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -323,20 +265,20 @@ func DeleteComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	post_uuid := utils.SanitizeInput(r.FormValue("post_uuid"))
 
 	if len(idStr) == 0 || len(post_uuid) == 0 {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.BadRequestError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.BadRequestError)
 		return
 	}
 
 	comment_id, err := strconv.Atoi(idStr)
 	if err != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// Update a record while checking duplicates
-	updateError := models.UpdateCommentStatus(db, comment_id, "delete", loginUser.ID)
+	updateError := models.UpdateCommentStatus(comment_id, "delete", userID)
 	if updateError != nil {
-		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.InternalServerError)
+		errorControllers.HandleErrorPage(w, r, errorControllers.InternalServerError)
 		return
 	}
 
