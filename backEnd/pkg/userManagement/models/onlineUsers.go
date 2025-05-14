@@ -1,22 +1,16 @@
 package models
 
-import (
-	"database/sql"
-	"fmt"
-	"net/http"
-	"strings"
-)
-
-func GetActiveSessionUserIDs(db *sql.DB, r *http.Request) ([]int, error) {
+/*
+func GetActiveSessionUserIDs(sqlDB *sql.DB, r *http.Request) ([]int, error) {
 	// Query to get unique user_ids with active sessions
-	rows, err := db.Query(`SELECT DISTINCT user_id FROM sessions WHERE expires_at > CURRENT_TIMESTAMP`)
+	rows, err := sqlDB.Query(`SELECT DISTINCT user_id FROM sessions WHERE expires_at > CURRENT_TIMESTAMP`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	// Get myUserID from session token
-	myUserID, _, err := GetUserIDFromCookie(db, r)
+	myUserID, _, err := GetUserIDFromCookie(r)
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +36,8 @@ func GetActiveSessionUserIDs(db *sql.DB, r *http.Request) ([]int, error) {
 	return userIds, nil
 }
 
-func GetActiveSessionUsernames(db *sql.DB, r *http.Request) ([]string, error) {
-	userIds, err := GetActiveSessionUserIDs(db, r)
+func GetActiveSessionUsernames(sqlDB *sql.DB, r *http.Request) ([]string, error) {
+	userIds, err := GetActiveSessionUserIDs(sqlDB, r)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +58,7 @@ func GetActiveSessionUsernames(db *sql.DB, r *http.Request) ([]string, error) {
 		args[i] = id
 	}
 
-	userRows, err := db.Query(query, args...)
+	userRows, err := sqlDB.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,3 +75,4 @@ func GetActiveSessionUsernames(db *sql.DB, r *http.Request) ([]string, error) {
 
 	return usernames, nil
 }
+*/
