@@ -52,10 +52,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if !getJSON(w, r, u) {
 		return
 	}
-
-	fmt.Println(u.Email)
-	fmt.Println(u.NickName)
-	fmt.Println(u.Passwd)
+	fmt.Println("hello")
+	fmt.Println("Login request received for:", u.Email, u.NickName, u.Passwd) // Debug: Log user credentials
 
 	if err := checkLoginCredentials(u); err != nil {
 		executeJSON(w, MsgData{err.Error()}, http.StatusBadRequest)
