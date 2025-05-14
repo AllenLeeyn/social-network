@@ -19,6 +19,12 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("Signup request received for:", u)
+
+	if u.Gender == "" {
+		u.Gender = "Other"
+	}
+
 	// check that credentials are valid
 	e := checkCredentials(u)
 	if e != nil {
