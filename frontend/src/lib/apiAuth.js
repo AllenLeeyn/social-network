@@ -4,7 +4,7 @@ export async function login(email, password) {
   const response = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nickName, email, password }),
+    body: JSON.stringify({ nickName:"", email, password }),
   });
   if (!response.ok) {
     const errorData = await response.json();

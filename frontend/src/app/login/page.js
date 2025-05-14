@@ -27,9 +27,9 @@ export default function AuthPage() {
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
         try {
-            await handleLogin("nickname", loginEmail, loginPassword); // Pass the credentials
+            await handleLogin(loginEmail, loginPassword); // Pass the credentials
             alert("Login successful! Redirecting...");
-            window.location.href = "/posts"; // Redirect to posts page
+            window.location.href = "/"; // Redirect to posts page
         } catch (err) {
             console.error("Login failed:", err.message);
         }
