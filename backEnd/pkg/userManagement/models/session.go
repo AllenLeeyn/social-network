@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"social-network/pkg/dbTools"
 	"social-network/pkg/utils"
 	"time"
 )
@@ -21,7 +20,7 @@ type Session struct {
 	LastAccess time.Time `json:"last_access"`
 }
 
-func InsertSession(db *dbTools.DBContainer, session *Session) (*Session, error) {
+func InsertSession(db *sql.DB, session *Session) (*Session, error) {
 	// Generate UUID for the user if not already set
 	if session.ID == "" {
 		uuidSessionTokenid, err := utils.GenerateUuid()
@@ -35,7 +34,7 @@ func InsertSession(db *dbTools.DBContainer, session *Session) (*Session, error) 
 	session.ExpireTime = time.Now().Add(1 * time.Hour)
 
 	// Start a transaction for atomicity
-	tx, err := db.Conn.Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		return &Session{}, err
 	}
@@ -69,11 +68,11 @@ func InsertSession(db *dbTools.DBContainer, session *Session) (*Session, error) 
 	return session, nil
 }
 
-func SelectSession(db *dbTools.DBContainer, sessionToken string) (User, time.Time, error) {
+func SelectSession(db *sql.DB, sessionToken string) (User, time.Time, error) {
 	var user User
 	var expirationTime time.Time
 	// todo: fix type_id, profile_image (, IFNULL(u.profile_image, '') as profile_image)
-	err := db.Conn.QueryRow(`SELECT 
+	err := db.QueryRow(`SELECT 
 							u.id as user_id, u.type_id as user_type_id, u.first_name as user_first_name, u.last_name as user_last_name, u.gender as user_gender, u.birthday as user_birthday, u.nick_name as nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 							expire_time 
 						FROM sessions s
@@ -94,8 +93,8 @@ func SelectSession(db *dbTools.DBContainer, sessionToken string) (User, time.Tim
 	return user, expirationTime, nil
 }
 
-func DeleteSession(db *dbTools.DBContainer, sessionToken string) error {
-	_, err := db.Conn.Exec(`UPDATE sessions
+func DeleteSession(db *sql.DB, sessionToken string) error {
+	_, err := db.Exec(`UPDATE sessions
 					SET expire_time = CURRENT_TIMESTAMP
 					WHERE id = ?;`, sessionToken)
 	if err != nil {
@@ -109,11 +108,11 @@ func DeleteSession(db *dbTools.DBContainer, sessionToken string) error {
 }
 
 // IsSessionActive checks if a session is active based on the session token
-func IsSessionActive(db *dbTools.DBContainer, sessionToken string) (bool, error) {
+func IsSessionActive(db *sql.DB, sessionToken string) (bool, error) {
 	var expiresAt time.Time
 
 	// Query the database for the session's expiration time
-	err := db.Conn.QueryRow(`SELECT expire_time FROM sessions WHERE id = ?`, sessionToken).Scan(&expiresAt)
+	err := db.QueryRow(`SELECT expire_time FROM sessions WHERE id = ?`, sessionToken).Scan(&expiresAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// No session found for the given token
@@ -131,7 +130,7 @@ func IsSessionActive(db *dbTools.DBContainer, sessionToken string) (bool, error)
 	return false, nil // Session is expired
 }
 
-func GetUserIDFromCookie(db *dbTools.DBContainer, r *http.Request) (int, string, error) {
+func GetUserIDFromCookie(db *sql.DB, r *http.Request) (int, string, error) {
 	// Retrieve user data (e.g., from session or database)
 	sessionToken, err := r.Cookie("session_token")
 	if err != nil {

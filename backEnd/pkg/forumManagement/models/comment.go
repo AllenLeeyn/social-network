@@ -1,8 +1,8 @@
 package models
 
 import (
+	"database/sql"
 	"log"
-	"social-network/pkg/dbTools"
 	userManagementModels "social-network/pkg/userManagement/models"
 	"time"
 )
@@ -25,10 +25,10 @@ type Comment struct {
 	User             userManagementModels.User `json:"user"`
 }
 
-func InsertComment(db *dbTools.DBContainer, postId int, userId int, content string) (int, error) {
+func InsertComment(db *sql.DB, postId int, userId int, content string) (int, error) {
 	// todo: add parent_id
 	insertQuery := `INSERT INTO comments (post_id, content, user_id) VALUES (?, ?, ?);`
-	result, insertErr := db.Conn.Exec(insertQuery, postId, content, userId)
+	result, insertErr := db.Exec(insertQuery, postId, content, userId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		return -1, insertErr
@@ -42,14 +42,14 @@ func InsertComment(db *dbTools.DBContainer, postId int, userId int, content stri
 	return int(lastInsertID), nil
 }
 
-func UpdateComment(db *dbTools.DBContainer, comment *Comment, user_id int, newContent string) error {
+func UpdateComment(db *sql.DB, comment *Comment, user_id int, newContent string) error {
 	// Start a transaction for atomicity
 	updateQuery := `UPDATE comments
 					SET content = ?,
 						updated_at = CURRENT_TIMESTAMP,
 						updated_by = ?
 					WHERE id = ?;`
-	_, updateErr := db.Conn.Exec(updateQuery, newContent, user_id, comment.ID)
+	_, updateErr := db.Exec(updateQuery, newContent, user_id, comment.ID)
 	if updateErr != nil {
 		return updateErr
 	}
@@ -57,13 +57,13 @@ func UpdateComment(db *dbTools.DBContainer, comment *Comment, user_id int, newCo
 	return nil
 }
 
-func UpdateCommentStatus(db *dbTools.DBContainer, id int, status string, user_id int) error {
+func UpdateCommentStatus(db *sql.DB, id int, status string, user_id int) error {
 	updateQuery := `UPDATE comments
 					SET status = ?,
 						updated_at = CURRENT_TIMESTAMP,
 						updated_by = ?
 					WHERE id = ?;`
-	_, updateErr := db.Conn.Exec(updateQuery, status, user_id, id)
+	_, updateErr := db.Exec(updateQuery, status, user_id, id)
 	if updateErr != nil {
 		return updateErr
 	}
@@ -71,7 +71,7 @@ func UpdateCommentStatus(db *dbTools.DBContainer, id int, status string, user_id
 	return nil
 }
 
-func ReadAllComments(db *dbTools.DBContainer) ([]Comment, error) {
+func ReadAllComments(db *sql.DB) ([]Comment, error) {
 	var comments []Comment
 	selectQuery := `
 		SELECT 
@@ -87,7 +87,7 @@ func ReadAllComments(db *dbTools.DBContainer) ([]Comment, error) {
 		ORDER BY c.id desc
 	`
 	// Query the records
-	rows, selectError := db.Conn.Query(selectQuery)
+	rows, selectError := db.Query(selectQuery)
 
 	if selectError != nil {
 		return nil, selectError
@@ -149,7 +149,7 @@ func ReadAllComments(db *dbTools.DBContainer) ([]Comment, error) {
 	return comments, nil
 }
 
-func ReadCommentsFromUserId(db *dbTools.DBContainer, userId int) ([]Comment, error) {
+func ReadCommentsFromUserId(db *sql.DB, userId int) ([]Comment, error) {
 	var comments []Comment
 
 	// Updated query to join comments with posts
@@ -165,7 +165,7 @@ func ReadCommentsFromUserId(db *dbTools.DBContainer, userId int) ([]Comment, err
 		ORDER BY c.id desc;
 	`
 
-	rows, selectError := db.Conn.Query(selectQuery, userId) // Query the database
+	rows, selectError := db.Query(selectQuery, userId) // Query the database
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -215,7 +215,7 @@ func ReadCommentsFromUserId(db *dbTools.DBContainer, userId int) ([]Comment, err
 	return comments, nil
 }
 
-func ReadAllCommentsForPost(db *dbTools.DBContainer, postId int) ([]Comment, error) {
+func ReadAllCommentsForPost(db *sql.DB, postId int) ([]Comment, error) {
 	var comments []Comment
 	commentMap := make(map[int]*Comment)
 	// Updated query to join comments with posts
@@ -231,7 +231,7 @@ func ReadAllCommentsForPost(db *dbTools.DBContainer, postId int) ([]Comment, err
 				ON c.user_id = u.id AND c.status != 'delete' AND u.status != 'delete' AND c.post_id = ?
 		ORDER BY c.id desc;
 	`
-	rows, selectError := db.Conn.Query(selectQuery, postId) // Query the database
+	rows, selectError := db.Query(selectQuery, postId) // Query the database
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -291,7 +291,7 @@ func ReadAllCommentsForPost(db *dbTools.DBContainer, postId int) ([]Comment, err
 	return comments, nil
 }
 
-func ReadAllCommentsForPostByUserID(db *dbTools.DBContainer, postId int, userID int) ([]Comment, error) {
+func ReadAllCommentsForPostByUserID(db *sql.DB, postId int, userID int) ([]Comment, error) {
 	var comments []Comment
 	commentMap := make(map[int]*Comment)
 	// Updated query to join comments with posts
@@ -315,7 +315,7 @@ func ReadAllCommentsForPostByUserID(db *dbTools.DBContainer, postId int, userID 
 				ON c.user_id = u.id AND c.status != 'delete' AND u.status != 'delete' AND c.post_id = ?	
 		ORDER BY c.id desc;
 	`
-	rows, selectError := db.Conn.Query(selectQuery, userID, userID, postId) // Query the database
+	rows, selectError := db.Query(selectQuery, userID, userID, postId) // Query the database
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -377,7 +377,7 @@ func ReadAllCommentsForPostByUserID(db *dbTools.DBContainer, postId int, userID 
 	return comments, nil
 }
 
-// func ReadAllCommentsForPostLikedByUser(db *dbTools.DBContainer, postId int, userId int) ([]Comment, error) {
+// func ReadAllCommentsForPostLikedByUser(db *sql.DB, postId int, userId int) ([]Comment, error) {
 // 	var comments []Comment
 //
 // 	// Updated query to join comments with posts
@@ -395,7 +395,7 @@ func ReadAllCommentsForPostByUserID(db *dbTools.DBContainer, postId int, userID 
 // 				ON c.id = cl.comment_id AND cl.status != 'delete'
 // 		GROUP BY cl.comment_id;
 // 	`
-// 	rows, selectError := db.Conn.Query(selectQuery, postId) // Query the database
+// 	rows, selectError := db.Query(selectQuery, postId) // Query the database
 // 	if selectError != nil {
 // 		return nil, selectError
 // 	}
@@ -451,7 +451,7 @@ func ReadAllCommentsForPostByUserID(db *dbTools.DBContainer, postId int, userID 
 // 	return comments, nil
 // }
 
-func ReadAllCommentsOfUserForPost(db *dbTools.DBContainer, postId int, userId int) ([]Comment, error) {
+func ReadAllCommentsOfUserForPost(db *sql.DB, postId int, userId int) ([]Comment, error) {
 	var comments []Comment
 	selectQuery := `
 		SELECT 
@@ -468,7 +468,7 @@ func ReadAllCommentsOfUserForPost(db *dbTools.DBContainer, postId int, userId in
 		ORDER BY c.id desc
 	`
 	// Query the records
-	rows, selectError := db.Conn.Query(selectQuery, postId, userId)
+	rows, selectError := db.Query(selectQuery, postId, userId)
 
 	if selectError != nil {
 		return nil, selectError

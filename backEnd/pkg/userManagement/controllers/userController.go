@@ -1,9 +1,9 @@
 package controller
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	fileManagementControllers "social-network/pkg/fileManagement/controllers"
 	"sync"
@@ -26,7 +26,7 @@ type AuthPageErrorData struct {
 	ErrorMessage string
 }
 
-func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func RegisterHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -154,7 +154,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 	return
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func LoginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -219,7 +219,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContaine
 	return
 }
 
-func sessionGenerator(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer, userId int) {
+func sessionGenerator(w http.ResponseWriter, r *http.Request, db *sql.DB, userId int) {
 	session := &userManagementModels.Session{
 		UserId:   userId,
 		IsActive: true,
@@ -235,7 +235,7 @@ func sessionGenerator(w http.ResponseWriter, r *http.Request, db *dbTools.DBCont
 }
 
 // helper function to check for valid user session in cookie
-func CheckLogin(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) (bool, userManagementModels.User, string, error) {
+func CheckLogin(w http.ResponseWriter, r *http.Request, db *sql.DB) (bool, userManagementModels.User, string, error) {
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
 		return false, userManagementModels.User{}, "", nil
@@ -261,7 +261,7 @@ func CheckLogin(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 	return true, user, sessionToken, nil
 }
 
-func Logout(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func Logout(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -303,7 +303,7 @@ func Logout(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	return
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func UpdateUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return

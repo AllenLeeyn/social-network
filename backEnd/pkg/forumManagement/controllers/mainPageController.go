@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"database/sql"
 	"net/http"
-	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
 	"social-network/pkg/utils"
@@ -30,7 +30,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func MainPageHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func MainPageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -126,7 +126,7 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 
 }
 
-func AdminMainPageHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func AdminMainPageHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return

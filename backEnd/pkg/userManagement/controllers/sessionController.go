@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"social-network/pkg/dbTools"
+	"database/sql"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/utils"
 
@@ -10,7 +10,7 @@ import (
 )
 
 // CheckSessionHandler checks if the user's session is active
-func CheckSessionHandler(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func CheckSessionHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	// Get the session token from cookies
 	cookie, err := r.Cookie("session_token")
 	if err != nil {

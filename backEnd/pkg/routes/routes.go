@@ -1,15 +1,15 @@
 package routes
 
 import (
+	"database/sql"
 	"net/http"
-	"social-network/pkg/dbTools"
 
 	// socialMediaManagementControllers "social-network/pkg/socialMediaManagement/controllers"
 	forumManagementControllers "social-network/pkg/forumManagement/controllers"
 	userManagementControllers "social-network/pkg/userManagement/controllers"
 )
 
-func SetupRoutes(db *dbTools.DBContainer) {
+func SetupRoutes(db *sql.DB) {
 	// ---------------------------- user management controller APIs ---------------------------- //
 	http.HandleFunc("/api/register", func(w http.ResponseWriter, r *http.Request) {
 		userManagementControllers.RegisterHandler(w, r, db)

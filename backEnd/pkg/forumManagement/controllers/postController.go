@@ -2,8 +2,8 @@ package controller
 
 import (
 	// "forum/middlewares"
+	"database/sql"
 	"net/http"
-	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	fileManagementControllers "social-network/pkg/fileManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -17,7 +17,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ReadAllPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func ReadAllPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -47,7 +47,7 @@ func ReadAllPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBContaine
 	utils.ReturnJson(w, res)
 }
 
-func AdminReadAllPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func AdminReadAllPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -100,7 +100,7 @@ func AdminReadAllPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBCon
 	}
 }
 
-func ReadPostsByCategory(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func ReadPostsByCategory(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -164,7 +164,7 @@ func ReadPostsByCategory(w http.ResponseWriter, r *http.Request, db *dbTools.DBC
 	utils.ReturnJson(w, res)
 }
 
-func FilterPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func FilterPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -222,7 +222,7 @@ func FilterPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer
 	utils.ReturnJson(w, res)
 }
 
-func ReadMyCreatedPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func ReadMyCreatedPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -268,7 +268,7 @@ func ReadMyCreatedPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBCo
 	utils.ReturnJson(w, res)
 }
 
-func ReadMyLikedPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func ReadMyLikedPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -314,7 +314,7 @@ func ReadMyLikedPosts(w http.ResponseWriter, r *http.Request, db *dbTools.DBCont
 	utils.ReturnJson(w, res)
 }
 
-func ReadPost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func ReadPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -394,7 +394,7 @@ func ReadPost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
 	utils.ReturnJson(w, res)
 }
 
-func SubmitPost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func SubmitPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -487,7 +487,7 @@ func SubmitPost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 	utils.ReturnJson(w, res)
 }
 
-func UpdatePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func UpdatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -590,7 +590,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 	utils.ReturnJson(w, res)
 }
 
-func DeletePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func DeletePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -640,7 +640,7 @@ func DeletePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 	utils.ReturnJson(w, res)
 }
 
-// func AdminDeletePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+// func AdminDeletePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 // 	if r.Method != http.MethodPost {
 // 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 // 		return
@@ -682,7 +682,7 @@ func DeletePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer)
 // 	// userManagementControllers.RedirectToAdminIndex(w, r)
 // }
 
-func LikePost(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func LikePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return

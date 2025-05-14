@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gofrs/uuid"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -76,6 +77,11 @@ func migrateDB(conn *sql.DB, migrateSource string) error {
 
 	log.Printf("Current migration version: %d", version)
 
+	err = generateUuidTables(conn)
+	if err != nil {
+		return err
+	}
+
 	err = m.Up()
 	if err != nil {
 		if err == migrate.ErrNoChange {
@@ -89,6 +95,63 @@ func migrateDB(conn *sql.DB, migrateSource string) error {
 	}
 
 	conn.Exec("PRAGMA foreign_keys = ON;")
+	return nil
+}
+
+func generateUuidTables(conn *sql.DB) error {
+	log.Println("Initializing UUIDs for users and posts...")
+
+	// Create the UUID tables if not already present
+	createTables := `
+	CREATE TABLE IF NOT EXISTS user_uuids (
+		user_id INTEGER PRIMARY KEY,
+		uuid TEXT NOT NULL UNIQUE,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	);
+
+	CREATE TABLE IF NOT EXISTS post_uuids (
+		post_id INTEGER PRIMARY KEY,
+		uuid TEXT NOT NULL UNIQUE,
+		FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+	);`
+	if _, err := conn.Exec(createTables); err != nil {
+		return err
+	}
+
+	err := generateUuids(conn, "user")
+	if err == nil {
+		err = generateUuids(conn, "post")
+	}
+	return err
+}
+
+func generateUuids(conn *sql.DB, table string) error {
+	// Insert UUIDs for users
+	rows, err := conn.Query("SELECT id FROM " + table + "s")
+	if err != nil {
+		return checkErrNoRows(err)
+	}
+	uuidMap := make(map[int]string)
+
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return err
+		}
+		uuid, _ := uuid.NewV4()
+		uuidMap[id] = uuid.String()
+	}
+	rows.Close()
+
+	query := "INSERT INTO " + table + "_uuids (" + table + "_id, uuid) VALUES (?, ?)"
+	for id, uuidStr := range uuidMap {
+		_, err = conn.Exec(query, id, uuidStr)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Println("UUID initialization complete.")
 	return nil
 }
 

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"social-network/pkg/dbTools"
 	userManagementModels "social-network/pkg/userManagement/models"
 	"social-network/pkg/utils"
 	"sort"
@@ -36,9 +35,9 @@ type Post struct {
 	PostFiles  []PostFile `json:"post_files"` // List of files related to the post
 }
 
-func InsertPost(db *dbTools.DBContainer, post *Post, categoryIds []int, uploadedFiles map[string]string) (int, error) {
+func InsertPost(db *sql.DB, post *Post, categoryIds []int, uploadedFiles map[string]string) (int, error) {
 	// Start a transaction for atomicity
-	tx, err := db.Conn.Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		return -1, err
 	}
@@ -84,9 +83,9 @@ func InsertPost(db *dbTools.DBContainer, post *Post, categoryIds []int, uploaded
 	return int(lastInsertID), nil
 }
 
-func UpdatePost(db *dbTools.DBContainer, post *Post, categories []int, uploadedFiles map[string]string, user_id int) error {
+func UpdatePost(db *sql.DB, post *Post, categories []int, uploadedFiles map[string]string, user_id int) error {
 	// Start a transaction for atomicity
-	tx, err := db.Conn.Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
@@ -138,9 +137,9 @@ func UpdatePost(db *dbTools.DBContainer, post *Post, categories []int, uploadedF
 	return nil
 }
 
-func UpdateStatusPost(db *dbTools.DBContainer, post_id int, status string, user_id int) error {
+func UpdateStatusPost(db *sql.DB, post_id int, status string, user_id int) error {
 	// Start a transaction for atomicity
-	tx, err := db.Conn.Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
@@ -176,10 +175,10 @@ func UpdateStatusPost(db *dbTools.DBContainer, post_id int, status string, user_
 	return nil
 }
 
-func ReadAllPosts(db *dbTools.DBContainer, checkLikeForUser int) ([]Post, error) {
+func ReadAllPosts(db *sql.DB, checkLikeForUser int) ([]Post, error) {
 	// Query the records
 	// todo check
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
@@ -290,9 +289,9 @@ func ReadAllPosts(db *dbTools.DBContainer, checkLikeForUser int) ([]Post, error)
 	return posts, nil
 }
 
-func ReadPostsByCategoryId(db *dbTools.DBContainer, category_id int) ([]Post, error) {
+func ReadPostsByCategoryId(db *sql.DB, category_id int) ([]Post, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
@@ -398,11 +397,11 @@ func ReadPostsByCategoryId(db *dbTools.DBContainer, category_id int) ([]Post, er
 	return posts, nil
 }
 
-func FilterPosts(db *dbTools.DBContainer, searchTerm string) ([]Post, error) {
+func FilterPosts(db *sql.DB, searchTerm string) ([]Post, error) {
 	searchPattern := "%" + searchTerm + "%" // Add wildcards for LIKE comparison
 
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
@@ -505,9 +504,9 @@ func FilterPosts(db *dbTools.DBContainer, searchTerm string) ([]Post, error) {
 	return posts, nil
 }
 
-func ReadPostsByUserId(db *dbTools.DBContainer, userId int) ([]Post, error) {
+func ReadPostsByUserId(db *sql.DB, userId int) ([]Post, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
@@ -619,9 +618,9 @@ func ReadPostsByUserId(db *dbTools.DBContainer, userId int) ([]Post, error) {
 	return posts, nil
 }
 
-func ReadPostsLikedByUserId(db *dbTools.DBContainer, userId int) ([]Post, error) {
+func ReadPostsLikedByUserId(db *sql.DB, userId int) ([]Post, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
@@ -738,9 +737,9 @@ func ReadPostsLikedByUserId(db *dbTools.DBContainer, userId int) ([]Post, error)
 	return posts, nil
 }
 
-func ReadPostById(db *dbTools.DBContainer, postId int, checkLikeForUser int) (Post, error) {
+func ReadPostById(db *sql.DB, postId int, checkLikeForUser int) (Post, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
@@ -839,9 +838,9 @@ func ReadPostById(db *dbTools.DBContainer, postId int, checkLikeForUser int) (Po
 	return post, nil
 }
 
-func ReadPostByUUID(db *dbTools.DBContainer, postUUID string, checkLikeForUser int) (Post, error) {
+func ReadPostByUUID(db *sql.DB, postUUID string, checkLikeForUser int) (Post, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
@@ -939,9 +938,9 @@ func ReadPostByUUID(db *dbTools.DBContainer, postUUID string, checkLikeForUser i
 	return post, nil
 }
 
-func ReadPostByUserID(db *dbTools.DBContainer, postId int, userID int) (Post, error) {
+func ReadPostByUserID(db *sql.DB, postId int, userID int) (Post, error) {
 	// Updated query to join comments with posts
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			p.user_id as post_user_id, u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,

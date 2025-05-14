@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"database/sql"
 	"net/http"
-	"social-network/pkg/dbTools"
 	errorManagementControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
 	"social-network/pkg/utils"
@@ -13,7 +13,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ReadAllComments(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func ReadAllComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -43,7 +43,7 @@ func ReadAllComments(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 	utils.ReturnJson(w, res)
 }
 
-func ReadPostComments(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func ReadPostComments(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodGet {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -92,7 +92,7 @@ func ReadPostComments(w http.ResponseWriter, r *http.Request, db *dbTools.DBCont
 	utils.ReturnJson(w, res)
 }
 
-func SubmitComment(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func SubmitComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -148,7 +148,7 @@ func SubmitComment(w http.ResponseWriter, r *http.Request, db *dbTools.DBContain
 	utils.ReturnJson(w, res)
 }
 
-func FeedbackComment(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func FeedbackComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -233,7 +233,7 @@ func FeedbackComment(w http.ResponseWriter, r *http.Request, db *dbTools.DBConta
 	}
 }
 
-func UpdateComment(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func UpdateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return
@@ -297,7 +297,7 @@ func UpdateComment(w http.ResponseWriter, r *http.Request, db *dbTools.DBContain
 	utils.ReturnJson(w, res)
 }
 
-func DeleteComment(w http.ResponseWriter, r *http.Request, db *dbTools.DBContainer) {
+func DeleteComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method != http.MethodPost {
 		errorManagementControllers.HandleErrorPage(w, r, errorManagementControllers.MethodNotAllowedError)
 		return

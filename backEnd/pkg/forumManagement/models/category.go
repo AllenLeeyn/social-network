@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"social-network/pkg/dbTools"
 )
 
 // Category struct represents the user data model
@@ -16,9 +15,9 @@ type Category struct {
 	PostLikesCount *int   `json:"post_likes_count"`
 }
 
-func InsertCategory(db *dbTools.DBContainer, category *Category) (int, error) {
+func InsertCategory(db *sql.DB, category *Category) (int, error) {
 	insertQuery := `INSERT INTO categories (name) VALUES (?);`
-	result, insertErr := db.Conn.Exec(insertQuery, category.Name)
+	result, insertErr := db.Exec(insertQuery, category.Name)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
@@ -39,13 +38,13 @@ func InsertCategory(db *dbTools.DBContainer, category *Category) (int, error) {
 	return int(lastInsertID), nil
 }
 
-func UpdateCategory(db *dbTools.DBContainer, category *Category, userId int) error {
+func UpdateCategory(db *sql.DB, category *Category, userId int) error {
 	updateQuery := `UPDATE categories
 					SET name = ?,
 						updated_at = CURRENT_TIMESTAMP,
 						updated_by = ?
 					WHERE id = ?;`
-	_, updateErr := db.Conn.Exec(updateQuery, category.Name, userId, category.ID)
+	_, updateErr := db.Exec(updateQuery, category.Name, userId, category.ID)
 	if updateErr != nil {
 		// Check if the error is a SQLite constraint violation
 		if sqliteErr, ok := updateErr.(interface{ ErrorCode() int }); ok {
@@ -59,9 +58,9 @@ func UpdateCategory(db *dbTools.DBContainer, category *Category, userId int) err
 	return nil
 }
 
-func AdminReadAllCategories(db *dbTools.DBContainer) ([]Category, error) {
+func AdminReadAllCategories(db *sql.DB) ([]Category, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT c.id as category_id, c.name as category_name,
 			   (SELECT COUNT(DISTINCT p.id) 
 			   	FROM post_categories pc
@@ -127,9 +126,9 @@ func AdminReadAllCategories(db *dbTools.DBContainer) ([]Category, error) {
 	return categories, nil
 }
 
-func ReadAllCategories(db *dbTools.DBContainer) ([]Category, error) {
+func ReadAllCategories(db *sql.DB) ([]Category, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT c.id as category_id, c.name as category_name
         FROM categories c
         WHERE c.status != 'delete';
@@ -164,9 +163,9 @@ func ReadAllCategories(db *dbTools.DBContainer) ([]Category, error) {
 	return categories, nil
 }
 
-func ReadCategoryById(db *dbTools.DBContainer, categoryId int) (Category, error) {
+func ReadCategoryById(db *sql.DB, categoryId int) (Category, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT c.id as category_id, c.name as category_name
         FROM categories c
         WHERE c.id = ?;
@@ -200,9 +199,9 @@ func ReadCategoryById(db *dbTools.DBContainer, categoryId int) (Category, error)
 	return category, nil
 }
 
-func ReadCategoryByName(db *dbTools.DBContainer, categoryName string) (Category, error) {
+func ReadCategoryByName(db *sql.DB, categoryName string) (Category, error) {
 	// Query the records
-	rows, selectError := db.Conn.Query(`
+	rows, selectError := db.Query(`
         SELECT c.id as category_id, c.name as category_name, c.color as category_color
         FROM categories c
         WHERE c.name = ?;

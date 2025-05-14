@@ -1,15 +1,15 @@
 package models
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
-	"social-network/pkg/dbTools"
 	"strings"
 )
 
-func GetActiveSessionUserIDs(db *dbTools.DBContainer, r *http.Request) ([]int, error) {
+func GetActiveSessionUserIDs(db *sql.DB, r *http.Request) ([]int, error) {
 	// Query to get unique user_ids with active sessions
-	rows, err := db.Conn.Query(`SELECT DISTINCT user_id FROM sessions WHERE expires_at > CURRENT_TIMESTAMP`)
+	rows, err := db.Query(`SELECT DISTINCT user_id FROM sessions WHERE expires_at > CURRENT_TIMESTAMP`)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func GetActiveSessionUserIDs(db *dbTools.DBContainer, r *http.Request) ([]int, e
 	return userIds, nil
 }
 
-func GetActiveSessionUsernames(db *dbTools.DBContainer, r *http.Request) ([]string, error) {
+func GetActiveSessionUsernames(db *sql.DB, r *http.Request) ([]string, error) {
 	userIds, err := GetActiveSessionUserIDs(db, r)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func GetActiveSessionUsernames(db *dbTools.DBContainer, r *http.Request) ([]stri
 		args[i] = id
 	}
 
-	userRows, err := db.Conn.Query(query, args...)
+	userRows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
