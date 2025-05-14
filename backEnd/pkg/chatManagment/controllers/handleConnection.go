@@ -1,4 +1,4 @@
-package messenger
+package controller
 
 import (
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func (m *Messenger) handleConnection(cl *client) {
+func (cc *ChatController) handleConnection(cl *client) {
 	for {
 		_, msg, err := cl.Conn.ReadMessage()
 		if err != nil {
@@ -27,30 +27,30 @@ func (m *Messenger) handleConnection(cl *client) {
 
 		switch msgData.Action {
 		case "message":
-			err = m.processMessage(&msgData, cl)
+			err = cc.processMessage(&msgData, cl)
 		case "messageReq":
-			err = m.processMessageRequest(&msgData, cl)
+			err = cc.processMessageRequest(&msgData, cl)
 		case "messageAck":
-			err = m.processMessageAcknowledgement(&msgData, cl)
+			err = cc.processMessageAcknowledgement(&msgData, cl)
 		case "typing":
-			m.processTypingEvent(&msgData, cl)
+			cc.processTypingEvent(&msgData, cl)
 		}
 
 		if err != nil {
 			log.Println(err)
 		}
 	}
-	m.clientQueue <- action{"offline", cl}
+	cc.clientQueue <- action{"offline", cl}
 	cl.Conn.Close()
 }
 
-func (m *Messenger) processMessage(msgData *message, cl *client) error {
+func (cc *ChatController) processMessage(msgData *message, cl *client) error {
 	isValidMsg, sanitizeMsg := checkMessage(msgData.Content)
 	if !isValidMsg {
 		return fmt.Errorf("invalid message")
 	}
 
-	receiver, err := db.SelectUserByField("id", msgData.ReceiverID)
+	receiver, err := cc.um.SelectUserByField("id", msgData.ReceiverID)
 	if err != nil || receiver == nil || receiver.ID == 0 {
 		return fmt.Errorf("receiver not found: %v", err)
 	}
@@ -59,7 +59,7 @@ func (m *Messenger) processMessage(msgData *message, cl *client) error {
 	msgData.Content = sanitizeMsg
 	msgData.CreatedAt = time.Now()
 
-	err = db.InsertMessage(msgData)
+	err = cc.db.InsertMessage(msgData)
 	if err != nil {
 		return fmt.Errorf("receiver inserting message: %v", err)
 	}
@@ -70,14 +70,14 @@ func (m *Messenger) processMessage(msgData *message, cl *client) error {
 	}
 	msgData.Content = string(content)
 
-	m.queuePublicMessage(`{"action":"messageSendOK"}`, cl.UserID)
-	m.msgQueue <- *msgData
+	cc.queuePublicMessage(`{"action":"messageSendOK"}`, cl.UserID)
+	cc.msgQueue <- *msgData
 	return nil
 }
 
-func (m *Messenger) processMessageRequest(msgData *message, cl *client) error {
+func (cc *ChatController) processMessageRequest(msgData *message, cl *client) error {
 	msgIdStr := msgData.Content
-	messages, err := db.SelectMessages(cl.UserID, msgData.ReceiverID, msgIdStr)
+	messages, err := cc.db.SelectMessages(cl.UserID, msgData.ReceiverID, msgIdStr)
 	if err != nil {
 		return fmt.Errorf("error getting messages: %v", err)
 	}
@@ -91,12 +91,12 @@ func (m *Messenger) processMessageRequest(msgData *message, cl *client) error {
 	if err != nil {
 		log.Printf("Error generating JSON: %v", err)
 	}
-	m.queuePublicMessage(string(contentJSON), cl.UserID)
+	cc.queuePublicMessage(string(contentJSON), cl.UserID)
 	return nil
 }
 
-func (m *Messenger) processMessageAcknowledgement(msgData *message, cl *client) error {
-	messages, err := db.SelectUnreadMessages(msgData.ReceiverID, cl.UserID)
+func (cc *ChatController) processMessageAcknowledgement(msgData *message, cl *client) error {
+	messages, err := cc.db.SelectUnreadMessages(msgData.ReceiverID, cl.UserID)
 	if err != nil {
 		return fmt.Errorf("error getting messages: %v", err)
 	}
@@ -106,7 +106,7 @@ func (m *Messenger) processMessageAcknowledgement(msgData *message, cl *client) 
 			Time:  time.Now(),
 			Valid: true,
 		}
-		err := db.UpdateMessage(&msg)
+		err := cc.db.UpdateMessage(&msg)
 		if err != nil {
 			return fmt.Errorf("error acknowledging messages: %v", err)
 		}
@@ -124,7 +124,7 @@ func checkMessage(message string) (bool, string) {
 	return true, html.EscapeString(message)
 }
 
-func (m *Messenger) processTypingEvent(msgData *message, cl *client) {
+func (cc *ChatController) processTypingEvent(msgData *message, cl *client) {
 	content := fmt.Sprintf(`{"action": "typing", "receiverID": %d, "senderID": %d}`, msgData.ReceiverID, cl.UserID)
-	m.queuePublicMessage(content, msgData.ReceiverID)
+	cc.queuePublicMessage(content, msgData.ReceiverID)
 }

@@ -1,4 +1,4 @@
-package messenger
+package controller
 
 import (
 	"log"
@@ -6,24 +6,24 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (m *Messenger) broadcaster() {
+func (cc *ChatController) broadcaster() {
 	for {
-		msg := <-m.msgQueue
+		msg := <-cc.msgQueue
 
 		if msg.ReceiverID == -1 {
-			for _, client := range m.clients {
+			for _, client := range cc.clients {
 				err := client.Conn.WriteMessage(websocket.TextMessage, []byte(msg.Content))
 				if err != nil {
 					log.Printf("Error sending message to %v: %v", msg.ReceiverID, err)
 				}
 			}
 		} else {
-			err := m.sendMessage(msg, msg.ReceiverID)
+			err := cc.sendMessage(msg, msg.ReceiverID)
 			if err != nil {
 				log.Printf("Error sending message to %v: %v", msg.ReceiverID, err)
 			}
 			if msg.SenderID != -1 && msg.SenderID != msg.ReceiverID {
-				err = m.sendMessage(msg, msg.SenderID)
+				err = cc.sendMessage(msg, msg.SenderID)
 				if err != nil {
 					log.Printf("Error sending message to %v: %v", msg.SenderID, err)
 				}

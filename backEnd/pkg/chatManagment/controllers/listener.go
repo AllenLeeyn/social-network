@@ -1,4 +1,4 @@
-package messenger
+package controller
 
 import (
 	"encoding/json"
@@ -6,26 +6,26 @@ import (
 	"log"
 )
 
-func (m *Messenger) listener() {
-	for action := range m.clientQueue {
+func (cc *ChatController) listener() {
+	for action := range cc.clientQueue {
 		switch action.kind {
 		case "join":
-			m.sendClientList(action.client, -1)
+			cc.sendClientList(action.client, -1)
 
 		case "online":
-			m.sendClientList(action.client, action.client.UserID)
+			cc.sendClientList(action.client, action.client.UserID)
 			content := fmt.Sprintf(`{"action": "online", "id": "%d"}`, action.client.UserID)
-			m.queuePublicMessage(content, -1)
+			cc.queuePublicMessage(content, -1)
 
 		case "offline":
-			delete(m.clients, action.client.UserID)
+			delete(cc.clients, action.client.UserID)
 			content := fmt.Sprintf(`{"action": "offline", "id": "%d"}`, action.client.UserID)
-			m.queuePublicMessage(content, -1)
+			cc.queuePublicMessage(content, -1)
 		}
 	}
 }
 
-func (m *Messenger) sendClientList(cl *client, receiver int) {
+func (cc *ChatController) sendClientList(cl *client, receiver int) {
 	type data struct {
 		Action           string   `json:"action"`
 		AllClients       []string `json:"allClients"`
@@ -35,7 +35,7 @@ func (m *Messenger) sendClientList(cl *client, receiver int) {
 	}
 
 	d := data{Action: "start"}
-	clientList, clientIDs, err := db.SelectUserList(cl.UserID)
+	clientList, clientIDs, err := cc.db.SelectUserList(cl.UserID)
 	if err != nil {
 		log.Println("Error fetching UserList:", err)
 		return
@@ -43,14 +43,14 @@ func (m *Messenger) sendClientList(cl *client, receiver int) {
 	d.AllClients = *clientList
 	d.ClientIDs = *clientIDs
 
-	unreadList, err := db.SelectUnreadMsgList(cl.UserID)
+	unreadList, err := cc.db.SelectUnreadMsgList(cl.UserID)
 	if err != nil {
 		log.Println("Error fetching UnreadMsgList:", err)
 		return
 	}
 	d.UnreadMsgClients = *unreadList
 
-	for userID := range m.clients {
+	for userID := range cc.clients {
 		d.OnlineClients = append(d.OnlineClients, userID)
 	}
 
@@ -59,5 +59,5 @@ func (m *Messenger) sendClientList(cl *client, receiver int) {
 		log.Println("Error marshaling data to JSON:", err)
 		return
 	}
-	m.queuePublicMessage(string(jsonData), receiver)
+	cc.queuePublicMessage(string(jsonData), receiver)
 }
