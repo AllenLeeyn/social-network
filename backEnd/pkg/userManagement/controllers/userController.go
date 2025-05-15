@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"database/sql"
-	"errors"
 	"net/http"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
@@ -15,44 +13,6 @@ import (
 )
 
 type user = userModel.User
-
-func isValidUserInfo(u *user) error {
-	isValid := false
-
-	if u.FirstName, isValid = utils.IsValidUserName(u.FirstName); !isValid {
-		return errors.New("first name must be between 3 to 16 alphanumeric characters, '_' or '-'")
-	}
-	if u.LastName, isValid = utils.IsValidUserName(u.LastName); !isValid {
-		return errors.New("last name must be between 3 to 16 alphanumeric characters, '_' or '-'")
-	}
-	if u.NickNameForm, isValid = utils.IsValidUserName(u.NickNameForm); !isValid && u.NickNameForm != "" {
-		return errors.New("nick name must be between 3 to 16 alphanumeric characters, '_' or '-'")
-	}
-	if u.NickNameForm != "" {
-		u.NickName = sql.NullString{Valid: true, String: u.NickNameForm}
-	}
-	if u.Password, isValid = utils.IsValidPassword(u.Password); !isValid {
-		return errors.New("password must be 8 characters or longer.\n" +
-			"Include at least a lower case character, an upper case character, a number and one of '@$!%*?&'")
-	}
-	if u.Password != u.ConfirmPassword {
-		return errors.New("passwords do not match")
-	}
-	if u.Email, isValid = utils.IsValidEmail(u.Email); !isValid {
-		return errors.New("invalid email")
-	}
-	if u.Visibility != "public" {
-		u.Visibility = "private"
-	}
-	if u.Gender != "Male" && u.Gender != "Female" {
-		u.Visibility = "Other"
-	}
-	if u.AboutMe, isValid = utils.IsValidContent(u.AboutMe, 0, 500); !isValid {
-		return errors.New("about me is limited to 500 characters")
-	}
-
-	return nil
-}
 
 func (uc *UserController) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
@@ -97,29 +57,6 @@ func (uc *UserController) RegisterHandler(w http.ResponseWriter, r *http.Request
 	utils.ReturnJsonSuccess(w, "Registered successfully", nil)
 }
 
-func isValidLogin(u *user) error {
-	isValid := false
-
-	if u.Email != "" {
-		if u.Email, isValid = utils.IsValidEmail(u.Email); !isValid {
-			return errors.New("invalid email")
-		}
-	} else if u.NickNameForm != "" {
-		if u.NickNameForm, isValid = utils.IsValidUserName(u.NickNameForm); !isValid {
-			return errors.New("nick name must be between 3 to 16 alphanumeric characters, '_' or '-'")
-		}
-		u.NickName = sql.NullString{Valid: true, String: u.NickNameForm}
-	} else {
-		return errors.New("email or user name is required")
-	}
-
-	if u.Password, isValid = utils.IsValidPassword(u.Password); !isValid {
-		return errors.New("password must be 8 characters or longer.\n" +
-			"Include at least a lower case character, an upper case character, a number and one of '@$!%*?&'")
-	}
-	return nil
-}
-
 func (uc *UserController) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
 	if err := utils.ReadJSON(w, r, u); err != nil {
@@ -136,7 +73,7 @@ func (uc *UserController) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if u.Email != "" {
 		user, _ = uc.um.SelectUserByField("email", u.Email)
 	} else {
-		user, _ = uc.um.SelectUserByField("nick_name", u.NickName.String)
+		user, _ = uc.um.SelectUserByField("nick_name", u.NickName)
 	}
 
 	if user == nil || bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(u.Password)) != nil {

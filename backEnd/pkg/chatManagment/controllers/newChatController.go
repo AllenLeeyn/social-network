@@ -59,7 +59,7 @@ func (cc *ChatController) WebSocketUpgrade(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	cl := &client{
-		u.NickName.String,
+		u.NickName,
 		u.ID,
 		sessionID,
 		conn,

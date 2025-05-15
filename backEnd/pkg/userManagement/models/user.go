@@ -10,19 +10,18 @@ import (
 
 // User struct represents the user data model
 type User struct {
-	ID              int       `json:"id"`
-	UUID            string    `json:"uuid"`
-	TypeId          int       `json:"type_id"`
-	FirstName       string    `json:"first_name"`
-	LastName        string    `json:"last_name"`
-	Gender          string    `json:"gender"`
-	BirthDay        time.Time `json:"birthday"`
-	Email           string    `json:"email"`
-	Password        string    `json:"password"`
-	ConfirmPassword string    `json:"confirmPassword"`
-	PasswordHash    string    `json:"pw_hash"`
-	NickName        sql.NullString
-	NickNameForm    string         `json:"nick_name"`
+	ID              int            `json:"id"`
+	UUID            string         `json:"uuid"`
+	TypeId          int            `json:"type_id"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Gender          string         `json:"gender"`
+	BirthDay        time.Time      `json:"birthday"`
+	Email           string         `json:"email"`
+	Password        string         `json:"password"`
+	ConfirmPassword string         `json:"confirmPassword"`
+	PasswordHash    string         `json:"pw_hash"`
+	NickName        string         `json:"nick_name"`
 	ProfileImage    sql.NullString `json:"profile_image"`
 	AboutMe         string         `json:"about_me"`
 	Visibility      string         `json:"visibility"`
@@ -55,7 +54,7 @@ func (um *UserModel) SelectUserByField(fieldName string, fieldValue interface{})
 
 func (um *UserModel) checkUniqueUser(user *User) error {
 	var existingEmail string
-	var existingUsername sql.NullString
+	var existingUsername string
 	qry := `SELECT email, nick_name 
 			FROM users 
 			WHERE email = ? OR nick_name = ? LIMIT 1;`
@@ -68,7 +67,7 @@ func (um *UserModel) checkUniqueUser(user *User) error {
 	if existingEmail == user.Email {
 		return errors.New("email is already used")
 	}
-	if user.NickName.Valid && existingUsername.String == user.NickName.String {
+	if existingUsername == user.NickName {
 		return errors.New("nick name is already used")
 	}
 	return nil
