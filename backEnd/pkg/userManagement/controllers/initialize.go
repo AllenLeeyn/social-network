@@ -1,24 +1,21 @@
 package controller
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"strings"
 
-	userModel "social-network/pkg/userManagement/models"
+	chatContollers "social-network/pkg/chatManagement/controllers"
 	"social-network/pkg/utils"
 )
 
-type UserController struct {
-	um *userModel.UserModel
-}
+var chatController *chatContollers.ChatController
 
-func NewUserController(dbMain *sql.DB) *UserController {
-	return &UserController{
-		um: userModel.NewUserModel(dbMain),
-	}
+func Initialize(cc *chatContollers.ChatController) {
+	log.Println("\033[35mInitlise user controller\033[0m")
+	chatController = cc
 }
 
 func isValidUserInfo(u *user) error {
@@ -30,7 +27,7 @@ func isValidUserInfo(u *user) error {
 	if u.LastName, isValid = utils.IsValidUserName(u.LastName); !isValid {
 		return errors.New("last name must be between 3 to 16 alphanumeric characters, '_' or '-'")
 	}
-	if u.NickName != "" {
+	if u.NickName == "" {
 		u.NickName = generateNickName(u)
 	}
 	if u.NickName, isValid = utils.IsValidUserName(u.NickName); !isValid {

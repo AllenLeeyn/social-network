@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
@@ -14,23 +13,14 @@ type contextKey string
 
 const (
 	CtxUserID       contextKey = "userID"
+	CtxUserUUID     contextKey = "userUUID"
 	CtxSessionID    contextKey = "sessionID"
 	CtxProfileImage contextKey = "profileImage"
 )
 
-type Middleware struct {
-	um *userModel.UserModel
-}
-
-func SetUpMiddleware(sqlDB *sql.DB) *Middleware {
-	return &Middleware{
-		um: userModel.NewUserModel(sqlDB),
-	}
-}
-
-func (mw *Middleware) CheckHttpRequest(checkFor, method string, next http.HandlerFunc) http.HandlerFunc {
+func CheckHttpRequest(checkFor, method string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sessionID, userID := mw.checkSessionValidity(r)
+		sessionID, userID, userUUID := checkSessionValidity(r)
 		if checkFor == "guest" && sessionID != "" {
 			errorControllers.CustomErrorHandler(w, r, "You are logged in", http.StatusBadRequest)
 			return
@@ -46,24 +36,25 @@ func (mw *Middleware) CheckHttpRequest(checkFor, method string, next http.Handle
 
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, CtxUserID, userID)
+		ctx = context.WithValue(ctx, CtxUserUUID, userUUID)
 		ctx = context.WithValue(ctx, CtxSessionID, sessionID)
 
 		next(w, r.WithContext(ctx))
 	}
 }
 
-func (mw *Middleware) checkSessionValidity(r *http.Request) (string, int) {
+func checkSessionValidity(r *http.Request) (string, int, string) {
 	sessionCookie, err := r.Cookie("session-id")
 	if err != nil || sessionCookie == nil {
-		return "", -1
+		return "", -1, ""
 	}
 	sessionID := sessionCookie.Value
 
-	s, err := mw.um.SelectActiveSessionBy("id", sessionID)
+	s, err := userModel.SelectActiveSessionBy("id", sessionID)
 	if err != nil {
-		return "", -1
+		return "", -1, ""
 	}
-	return sessionID, s.UserId
+	return sessionID, s.UserId, s.UserUUID
 }
 
 const maxUploadSize = 2 << 20 // 2 MB
@@ -102,4 +93,19 @@ func HandleProfileImageUpload(next http.HandlerFunc) http.HandlerFunc {
 		ctx := context.WithValue(r.Context(), CtxProfileImage, profileImage)
 		next(w, r.WithContext(ctx))
 	}
+}
+
+func GetSessionID(ctx context.Context) (string, bool) {
+	sessionID, ok := ctx.Value(CtxSessionID).(string)
+	return sessionID, ok
+}
+
+func GetUserID(ctx context.Context) (int, bool) {
+	userID, ok := ctx.Value(CtxUserID).(int)
+	return userID, ok
+}
+
+func GetUserUUID(ctx context.Context) (string, bool) {
+	userUUID, ok := ctx.Value(CtxUserUUID).(string)
+	return userUUID, ok
 }

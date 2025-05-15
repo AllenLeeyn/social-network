@@ -12,7 +12,7 @@ CREATE TABLE users_new (
     pw_hash         TEXT NOT NULL,
     nick_name       TEXT NOT NULL UNIQUE,
     profile_image   TEXT UNIQUE,
-    about_me        TEXT,
+    about_me        TEXT NOT NULL DEFAULT '',
     visibility      TEXT NOT NULL DEFAULT 'private' CHECK(visibility IN ('private', 'public')),
 
     status      TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',

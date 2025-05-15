@@ -20,7 +20,7 @@ type User struct {
 	Email           string         `json:"email"`
 	Password        string         `json:"password"`
 	ConfirmPassword string         `json:"confirmPassword"`
-	PasswordHash    string         `json:"pw_hash"`
+	PasswordHash    []byte         `json:"pw_hash"`
 	NickName        string         `json:"nick_name"`
 	ProfileImage    sql.NullString `json:"profile_image"`
 	AboutMe         string         `json:"about_me"`
@@ -31,14 +31,14 @@ type User struct {
 	UpdatedAt       *time.Time     `json:"updated_at"`
 }
 
-func (um *UserModel) SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) {
+func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) {
 	if fieldName != "id" && fieldName != "nick_name" && fieldName != "email" {
 		return nil, fmt.Errorf("invalid field")
 	}
 	qry := `SELECT * FROM users WHERE ` + fieldName + ` = ?`
 
 	var u User
-	err := um.DB.QueryRow(qry, fieldValue).Scan(
+	err := sqlDB.QueryRow(qry, fieldValue).Scan(
 		&u.ID, &u.UUID, &u.TypeId,
 		&u.FirstName, &u.LastName,
 		&u.Gender, &u.BirthDay,
@@ -52,14 +52,14 @@ func (um *UserModel) SelectUserByField(fieldName string, fieldValue interface{})
 	return &u, nil
 }
 
-func (um *UserModel) checkUniqueUser(user *User) error {
+func checkUniqueUser(user *User) error {
 	var existingEmail string
 	var existingUsername string
 	qry := `SELECT email, nick_name 
 			FROM users 
 			WHERE email = ? OR nick_name = ? LIMIT 1;`
 
-	err := um.DB.QueryRow(qry, user.Email, user.NickName).Scan(&existingEmail, &existingUsername)
+	err := sqlDB.QueryRow(qry, user.Email, user.NickName).Scan(&existingEmail, &existingUsername)
 	if err != nil {
 		return checkErrNoRows(err)
 	}
@@ -73,14 +73,14 @@ func (um *UserModel) checkUniqueUser(user *User) error {
 	return nil
 }
 
-func (um *UserModel) InsertUser(user *User) (int, error) {
+func InsertUser(user *User) (int, error) {
 	uuid, err := utils.GenerateUuid()
 	if err != nil {
 		return -1, err
 	}
 	user.UUID = uuid
 
-	if err = um.checkUniqueUser(user); err != nil {
+	if err = checkUniqueUser(user); err != nil {
 		return -1, err
 	}
 
@@ -92,7 +92,7 @@ func (um *UserModel) InsertUser(user *User) (int, error) {
 				about_me, profile_image, visibility,
 				updated_by, updated_at) 
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP);`
-	result, insertErr := um.DB.Exec(qry,
+	result, insertErr := sqlDB.Exec(qry,
 		user.UUID, 1,
 		user.FirstName, user.LastName,
 		user.BirthDay, user.Gender, user.NickName,
@@ -116,7 +116,7 @@ func (um *UserModel) InsertUser(user *User) (int, error) {
 	return int(userId), nil
 }
 
-func (um *UserModel) UpdateUser(user *User) error {
+func UpdateUser(user *User) error {
 	updateQuery := `
 		UPDATE users
 		SET first_name = ?,	last_name = ?, nick_name =?,
@@ -125,7 +125,7 @@ func (um *UserModel) UpdateUser(user *User) error {
 			status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
 		WHERE id = ?;`
 
-	_, err := um.DB.Exec(updateQuery,
+	_, err := sqlDB.Exec(updateQuery,
 		user.FirstName, user.LastName, user.NickName,
 		user.Gender, user.BirthDay, user.AboutMe,
 		user.Visibility, user.ProfileImage,

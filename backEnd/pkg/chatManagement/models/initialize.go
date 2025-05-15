@@ -1,13 +1,15 @@
 package model
 
-import "database/sql"
+import (
+	"database/sql"
+	"log"
+)
 
-type ChatModel struct {
-	DB *sql.DB
-}
+var sqlDB *sql.DB
 
-func NewChatModel(dbMain *sql.DB) *ChatModel {
-	return &ChatModel{DB: dbMain}
+func Initialize(dbMain *sql.DB) {
+	log.Println("\033[34mInitlise chat model\033[0m")
+	sqlDB = dbMain
 }
 
 // checkErrNoRows() checks if no result from sql query.

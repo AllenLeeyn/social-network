@@ -58,11 +58,11 @@ func migrateDB(sqlDB *sql.DB, migrateSource string) error {
 		return err
 	}
 	if dirty {
-		log.Printf("Database is in a dirty state at version %d. Manual intervention may be required.", version)
+		log.Printf("\033[33mDatabase is in a dirty state at version %d. Manual intervention may be required.\033[0m", version)
 		return err
 	}
 
-	log.Printf("Current migration version: %d", version)
+	log.Printf("\033[33mCurrent migration version: %d\033[0m", version)
 	if version == 0 || err == migrate.ErrNilVersion {
 		if err = generateUuidTables(sqlDB); err != nil {
 			return err
@@ -71,19 +71,19 @@ func migrateDB(sqlDB *sql.DB, migrateSource string) error {
 
 	if err = m.Up(); err != nil {
 		if err == migrate.ErrNoChange {
-			log.Println("No new migrations to apply.")
+			log.Println("\033[33mNo new migrations to apply.\033[0m")
 			err = nil
 		}
 	} else {
 		version, _, _ = m.Version()
-		log.Printf("Migrations applied successfully. New migration version: %d", version)
+		log.Printf("\033[33mMigrations applied successfully. New migration version: %d\033[0m", version)
 	}
 
 	return err
 }
 
 func generateUuidTables(sqlDB *sql.DB) error {
-	log.Println("Initializing UUIDs for users and posts...")
+	log.Println("\033[33mInitializing UUIDs for users and posts...\033[0m")
 
 	// Create the UUID tables if not already present
 	createTables := `

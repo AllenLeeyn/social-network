@@ -14,7 +14,7 @@ import (
 
 type user = userModel.User
 
-func (uc *UserController) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
 	if err := utils.ReadJSON(w, r, u); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -33,7 +33,7 @@ func (uc *UserController) RegisterHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	u.TypeId = 1
-	u.PasswordHash = string(password_hash)
+	u.PasswordHash = password_hash
 
 	/* profileImageRaw := r.Context().Value("profileImage")
 	profileImagePath, isOk := profileImageRaw.(string)
@@ -41,7 +41,7 @@ func (uc *UserController) RegisterHandler(w http.ResponseWriter, r *http.Request
 		u.ProfileImage = sql.NullString{String: profileImagePath, Valid: true}
 	} */
 
-	userId, err := uc.um.InsertUser(u)
+	userId, err := userModel.InsertUser(u)
 	if err != nil {
 		if err.Error() == "email is already used" ||
 			err.Error() == "nick name is already used" ||
@@ -53,11 +53,11 @@ func (uc *UserController) RegisterHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	uc.generateSession(w, r, userId)
+	generateSession(w, r, userId)
 	utils.ReturnJsonSuccess(w, "Registered successfully", nil)
 }
 
-func (uc *UserController) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
 	if err := utils.ReadJSON(w, r, u); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -71,33 +71,32 @@ func (uc *UserController) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	user := &user{}
 	if u.Email != "" {
-		user, _ = uc.um.SelectUserByField("email", u.Email)
+		user, _ = userModel.SelectUserByField("email", u.Email)
 	} else {
-		user, _ = uc.um.SelectUserByField("nick_name", u.NickName)
+		user, _ = userModel.SelectUserByField("nick_name", u.NickName)
 	}
 
-	if user == nil || bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(u.Password)) != nil {
+	if user == nil || bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(u.Password)) != nil {
 		errorControllers.CustomErrorHandler(w, r, "Incorrect username and/or password", http.StatusBadRequest)
 		return
 	}
 
-	session, err := uc.um.SelectActiveSessionBy("user_id", user.ID)
+	session, err := userModel.SelectActiveSessionBy("user_id", user.ID)
 	if err == nil {
-		uc.ExpireSession(w, session.ID)
+		ExpireSession(w, r, session.ID)
 	}
 
-	uc.generateSession(w, r, user.ID)
+	generateSession(w, r, user.ID)
 	utils.ReturnJsonSuccess(w, "Logged in successfully", nil)
 }
 
-func (uc *UserController) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	sessionIdRaw := r.Context().Value(middleware.CtxSessionID)
-	sessionId, isOk := sessionIdRaw.(string)
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	sessionId, isOk := middleware.GetSessionID(r.Context())
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	if err := uc.ExpireSession(w, sessionId); err != nil {
+	if err := ExpireSession(w, r, sessionId); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -105,15 +104,14 @@ func (uc *UserController) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 	utils.ReturnJsonSuccess(w, "Logged out successfully", nil)
 }
 
-func (uc *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value(middleware.CtxUserID)
-	userID, isOk := userIDRaw.(int)
+func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+	userId, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	currentUserInfo, err := uc.um.SelectUserByField("id", userID)
+	currentUserInfo, err := userModel.SelectUserByField("id", userId)
 	if currentUserInfo == nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusInternalServerError)
 		return
@@ -142,7 +140,7 @@ func (uc *UserController) UpdateUserHandler(w http.ResponseWriter, r *http.Reque
 		u.ProfileImage = sql.NullString{String: profileImagePath, Valid: true}
 	} */
 
-	updateError := uc.um.UpdateUser(currentUserInfo)
+	updateError := userModel.UpdateUser(currentUserInfo)
 	if updateError != nil {
 		errorControllers.CustomErrorHandler(w, r, updateError.Error(), http.StatusInternalServerError)
 		return

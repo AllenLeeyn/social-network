@@ -4,46 +4,48 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+
+	chatModel "social-network/pkg/chatManagement/models"
 )
 
 func (cc *ChatController) listener() {
 	for action := range cc.clientQueue {
 		switch action.kind {
 		case "join":
-			cc.sendClientList(action.client, -1)
+			cc.sendClientList(action.client, "-1")
 
 		case "online":
-			cc.sendClientList(action.client, action.client.UserID)
+			cc.sendClientList(action.client, action.client.UserUUID)
 			content := fmt.Sprintf(`{"action": "online", "id": "%d"}`, action.client.UserID)
-			cc.queuePublicMessage(content, -1)
+			cc.queuePublicMessage(content, "-1")
 
 		case "offline":
-			delete(cc.clients, action.client.UserID)
+			delete(cc.clients, action.client.UserUUID)
 			content := fmt.Sprintf(`{"action": "offline", "id": "%d"}`, action.client.UserID)
-			cc.queuePublicMessage(content, -1)
+			cc.queuePublicMessage(content, "-1")
 		}
 	}
 }
 
-func (cc *ChatController) sendClientList(cl *client, receiver int) {
+func (cc *ChatController) sendClientList(cl *client, receiverUUID string) {
 	type data struct {
 		Action           string   `json:"action"`
 		AllClients       []string `json:"allClients"`
-		ClientIDs        []int    `json:"clientIDs"`
-		OnlineClients    []int    `json:"onlineClients"`
-		UnreadMsgClients []int    `json:"unreadMsgClients"`
+		ClientUUIDs      []string `json:"clientIDs"`
+		OnlineClients    []string `json:"onlineClients"`
+		UnreadMsgClients []string `json:"unreadMsgClients"`
 	}
 
 	d := data{Action: "start"}
-	clientList, clientIDs, err := cc.db.SelectUserList(cl.UserID)
+	clientList, clientUUIDs, err := chatModel.SelectUserList(cl.UserID)
 	if err != nil {
 		log.Println("Error fetching UserList:", err)
 		return
 	}
 	d.AllClients = *clientList
-	d.ClientIDs = *clientIDs
+	d.ClientUUIDs = *clientUUIDs
 
-	unreadList, err := cc.db.SelectUnreadMsgList(cl.UserID)
+	unreadList, err := chatModel.SelectUnreadMsgList(cl.UserID)
 	if err != nil {
 		log.Println("Error fetching UnreadMsgList:", err)
 		return
@@ -59,5 +61,5 @@ func (cc *ChatController) sendClientList(cl *client, receiver int) {
 		log.Println("Error marshaling data to JSON:", err)
 		return
 	}
-	cc.queuePublicMessage(string(jsonData), receiver)
+	cc.queuePublicMessage(string(jsonData), receiverUUID)
 }

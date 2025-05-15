@@ -4,27 +4,27 @@ import (
 	"database/sql"
 	"net/http"
 
-	// socialMediaManagementControllers "social-network/pkg/socialMediaManagement/controllers"
+	chatContollers "social-network/pkg/chatManagement/controllers"
 	middleware "social-network/pkg/middleware"
 	userContollers "social-network/pkg/userManagement/controllers"
 )
 
-func SetupRoutes(sqlDB *sql.DB) {
-
-	// Create controller instance
-	uc := userContollers.NewUserController(sqlDB)
-	mw := middleware.SetUpMiddleware(sqlDB)
+func SetupRoutes(sqlDB *sql.DB, cc *chatContollers.ChatController) {
 
 	// ---------------------------- user management controller APIs ---------------------------- //
-	http.HandleFunc("/api/register",
-		mw.CheckHttpRequest("guest", http.MethodPost, uc.RegisterHandler)) /*post method*/
+	http.HandleFunc("/register",
+		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.RegisterHandler)) /*post method*/
 
-	http.HandleFunc("/api/login",
-		mw.CheckHttpRequest("guest", http.MethodPost, uc.LoginHandler)) /*post method*/
+	http.HandleFunc("/login",
+		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.LoginHandler)) /*post method*/
 
-	http.HandleFunc("/api/logout/",
-		mw.CheckHttpRequest("user", http.MethodGet, uc.LogoutHandler))
+	http.HandleFunc("/logout/",
+		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.LogoutHandler))
 
-	http.HandleFunc("/api/updateUser",
-		mw.CheckHttpRequest("user", http.MethodPost, uc.UpdateUserHandler)) /*post method*/
+	http.HandleFunc("/updateUser",
+		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUserHandler)) /*post method*/
+
+	http.HandleFunc("/ws",
+		middleware.CheckHttpRequest("user", http.MethodGet, cc.WSHandler)) /*post method*/
+
 }

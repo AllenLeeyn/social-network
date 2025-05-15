@@ -1,13 +1,15 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+	"log"
+)
 
-type UserModel struct {
-	DB *sql.DB
-}
+var sqlDB *sql.DB
 
-func NewUserModel(dbMain *sql.DB) *UserModel {
-	return &UserModel{DB: dbMain}
+func Initialize(dbMain *sql.DB) {
+	log.Println("\033[34mInitlise user model\033[0m")
+	sqlDB = dbMain
 }
 
 // checkErrNoRows() checks if no result from sql query.
