@@ -2,16 +2,18 @@
 
 'use client';
 
-import React,  { useState } from 'react';
+import { useState } from 'react';
+
 import SidebarSection from '../components/SidebarSection';
+import CategoriesList from '../components/CategoriesList';
 import PostList from '../components/PostList';
 import CreatePost from '../components/CreatePost'
 import Modal from '../components/Modal'
 
+import { usePosts } from '../hooks/usePosts';
+
 
 import {
-    samplePosts,
-    sampleCategories,
     sampleUsers,
     sampleGroups,
     sampleConnections
@@ -21,6 +23,7 @@ import {
 export default function HomePage() {
 
     const [showModal, setShowModal] = useState(false);
+    const { posts, categories, loading, error } = usePosts([]);
 
 return (
         <main>
@@ -28,13 +31,9 @@ return (
                 {/* Left Sidebar */}
                 <aside className="sidebar left-sidebar">
                     <SidebarSection title="Categories">
-                        <ul className="categories">
-                            {sampleCategories.map(cat => (
-                            <li key={cat.id} className="category-item">
-                                <strong>{cat.name}</strong>
-                            </li>
-                            ))}
-                        </ul>
+                        {loading && <div>Loading...</div>}
+                        {error && <div>Error: {error}</div>}
+                        {!loading && !error && <CategoriesList categories={categories} />}
                     </SidebarSection>
                     <SidebarSection title="Groups">
                         <ul className="groups">
@@ -68,7 +67,9 @@ return (
                             + Create Post
                         </button>
                     </div>
-                        <PostList posts={samplePosts} />
+                        {loading && <div>Loading...</div>}
+                        {error && <div>Error: {error}</div>}
+                        {!loading && !error && <PostList posts={posts} />}
 
                         {showModal && (
                             <Modal onClose={() => setShowModal(false)} title="Create Post">

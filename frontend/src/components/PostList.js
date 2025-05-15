@@ -1,14 +1,8 @@
 "use client";
-import { usePosts } from "../hooks/usePosts";
-
 import "../styles/globals.css";
 
 
-export default function PostsPage() {
-    const { posts, error, loading } = usePosts();
-
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+export default function PostsPage( {posts}) {
 
     return (
         <div className="post-list">
@@ -17,8 +11,8 @@ export default function PostsPage() {
                 {posts.map((post) => (
                 <li key={post.id}>
                     <h2>{post.title}</h2>
-                    <p>{post.content || post.snippet}</p>
-                    <small>By {post.userName || post.author}</small>
+                    <p>{post.content}</p>
+                    <small>By {post.userName}</small>
                 </li>
                 ))}
             </ul>
