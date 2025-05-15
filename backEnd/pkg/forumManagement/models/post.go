@@ -31,8 +31,9 @@ type Post struct {
 	IsDislikedByUser bool                      `json:"disliked"`
 	User             userManagementModels.User `json:"user"` // Embedded user data
 
-	Categories []Category `json:"categories"` // List of categories related to the post
-	PostFiles  []PostFile `json:"post_files"` // List of files related to the post
+	CategoryIds []int      `json:"category_ids"` // List of category ids related to the post
+	Categories  []Category `json:"categories"`   // List of categories related to the post
+	PostFiles   []PostFile `json:"post_files"`   // List of files related to the post
 }
 
 func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) (int, error) {

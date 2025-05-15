@@ -292,7 +292,7 @@ func ReadPostsFeedbacksByPostId(postId int) ([]PostFeedback, error) {
 	return postFeedbacks, nil
 }
 
-func PostHasFeedbacked(userId int, postID int) (int, string) {
+func PostHasFeedback(userId int, postID int) (int, string) {
 	var existingLikeId int
 	var existingLikeType string
 	likeCheckQuery := `SELECT id, rating

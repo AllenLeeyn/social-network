@@ -3,10 +3,13 @@ package controller
 import (
 	// "forum/middlewares"
 
+	"errors"
+	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	fileControllers "social-network/pkg/fileManagement/controllers"
 	"social-network/pkg/forumManagement/models"
+	"social-network/pkg/middleware"
 	"social-network/pkg/utils"
 	"strconv"
 
@@ -14,7 +17,7 @@ import (
 )
 
 func ReadAllPostsHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -101,7 +104,7 @@ func FilterPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadMyCreatedPostsHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -132,7 +135,7 @@ func ReadMyCreatedPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadMyLikedPostsHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -163,7 +166,7 @@ func ReadMyLikedPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -201,79 +204,90 @@ func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post fetched successfully", data_obj_sender)
 }
 
+func isValidPostInfo(post *models.Post) error {
+	isValid := false
+
+	if post.Title, isValid = utils.IsValidContent(post.Title, 3, 100); !isValid {
+		return errors.New("title is required and must be between 3 to 100 alphanumeric characters, '_' or '-'")
+	}
+	if post.Content, isValid = utils.IsValidContent(post.Content, 3, 1000); !isValid {
+		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
+	}
+
+	// todo check categories
+
+	//to check post audiences if it has selected visibility
+
+	if post.Visibility == "" {
+		post.Visibility = "public"
+	}
+
+	return nil
+}
+
+// todo
 func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	// Parse the multipart form with a max memory of 10MB
-	err := r.ParseMultipartForm(10 << 20) // 10 MB limit
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+	post := &models.Post{}
+	post.UserId = userID
+	if err := utils.ReadJSON(w, r, post); err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	title := utils.SanitizeInput(r.FormValue("title"))
-	content := utils.SanitizeInput(r.FormValue("content"))
-	categories := r.Form["categories"]
-	if len(title) == 0 || len(content) == 0 || len(categories) == 0 {
-		res := utils.Result{
-			Success:    false,
-			Message:    "title, content and categories are required.",
-			HttpStatus: http.StatusOK,
-			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
+	if err := isValidPostInfo(post); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Retrieve all uploaded files
-	files := r.MultipartForm.File["postFiles"]
+	// // Retrieve all uploaded files
+	// // todo handle file upload
+	// files := r.MultipartForm.File["postFiles"]
 
-	uploadedFiles := make(map[string]string)
+	// uploadedFiles := make(map[string]string)
 
-	for _, handler := range files {
-		file, err := handler.Open()
-		if err != nil {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-			return
-		}
-		defer file.Close()
+	// for _, handler := range files {
+	// 	file, err := handler.Open()
+	// 	if err != nil {
+	// 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+	// 		return
+	// 	}
+	// 	defer file.Close()
 
-		// Call your file upload function
-		uploadedFile, err := fileControllers.FileUpload(file, handler)
-		if err != nil {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-			return
-		}
+	// 	// Call your file upload function
+	// 	uploadedFile, err := fileControllers.FileUpload(file, handler)
+	// 	if err != nil {
+	// 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+	// 		return
+	// 	}
 
-		uploadedFiles[handler.Filename] = uploadedFile
-	}
-
-	post := &models.Post{
-		Title:   title,
-		Content: content,
-		UserId:  userID,
-	}
+	// 	uploadedFiles[handler.Filename] = uploadedFile
+	// }
 
 	// Convert the string slice to an int slice
-	categoryIds := make([]int, 0, len(categories))
-	for _, category := range categories {
-		if id, err := strconv.Atoi(category); err == nil {
-			categoryIds = append(categoryIds, id)
-		} else {
-			// Handle error if conversion fails (for example, invalid input)
-			errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-			return
-		}
-	}
+	// categoryIds := make([]int, 0, len(post.CategoryIds))
+	// for _, category := range post.CategoryIds {
+	// 	if id, err := strconv.Atoi(category); err == nil {
+	// 		categoryIds = append(categoryIds, id)
+	// 	} else {
+	// 		// Handle error if conversion fails (for example, invalid input)
+	// 		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+	// 		return
+	// 	}
+	// }
 
 	// Insert a record while checking duplicates
+	categoryIds := []int{1, 2}
+	uploadedFiles := make(map[string]string)
 	_, insertError := models.InsertPost(post, categoryIds, uploadedFiles)
 	if insertError != nil {
+		fmt.Println("Error inserting post:", insertError)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -281,8 +295,9 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post submitted successfully", nil)
 }
 
+// todo
 func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -371,35 +386,23 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post updated successfully", nil)
 }
 
+// todo
 func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	err := r.ParseMultipartForm(0)
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-		return
-	}
-
-	idStr := r.FormValue("id")
-
-	if len(idStr) == 0 {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-		return
-	}
-
-	post_id, err := strconv.Atoi(idStr)
-	if err != nil {
+	post := &models.Post{}
+	if err := utils.ReadJSON(w, r, post); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	// Update a record while checking duplicates
-	updateError := models.UpdateStatusPost(post_id, "delete", userID)
+	updateError := models.UpdateStatusPost(post.ID, "delete", userID)
 	if updateError != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -408,8 +411,9 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post removed successfully", nil)
 }
 
+// todo
 func PostFeedbackHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -434,7 +438,7 @@ func PostFeedbackHandler(w http.ResponseWriter, r *http.Request) {
 	// }
 	ratingStr := r.FormValue("rating")
 
-	existingLikeId, existingFeedbackRating := models.PostHasFeedbacked(userID, postIDInt)
+	existingLikeId, existingFeedbackRating := models.PostHasFeedback(userID, postIDInt)
 
 	var resMessage string
 	if ratingStr == "1" {

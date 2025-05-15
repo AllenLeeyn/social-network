@@ -53,11 +53,11 @@ func SetupRoutes(sqlDB *sql.DB) {
 	http.HandleFunc("/api/postFeedback",
 		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.PostFeedbackHandler)) /*post method*/
 
-	http.HandleFunc("/api/updatePost",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.UpdatePostHandler)) /*post method*/
+	http.HandleFunc("/api/post",
+		middleware.CheckHttpRequest("user", http.MethodPut, forumControllers.UpdatePostHandler)) /*post method*/
 
-	http.HandleFunc("/api/deletePost",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.DeletePostHandler)) /*post method*/
+	http.HandleFunc("/api/post",
+		middleware.CheckHttpRequest("user", http.MethodDelete, forumControllers.DeletePostHandler)) /*post method*/
 
 	http.HandleFunc("/api/likeComment",
 		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.FeedbackCommentHandler)) /*post method*/

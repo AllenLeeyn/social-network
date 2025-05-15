@@ -4,6 +4,7 @@ import (
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
+	"social-network/pkg/middleware"
 	"social-network/pkg/utils"
 	"strconv"
 
@@ -21,7 +22,7 @@ func ReadAllCommentsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -56,8 +57,9 @@ func ReadPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Comments fetched successfully", comments)
 }
 
+// todo
 func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -99,8 +101,9 @@ func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Comment submitted successfully", nil)
 }
 
+// todo
 func FeedbackCommentHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -167,8 +170,9 @@ func FeedbackCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// todo
 func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -218,8 +222,9 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Comment updated successfully", nil)
 }
 
+// todo
 func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
-	userIDRaw := r.Context().Value("userID")
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
