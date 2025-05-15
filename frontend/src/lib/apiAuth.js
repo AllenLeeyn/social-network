@@ -27,3 +27,17 @@ export async function signup(userData) {
 
   return response.json(); // Return success message or user data
 }
+
+export async function logout() {
+  const response = await fetch(`${API_URL}/logout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(userData),
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Signup failed");
+  }
+
+  return response.json(); // Return success message or user data
+}

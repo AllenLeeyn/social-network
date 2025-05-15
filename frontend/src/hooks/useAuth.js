@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login, signup } from "../lib/apiAuth";
+import { login, logout, signup } from "../lib/apiAuth";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -34,7 +34,8 @@ export function useAuth() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logout()
     setUser(null);
     // Optionally, clear cookies or session storage here
   };
