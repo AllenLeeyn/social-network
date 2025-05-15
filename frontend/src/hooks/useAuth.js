@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login } from "../lib/apiAuth";
+import { login, signup } from "../lib/apiAuth";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -20,10 +20,24 @@ export function useAuth() {
     }
   };
 
+  const handleSignup = async (userData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await signup(userData);
+      alert("Signup successful! You can now log in.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     setUser(null);
     // Optionally, clear cookies or session storage here
   };
 
-  return { user, loading, error, handleLogin, handleLogout };
+  return { user, loading, error, handleLogin, handleSignup, handleLogout };
 }
