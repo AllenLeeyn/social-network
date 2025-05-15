@@ -5,7 +5,7 @@ export async function GET() {
 
   try {
     // Retrieve the session-id cookie
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const sessionId = cookieStore.get("session-id")?.value;
 
     if (!sessionId) {
