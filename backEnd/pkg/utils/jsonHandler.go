@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 )
@@ -48,6 +47,5 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	if err = json.Unmarshal(body, data); err != nil {
 		return err
 	}
-	fmt.Println(data)
 	return nil
 }

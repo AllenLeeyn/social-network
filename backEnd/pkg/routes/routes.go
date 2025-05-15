@@ -12,19 +12,19 @@ import (
 func SetupRoutes(sqlDB *sql.DB, cc *chatContollers.ChatController) {
 
 	// ---------------------------- user management controller APIs ---------------------------- //
-	http.HandleFunc("/register",
+	http.HandleFunc("/api/register",
 		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.RegisterHandler)) /*post method*/
 
-	http.HandleFunc("/login",
+	http.HandleFunc("/api/login",
 		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.LoginHandler)) /*post method*/
 
-	http.HandleFunc("/logout/",
+	http.HandleFunc("/api/logout/",
 		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.LogoutHandler))
 
-	http.HandleFunc("/updateUser",
+	http.HandleFunc("/api/updateUser",
 		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUserHandler)) /*post method*/
 
-	http.HandleFunc("/ws",
+	http.HandleFunc("/api/ws",
 		middleware.CheckHttpRequest("user", http.MethodGet, cc.WSHandler)) /*post method*/
 
 }
