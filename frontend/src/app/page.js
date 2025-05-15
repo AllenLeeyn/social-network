@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import SidebarSection from '../components/SidebarSection';
 import CategoriesList from '../components/CategoriesList';
-import PostList from '../components/PostList';
+import PostList from '../components/PostList'
 import CreatePost from '../components/CreatePost'
 import Modal from '../components/Modal'
 
@@ -82,15 +82,9 @@ return (
                 {/* Right Sidebar */}
                 <aside className="sidebar right-sidebar">
                     <SidebarSection title="Active Users">
-                        <ul className="users">
-                        {sampleUsers.map(user => (
-                            <li key={user.id} className={`user-item${user.online ? " online" : ""}${user.unread ? " unread" : ""}`}>
-                            <img src={user.avatar} alt={user.username} />
-                            <span>{user.fullName} ({user.username})</span>
-                            </li>
-                        ))}
-                        </ul>
-                    </SidebarSection>
+
+                </SidebarSection>
+
                 </aside>
             </div>
         </main>
