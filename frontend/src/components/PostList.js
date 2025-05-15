@@ -1,21 +1,22 @@
 "use client";
-import "../styles/globals.css";
+import Link from "next/link";
+import "../styles/PostList.css";
 
 
-export default function PostsPage( {posts}) {
-
+export default function PostsPage({ posts }) {
     return (
         <div className="post-list">
-            <h1>Posts</h1>
             <ul>
                 {posts.map((post) => (
-                <li key={post.id}>
-                    <h2>{post.title}</h2>
-                    <p>{post.content}</p>
-                    <small>By {post.userName}</small>
-                </li>
+                    <li className="post-item" key={post.id}>
+                        <h2>
+                        <Link href={`/post/${post.id}`}>{post.title}</Link>
+                        </h2>
+                        <p>{post.content}</p>
+                        <small>By {post.userName}</small>
+                    </li>
                 ))}
             </ul>
         </div>
-        );
+    );
 }

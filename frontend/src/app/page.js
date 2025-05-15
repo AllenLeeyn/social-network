@@ -24,6 +24,22 @@ export default function HomePage() {
 
     const [showModal, setShowModal] = useState(false);
     const { posts, categories, loading, error } = usePosts([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+
+    // Filter logic
+    const filteredPosts = selectedCategory
+        ? posts.filter(post =>
+            // If your post has a catNames string (e.g. "General, sqlite3")
+            post.catNames && post.catNames.split(",").map(s => s.trim()).includes(selectedCategory)
+            // If your post has categories as array of names: post.categories.includes(selectedCategory)
+          )
+        : posts;
+
+    const handleCategoryClick = (cat) => {
+        setSelectedCategory(prev => 
+            prev === cat ? null : cat
+        );
+    };
 
 return (
         <main>
@@ -31,9 +47,13 @@ return (
                 {/* Left Sidebar */}
                 <aside className="sidebar left-sidebar">
                     <SidebarSection title="Categories">
-                        {loading && <div>Loading...</div>}
-                        {error && <div>Error: {error}</div>}
-                        {!loading && !error && <CategoriesList categories={categories} />}
+                        <CategoriesList
+                            categories={categories}
+                            loading={loading}
+                            error={error}
+                            selectedCategory={selectedCategory}
+                            onCategoryClick={handleCategoryClick}
+                        />
                     </SidebarSection>
                     <SidebarSection title="Groups">
                         <ul className="groups">
@@ -69,7 +89,7 @@ return (
                     </div>
                         {loading && <div>Loading...</div>}
                         {error && <div>Error: {error}</div>}
-                        {!loading && !error && <PostList posts={posts} />}
+                        {!loading && !error && <PostList posts={filteredPosts} />}
 
                         {showModal && (
                             <Modal onClose={() => setShowModal(false)} title="Create Post">
