@@ -3,6 +3,9 @@ import { fetchPosts } from "../lib/apiPosts";
 
 export function usePosts() {
   const [posts, setPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [users, setUsers] = useState([]);
+
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -10,7 +13,9 @@ export function usePosts() {
     async function loadPosts() {
       try {
         const data = await fetchPosts();
-        setPosts(data.posts); // Assuming backend returns { posts: [...] }
+        setPosts(data.posts); 
+        setCategories(data.categories);
+        setUsers(data.users);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -21,5 +26,5 @@ export function usePosts() {
     loadPosts();
   }, []);
 
-  return { posts, error, loading };
+  return { posts, categories, users, loading, error };
 }

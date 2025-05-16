@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import '../styles/SidebarSection.css'; 
 
 export default function SidebarSection({ title, children, defaultOpen = true }) {

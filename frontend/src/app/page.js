@@ -2,16 +2,18 @@
 
 'use client';
 
-import React,  { useState } from 'react';
+import { useState } from 'react';
+
 import SidebarSection from '../components/SidebarSection';
-import PostList from '../components/PostList';
+import CategoriesList from '../components/CategoriesList';
+import PostList from '../components/PostList'
 import CreatePost from '../components/CreatePost'
 import Modal from '../components/Modal'
 
+import { usePosts } from '../hooks/usePosts';
+
 
 import {
-    samplePosts,
-    sampleCategories,
     sampleUsers,
     sampleGroups,
     sampleConnections
@@ -21,6 +23,23 @@ import {
 export default function HomePage() {
 
     const [showModal, setShowModal] = useState(false);
+    const { posts, categories, loading, error } = usePosts([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+
+    // Filter logic
+    const filteredPosts = selectedCategory
+        ? posts.filter(post =>
+            // If your post has a catNames string (e.g. "General, sqlite3")
+            post.catNames && post.catNames.split(",").map(s => s.trim()).includes(selectedCategory)
+            // If your post has categories as array of names: post.categories.includes(selectedCategory)
+          )
+        : posts;
+
+    const handleCategoryClick = (cat) => {
+        setSelectedCategory(prev => 
+            prev === cat ? null : cat
+        );
+    };
 
 return (
         <main>
@@ -28,13 +47,13 @@ return (
                 {/* Left Sidebar */}
                 <aside className="sidebar left-sidebar">
                     <SidebarSection title="Categories">
-                        <ul className="categories">
-                            {sampleCategories.map(cat => (
-                            <li key={cat.id} className="category-item">
-                                <strong>{cat.name}</strong>
-                            </li>
-                            ))}
-                        </ul>
+                        <CategoriesList
+                            categories={categories}
+                            loading={loading}
+                            error={error}
+                            selectedCategory={selectedCategory}
+                            onCategoryClick={handleCategoryClick}
+                        />
                     </SidebarSection>
                     <SidebarSection title="Groups">
                         <ul className="groups">
@@ -68,7 +87,9 @@ return (
                             + Create Post
                         </button>
                     </div>
-                        <PostList posts={samplePosts} />
+                        {loading && <div>Loading...</div>}
+                        {error && <div>Error: {error}</div>}
+                        {!loading && !error && <PostList posts={filteredPosts} />}
 
                         {showModal && (
                             <Modal onClose={() => setShowModal(false)} title="Create Post">
@@ -81,15 +102,9 @@ return (
                 {/* Right Sidebar */}
                 <aside className="sidebar right-sidebar">
                     <SidebarSection title="Active Users">
-                        <ul className="users">
-                        {sampleUsers.map(user => (
-                            <li key={user.id} className={`user-item${user.online ? " online" : ""}${user.unread ? " unread" : ""}`}>
-                            <img src={user.avatar} alt={user.username} />
-                            <span>{user.fullName} ({user.username})</span>
-                            </li>
-                        ))}
-                        </ul>
-                    </SidebarSection>
+
+                </SidebarSection>
+
                 </aside>
             </div>
         </main>

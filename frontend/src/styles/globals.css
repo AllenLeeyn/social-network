@@ -59,15 +59,6 @@ section h2 {
 
 /* ------------------------------ */
 
-/* Post card styling */
-.post-item {
-    border: 1px solid #ccc;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 4px;
-    background-color: white;
-}
-
 /* Layout */
 .homepage-layout {
     display: flex;
@@ -236,11 +227,14 @@ section h2 {
         min-width: 0;
         flex: 1 1 100%;
     }
-    .left-sidebar,
-    .right-sidebar {
+    .left-sidebar{
         order: 1;
     }
     .main-feed {
         order: 2;
     }
+    .right-sidebar {
+        order: 3;
+    }
 }
+

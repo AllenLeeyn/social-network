@@ -1,3 +1,7 @@
+.navbar {
+    display: none !important;
+}
+
 /* Container splits the screen */
 .auth-container {
     display: flex;
