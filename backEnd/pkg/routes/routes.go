@@ -31,4 +31,7 @@ func SetupRoutes(sqlDB *sql.DB, cc *chatContollers.ChatController) {
 	http.HandleFunc("/api/createGroup",
 		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.CreateGroupHandler))
 
+	http.HandleFunc("/api/updateGroup",
+		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.UpdateGroupHandler))
+
 }

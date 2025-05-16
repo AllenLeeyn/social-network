@@ -45,18 +45,29 @@ func InsertGroup(group *Group) (int, string, error) {
 	return int(groupId), group.UUID, err
 }
 
-func UpdateUser(group *Group) error {
+func UpdateGroup(group *Group) error {
 	updateQuery := `
-		UPDATE users
+		UPDATE groups
 		SET title = ?,	description = ?, banner_image =?,
-			Status = ?, updated_by = ?, update_at = CURRENT_TIMESTAMP,
+			updated_by = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE uuid = ?;`
 
 	_, err := sqlDB.Exec(updateQuery,
 		group.Title, group.Description, group.Banner_image,
-		group.Status, group.UpdatedBy,
+		group.UpdatedBy,
 		group.UUID,
 	)
 
 	return err
+}
+
+func IsGroupFollower(groupUUID string, userID int) bool {
+	qry := `SELECT g.id
+			FROM groups g
+			LEFT JOIN following f ON g.id = f.group_id
+			WHERE g.uuid = ? AND f.follower_id = ?`
+
+	var groupID int
+	err := sqlDB.QueryRow(qry, groupUUID, userID).Scan(&groupID)
+	return err == nil
 }
