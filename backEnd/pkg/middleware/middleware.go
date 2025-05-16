@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
-	fileControllers "social-network/pkg/fileManagement/controllers"
 	userModel "social-network/pkg/userManagement/models"
 )
 
@@ -55,44 +54,6 @@ func checkSessionValidity(r *http.Request) (string, int, string) {
 		return "", -1, ""
 	}
 	return sessionID, s.UserId, s.UserUUID
-}
-
-const maxUploadSize = 2 << 20 // 2 MB
-func HandleProfileImageUpload(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
-
-		err := r.ParseMultipartForm(maxUploadSize)
-		if err != nil {
-			errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-			return
-		}
-
-		profileImageFile, handler, err := r.FormFile("profile_image")
-		if err != nil && err != http.ErrMissingFile {
-			errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-			return
-		}
-
-		profileImage := ""
-		if err == nil && handler.Size > 0 {
-			defer profileImageFile.Close()
-
-			if handler.Size > maxUploadSize {
-				errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-				return
-			}
-
-			profileImage, err = fileControllers.FileUpload(profileImageFile, handler)
-			if err != nil {
-				errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-				return
-			}
-		}
-
-		ctx := context.WithValue(r.Context(), CtxProfileImage, profileImage)
-		next(w, r.WithContext(ctx))
-	}
 }
 
 func GetSessionID(ctx context.Context) (string, bool) {

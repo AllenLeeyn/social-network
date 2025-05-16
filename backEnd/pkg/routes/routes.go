@@ -18,7 +18,7 @@ func SetupRoutes(sqlDB *sql.DB, cc *chatContollers.ChatController) {
 	http.HandleFunc("/api/login",
 		middleware.CheckHttpRequest("guest", http.MethodPost, userContollers.LoginHandler)) /*post method*/
 
-	http.HandleFunc("/api/logout/",
+	http.HandleFunc("/api/logout",
 		middleware.CheckHttpRequest("user", http.MethodGet, userContollers.LogoutHandler))
 
 	http.HandleFunc("/api/updateUser",

@@ -35,12 +35,6 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	u.TypeId = 1
 	u.PasswordHash = password_hash
 
-	/* profileImageRaw := r.Context().Value("profileImage")
-	profileImagePath, isOk := profileImageRaw.(string)
-	if isOk && profileImagePath != "" {
-		u.ProfileImage = sql.NullString{String: profileImagePath, Valid: true}
-	} */
-
 	userId, err := userModel.InsertUser(u)
 	if err != nil {
 		if err.Error() == "email is already used" ||
@@ -82,8 +76,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session, err := userModel.SelectActiveSessionBy("user_id", user.ID)
-	if err == nil {
-		ExpireSession(w, r, session.ID)
+	if err == nil && session != nil {
+		ExpireSession(w, r, session)
 	}
 
 	generateSession(w, r, user.ID)
@@ -91,16 +85,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	sessionId, isOk := middleware.GetSessionID(r.Context())
-	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
+	sessionId, _ := middleware.GetSessionID(r.Context())
+	session, err := userModel.SelectActiveSessionBy("id", sessionId)
+	if err == nil && session != nil {
+		ExpireSession(w, r, session)
 	}
-	if err := ExpireSession(w, r, sessionId); err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
-
 	utils.ReturnJsonSuccess(w, "Logged out successfully", nil)
 }
 
@@ -134,17 +123,13 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	currentUserInfo.AboutMe = u.AboutMe
 	currentUserInfo.Visibility = u.Visibility
 
-	/* profileImageRaw := r.Context().Value("profileImage")
-	profileImagePath, isOk := profileImageRaw.(string)
-	if isOk && profileImagePath != "" {
-		u.ProfileImage = sql.NullString{String: profileImagePath, Valid: true}
-	} */
-
 	updateError := userModel.UpdateUser(currentUserInfo)
 	if updateError != nil {
 		errorControllers.CustomErrorHandler(w, r, updateError.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	sessionId, _ := middleware.GetSessionID(r.Context())
+	ExtendSession(w, sessionId)
 	utils.ReturnJsonSuccess(w, "Profile updated successfully", nil)
 }

@@ -6,13 +6,30 @@ import (
 	"time"
 
 	errorController "social-network/pkg/errorManagement/controllers"
-	middleware "social-network/pkg/middleware"
 	userModel "social-network/pkg/userManagement/models"
 )
 
 type session = userModel.Session
 
-func ExpireSession(w http.ResponseWriter, r *http.Request, sessionId string) error {
+func ExtendSession(w http.ResponseWriter, sessionID string) error {
+	// generate a uuid for the session and set it into a cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session-id",
+		Value:    sessionID,
+		Expires:  time.Now().Add(2 * time.Hour),
+		MaxAge:   7200,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+	return userModel.UpdateSession(&session{
+		IsActive:   true,
+		ExpireTime: time.Now().Add(2 * time.Hour),
+		LastAccess: time.Now(),
+		ID:         sessionID,
+	})
+}
+
+func ExpireSession(w http.ResponseWriter, r *http.Request, s *session) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session-id",
 		Value:    "",         // Empty the cookie's value
@@ -27,17 +44,12 @@ func ExpireSession(w http.ResponseWriter, r *http.Request, sessionId string) err
 		IsActive:   false,
 		ExpireTime: time.Now(),
 		LastAccess: time.Now(),
-		ID:         sessionId,
+		ID:         s.ID,
 	})
 	if err != nil {
-		return err
+		fmt.Println(err.Error())
 	}
-
-	userUUId, isOk := middleware.GetUserUUID(r.Context())
-	if !isOk {
-		return fmt.Errorf("error getting userId from context")
-	}
-	return chatController.CloseConn(userUUId)
+	fmt.Println(chatController.CloseConn(s.UserUUID))
 }
 
 func generateSession(w http.ResponseWriter, r *http.Request, userId int) {
