@@ -1,15 +1,27 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
 	"social-network/pkg/middleware"
 	"social-network/pkg/utils"
-	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+func isValidCommentFeedback(commentFeedback *models.CommentFeedback) error {
+	isValid := false
+
+	if commentFeedback.ParentId, isValid = utils.IsValidId(commentFeedback.ParentId); !isValid {
+		return errors.New("parent id is required and must be numeric")
+	}
+	if commentFeedback.Rating, isValid = utils.IsValidRating(commentFeedback.Rating); !isValid {
+		return errors.New("rating is required and must be 1 or -1")
+	}
+	return nil
+}
 
 func CommentFeedbackHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
@@ -19,61 +31,57 @@ func CommentFeedbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// err := r.ParseForm()
-	err := r.ParseMultipartForm(0)
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-		return
-	}
-	parentID := r.FormValue("parent_id")
-	parentIDInt, _ := strconv.Atoi(parentID)
-	ratingStr := r.FormValue("rating")
-
-	rating, err := strconv.Atoi(ratingStr)
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+	commentFeedback := &models.CommentFeedback{}
+	commentFeedback.UserId = userID
+	if err := utils.ReadJSON(w, r, commentFeedback); err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	existingFeedbackId, existingFeedbackRating := models.CommentHasFeedback(userID, parentIDInt)
+	if err := isValidCommentFeedback(commentFeedback); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	existingFeedbackRating := models.CommentHasFeedback(userID, commentFeedback.ParentId)
 
 	var resMessage string
-	if ratingStr == "1" {
+	if commentFeedback.Rating == 1 {
 		resMessage = "You liked successfully"
 	} else {
 		resMessage = "You disliked successfully"
 	}
 
-	if existingFeedbackId == -1 {
-		insertError := models.InsertCommentFeedback(ratingStr, parentIDInt, userID)
+	if existingFeedbackRating == -1000 {
+		lastInsertID, insertError := models.InsertCommentFeedback(commentFeedback)
 		if insertError != nil {
 			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 			return
 		}
 
-		utils.ReturnJsonSuccess(w, resMessage, nil)
+		utils.ReturnJsonSuccess(w, resMessage, lastInsertID)
 		return
 	} else {
-		updateError := models.UpdateCommentFeedbackStatus(existingFeedbackId, "delete", userID)
-		if updateError != nil {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-			return
-		}
-
-		if existingFeedbackRating != rating { //this is duplicated like or duplicated dislike so we should update it to disable
-			insertError := models.InsertCommentFeedback(ratingStr, parentIDInt, userID)
-			if insertError != nil {
+		if existingFeedbackRating != commentFeedback.Rating {
+			updateError := models.UpdateCommentFeedback(commentFeedback)
+			if updateError != nil {
 				errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 				return
 			}
-		} else {
-			if ratingStr == "1" {
+		} else { //this is duplicated like or duplicated dislike so we should update it to delete
+			if commentFeedback.Rating == 1 {
 				resMessage = "You removed like successfully"
 			} else {
 				resMessage = "You removed dislike successfully"
 			}
-		}
 
+			commentFeedback.Rating = 0
+			updateError := models.UpdateCommentFeedback(commentFeedback)
+			if updateError != nil {
+				errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+				return
+			}
+		}
 		utils.ReturnJsonSuccess(w, resMessage, nil)
 		return
 	}

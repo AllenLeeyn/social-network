@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+	"log"
 	userManagementModels "social-network/pkg/userManagement/models"
 	"time"
 )
@@ -19,27 +21,57 @@ type CommentFeedback struct {
 	Comment   Comment                   `json:"comment"`
 }
 
-func InsertCommentFeedback(Rating string, parentId int, userId int) error {
-	insertQuery := `INSERT INTO comment_feedback (rating, user_id, parent_id) VALUES (?, ?, ?);`
-	_, insertErr := sqlDB.Exec(insertQuery, Rating, userId, parentId)
+func InsertCommentFeedback(commentFeedback *CommentFeedback) (int, error) {
+	insertQuery := `INSERT INTO comment_feedback (rating, parent_id, user_id) VALUES (?, ?, ?);`
+	result, insertErr := sqlDB.Exec(insertQuery, commentFeedback.Rating, commentFeedback.ParentId, commentFeedback.UserId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
-		return insertErr
+		var ErrDuplicateCommentFeedback = errors.New("duplicate comment feedback")
+		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
+			// if sqliteErr.ErrorCode() == 19 { // SQLite constraint violation error code
+			// 	return -1, sql.ErrNoRows // Return custom error to indicate a duplicate
+			// }
+			if sqliteErr.ErrorCode() == 19 {
+				return -1, ErrDuplicateCommentFeedback
+			}
+		}
+
+		return -1, insertErr
 	}
-	return nil
+
+	// Retrieve the last inserted ID
+	lastInsertID, err := result.LastInsertId()
+	if err != nil {
+		log.Fatal(err)
+		return -1, err
+	}
+
+	return int(lastInsertID), nil
 }
 
-func UpdateCommentFeedback(Rating string, commentFeedback CommentFeedback) error {
+func UpdateCommentFeedback(commentFeedback *CommentFeedback) error {
 	updateQuery := `UPDATE comment_feedback
 	SET rating = ?,
 		updated_at = CURRENT_TIMESTAMP,
 		updated_by = ?
-	WHERE id = ?;`
-	_, insertErr := sqlDB.Exec(updateQuery, Rating, commentFeedback.UserId, commentFeedback.ID)
-	if insertErr != nil {
+	WHERE parent_id = ?
+	AND user_id = ?;`
+	_, updateErr := sqlDB.Exec(updateQuery, commentFeedback.Rating, commentFeedback.UserId, commentFeedback.ParentId, commentFeedback.UserId)
+	if updateErr != nil {
 		// Check if the error is a SQLite constraint violation
-		return insertErr
+		var ErrDuplicateCommentFeedback = errors.New("duplicate comment rating")
+		if sqliteErr, ok := updateErr.(interface{ ErrorCode() int }); ok {
+			// if sqliteErr.ErrorCode() == 19 { // SQLite constraint violation error code
+			// 	return -1, sql.ErrNoRows // Return custom error to indicate a duplicate
+			// }
+			if sqliteErr.ErrorCode() == 19 {
+				return ErrDuplicateCommentFeedback
+			}
+		}
+
+		return updateErr
 	}
+
 	return nil
 }
 
@@ -151,19 +183,18 @@ func ReadAllCommentsFeedbackdByUserId(userId int, Rating string) ([]CommentFeedb
 
 }
 
-func CommentHasFeedback(userId int, parentIdID int) (int, int) {
-	var existingFeedbackId int
+func CommentHasFeedback(userId int, parentIdID int) int {
 	var existingFeedbackRating int
-	feedbackCheckQuery := `SELECT id, rating
+	feedbackCheckQuery := `SELECT rating
 		FROM comment_feedback cf
 		WHERE cf.user_id = ? AND cf.parent_id = ?
 		AND status = 'enable'
 	`
-	err := sqlDB.QueryRow(feedbackCheckQuery, userId, parentIdID).Scan(&existingFeedbackId, &existingFeedbackRating)
+	err := sqlDB.QueryRow(feedbackCheckQuery, userId, parentIdID).Scan(&existingFeedbackRating)
 
 	if err == nil { //it means that post has feedback
-		return existingFeedbackId, existingFeedbackRating
+		return existingFeedbackRating
 	} else {
-		return -1, 0
+		return -1000
 	}
 }

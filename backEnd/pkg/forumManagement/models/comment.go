@@ -24,10 +24,17 @@ type Comment struct {
 	User             userManagementModels.User `json:"user"`
 }
 
-func InsertComment(postId int, userId int, content string) (int, error) {
+func InsertComment(comment *Comment) (int, error) {
 	// todo: add parent_id
-	insertQuery := `INSERT INTO comments (post_id, content, user_id) VALUES (?, ?, ?);`
-	result, insertErr := sqlDB.Exec(insertQuery, postId, content, userId)
+	var parentId interface{}
+	if comment.ParentId == 0 {
+		parentId = nil
+	} else {
+		parentId = comment.ParentId
+	}
+
+	insertQuery := `INSERT INTO comments (post_id, parent_id, content, user_id) VALUES (?, ?, ?, ?);`
+	result, insertErr := sqlDB.Exec(insertQuery, comment.PostId, parentId, comment.Content, comment.UserId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		return -1, insertErr
@@ -41,14 +48,14 @@ func InsertComment(postId int, userId int, content string) (int, error) {
 	return int(lastInsertID), nil
 }
 
-func UpdateComment(comment *Comment, user_id int, newContent string) error {
+func UpdateComment(comment *Comment) error {
 	// Start a transaction for atomicity
 	updateQuery := `UPDATE comments
 					SET content = ?,
 						updated_at = CURRENT_TIMESTAMP,
 						updated_by = ?
 					WHERE id = ?;`
-	_, updateErr := sqlDB.Exec(updateQuery, newContent, user_id, comment.ID)
+	_, updateErr := sqlDB.Exec(updateQuery, comment.Content, comment.UserId, comment.ID)
 	if updateErr != nil {
 		return updateErr
 	}

@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -57,6 +59,21 @@ func ReadPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Comments fetched successfully", comments)
 }
 
+func isValidCommentInfo(comment *models.Comment) error {
+	isValid := false
+
+	if comment.PostId, isValid = utils.IsValidId(comment.PostId); !isValid {
+		return errors.New("post id is required and must be numeric")
+	}
+	if comment.Content, isValid = utils.IsValidContent(comment.Content, 3, 1000); !isValid {
+		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
+	}
+
+	//todo check parent_id
+
+	return nil
+}
+
 // todo
 func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
@@ -66,39 +83,38 @@ func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(0)
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-		return
-	}
-
-	post_id_str := r.FormValue("post_id")
-	content := utils.SanitizeInput(r.FormValue("content"))
-	if len(post_id_str) == 0 || len(content) == 0 {
-		res := utils.Result{
-			Success:    false,
-			Message:    "content is required.",
-			HttpStatus: http.StatusOK,
-			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-
-	post_id, err := strconv.Atoi(post_id_str)
-	if err != nil {
+	comment := &models.Comment{}
+	comment.UserId = userID
+	if err := utils.ReadJSON(w, r, comment); err != nil {
+		fmt.Println("Error reading JSON:", err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
+	if err := isValidCommentInfo(comment); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	// Insert a record while checking duplicates
-	_, insertError := models.InsertComment(post_id, userID, content)
+	_, insertError := models.InsertComment(comment)
 	if insertError != nil {
+		fmt.Println("Error inserting comment:", insertError)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	utils.ReturnJsonSuccess(w, "Comment submitted successfully", nil)
+}
+
+func isValidUpdateCommentInfo(comment *models.Comment) error {
+	isValid := false
+
+	if comment.ID, isValid = utils.IsValidId(comment.ID); !isValid {
+		return errors.New("comment id is required and must be numeric")
+	}
+
+	return isValidCommentInfo(comment)
 }
 
 // todo
@@ -110,41 +126,20 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(0)
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-		return
-	}
-
-	idStr := r.FormValue("comment_id")
-	post_uuid := utils.SanitizeInput(r.FormValue("post_uuid"))
-	content := utils.SanitizeInput(r.FormValue("content"))
-
-	if len(idStr) == 0 || len(post_uuid) == 0 || len(content) == 0 {
-		res := utils.Result{
-			Success:    false,
-			Message:    "content is required.",
-			HttpStatus: http.StatusOK,
-			Data:       nil,
-		}
-		utils.ReturnJson(w, res)
-		return
-	}
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	comment := &models.Comment{}
+	comment.UserId = userID
+	if err := utils.ReadJSON(w, r, comment); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	comment := &models.Comment{
-		ID:      id,
-		Content: content,
-		UserId:  userID,
+	if err := isValidUpdateCommentInfo(comment); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	// Update a record while checking duplicates
-	updateError := models.UpdateComment(comment, userID, content)
+	updateError := models.UpdateComment(comment)
 	if updateError != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -162,28 +157,19 @@ func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(0)
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-		return
-	}
-
-	idStr := r.FormValue("comment_id")
-	post_uuid := utils.SanitizeInput(r.FormValue("post_uuid"))
-
-	if len(idStr) == 0 || len(post_uuid) == 0 {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-		return
-	}
-
-	comment_id, err := strconv.Atoi(idStr)
-	if err != nil {
+	comment := &models.Comment{}
+	if err := utils.ReadJSON(w, r, comment); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
+	if _, isValid := utils.IsValidId(comment.ID); !isValid {
+		errorControllers.CustomErrorHandler(w, r, "comment id is required and must be numeric", http.StatusBadRequest)
+		return
+	}
+
 	// Update a record while checking duplicates
-	updateError := models.UpdateCommentStatus(comment_id, "delete", userID)
+	updateError := models.UpdateCommentStatus(comment.ID, "delete", userID)
 	if updateError != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return

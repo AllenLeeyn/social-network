@@ -55,13 +55,13 @@ func PostFeedbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if existingFeedbackRating == -1000 {
-		_, insertError := models.InsertPostFeedback(postFeedback)
+		lastInsertID, insertError := models.InsertPostFeedback(postFeedback)
 		if insertError != nil {
 			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 			return
 		}
 
-		utils.ReturnJsonSuccess(w, resMessage, nil)
+		utils.ReturnJsonSuccess(w, resMessage, lastInsertID)
 		return
 	} else {
 		if existingFeedbackRating != postFeedback.Rating {

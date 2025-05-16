@@ -173,7 +173,7 @@ func isValidPostInfo(post *models.Post) error {
 		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
 	}
 
-	//to check post audiences if it has selected visibility
+	//todo check post audiences if it has selected visibility
 
 	if post.Visibility == "" {
 		post.Visibility = "public"
@@ -213,6 +213,16 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post submitted successfully", nil)
 }
 
+func isValidUpdatePostInfo(post *models.Post) error {
+	isValid := false
+
+	if post.ID, isValid = utils.IsValidId(post.ID); !isValid {
+		return errors.New("post id is required and must be numeric")
+	}
+
+	return isValidPostInfo(post)
+}
+
 // todo
 func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
@@ -229,7 +239,7 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := isValidPostInfo(post); err != nil {
+	if err := isValidUpdatePostInfo(post); err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
 	}

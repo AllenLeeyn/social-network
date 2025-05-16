@@ -67,10 +67,10 @@ func SetupRoutes(sqlDB *sql.DB) {
 		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.SubmitCommentHandler)) /*post method*/
 
 	http.HandleFunc("/api/updateComment",
-		middleware.CheckHttpRequest("user", http.MethodPut, forumControllers.UpdateCommentHandler)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodPut, forumControllers.UpdateCommentHandler)) /*put method*/
 
 	http.HandleFunc("/api/deleteComment",
-		middleware.CheckHttpRequest("user", http.MethodDelete, forumControllers.DeleteCommentHandler)) /*post method*/
+		middleware.CheckHttpRequest("user", http.MethodDelete, forumControllers.DeleteCommentHandler)) /*delete method*/
 
 	http.HandleFunc("/api/commentFeedback",
 		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.CommentFeedbackHandler)) /*post method*/

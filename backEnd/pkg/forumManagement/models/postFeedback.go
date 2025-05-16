@@ -26,7 +26,7 @@ func InsertPostFeedback(postFeedback *PostFeedback) (int, error) {
 	result, insertErr := sqlDB.Exec(insertQuery, postFeedback.Rating, postFeedback.ParentId, postFeedback.UserId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
-		var ErrDuplicatePostFeedback = errors.New("duplicate post like")
+		var ErrDuplicatePostFeedback = errors.New("duplicate post feedback")
 		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
 			// if sqliteErr.ErrorCode() == 19 { // SQLite constraint violation error code
 			// 	return -1, sql.ErrNoRows // Return custom error to indicate a duplicate
@@ -50,13 +50,13 @@ func InsertPostFeedback(postFeedback *PostFeedback) (int, error) {
 }
 
 func UpdatePostFeedback(postFeedback *PostFeedback) error {
-	insertQuery := `UPDATE post_feedback
+	updateQuery := `UPDATE post_feedback
 		               SET rating = ?,
 			           updated_at = CURRENT_TIMESTAMP,
 			           updated_by = ?
 		               WHERE parent_id = ?
 					   AND user_id = ?;`
-	_, updateErr := sqlDB.Exec(insertQuery, postFeedback.Rating, postFeedback.UserId, postFeedback.ParentId, postFeedback.UserId)
+	_, updateErr := sqlDB.Exec(updateQuery, postFeedback.Rating, postFeedback.UserId, postFeedback.ParentId, postFeedback.UserId)
 	if updateErr != nil {
 		// Check if the error is a SQLite constraint violation
 		var ErrDuplicatePostFeedback = errors.New("duplicate post rating")
@@ -319,16 +319,16 @@ func ReadPostsFeedbacksByPostId(postId int) ([]PostFeedback, error) {
 }
 
 func PostHasFeedback(userId int, postID int) int {
-	var existingLikeType int
-	likeCheckQuery := `SELECT rating
+	var existingLikeRating int
+	feedbackCheckQuery := `SELECT rating
 		FROM post_feedback pf
 		WHERE pf.user_id = ? AND pf.parent_id = ?
 		AND status = 'enable'
 	`
-	err := sqlDB.QueryRow(likeCheckQuery, userId, postID).Scan(&existingLikeType)
+	err := sqlDB.QueryRow(feedbackCheckQuery, userId, postID).Scan(&existingLikeRating)
 
 	if err == nil { //it means that post has like or dislike
-		return existingLikeType
+		return existingLikeRating
 	} else {
 		return -1000
 	}
