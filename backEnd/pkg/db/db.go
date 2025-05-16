@@ -69,6 +69,12 @@ func migrateDB(sqlDB *sql.DB, migrateSource string) error {
 		}
 	}
 
+	if version == 0 || err == migrate.ErrNilVersion {
+		if err = convertPasswordByteToString(sqlDB); err != nil {
+			return err
+		}
+	}
+
 	if err = m.Up(); err != nil {
 		if err == migrate.ErrNoChange {
 			log.Println("\033[33mNo new migrations to apply.\033[0m")
@@ -80,6 +86,45 @@ func migrateDB(sqlDB *sql.DB, migrateSource string) error {
 	}
 
 	return err
+}
+
+func convertPasswordByteToString(sqlDB *sql.DB) error {
+	selectUsersQry := `SELECT id, pw_hash FROM users`
+
+	type userConatiner struct {
+		id      int
+		pw_hash []byte
+	}
+
+	rows, err := sqlDB.Query(selectUsersQry)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var users []userConatiner
+	for rows.Next() {
+		var user userConatiner
+		err := rows.Scan(&user.id, &user.pw_hash)
+		if err != nil {
+			return err
+		}
+		users = append(users, user)
+	}
+	if err := rows.Err(); err != nil {
+		return checkErrNoRows(err)
+	}
+
+	updateQry := `UPDATE users SET pw_hash = ? WHERE id = ?`
+
+	for _, user := range users {
+		pwHashStr := string(user.pw_hash) // safe if it's a bcrypt hash
+		_, err := sqlDB.Exec(updateQry, pwHashStr, user.id)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func generateUuidTables(sqlDB *sql.DB) error {

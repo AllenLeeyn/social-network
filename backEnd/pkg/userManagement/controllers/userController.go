@@ -33,7 +33,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u.TypeId = 1
-	u.PasswordHash = password_hash
+	u.PasswordHash = string(password_hash)
 
 	userId, err := userModel.InsertUser(u)
 	if err != nil {
@@ -70,7 +70,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		user, _ = userModel.SelectUserByField("nick_name", u.NickName)
 	}
 
-	if user == nil || bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(u.Password)) != nil {
+	if user == nil || bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(u.Password)) != nil {
 		errorControllers.CustomErrorHandler(w, r, "Incorrect username and/or password", http.StatusBadRequest)
 		return
 	}

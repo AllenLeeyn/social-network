@@ -20,7 +20,7 @@ type User struct {
 	Email           string         `json:"email"`
 	Password        string         `json:"password"`
 	ConfirmPassword string         `json:"confirmPassword"`
-	PasswordHash    []byte         `json:"pw_hash"`
+	PasswordHash    string         `json:"pw_hash"`
 	NickName        string         `json:"nick_name"`
 	ProfileImage    sql.NullString `json:"profile_image"`
 	AboutMe         string         `json:"about_me"`
@@ -59,7 +59,8 @@ func checkUniqueUser(user *User) error {
 			FROM users 
 			WHERE email = ? OR nick_name = ? LIMIT 1;`
 
-	err := sqlDB.QueryRow(qry, user.Email, user.NickName).Scan(&existingEmail, &existingUsername)
+	err := sqlDB.QueryRow(qry, user.Email, user.NickName).
+		Scan(&existingEmail, &existingUsername)
 	if err != nil {
 		return checkErrNoRows(err)
 	}
@@ -117,6 +118,20 @@ func InsertUser(user *User) (int, error) {
 }
 
 func UpdateUser(user *User) error {
+	checkQuery := `SELECT id 
+					FROM users 
+					WHERE nick_name = ? AND id != ?`
+
+	var existingID int
+	err := sqlDB.QueryRow(checkQuery, user.NickName, user.ID).
+		Scan(&existingID)
+	if err == nil {
+		return fmt.Errorf("nickname '%s' is already taken", user.NickName)
+	}
+	if err != sql.ErrNoRows {
+		return err
+	}
+
 	updateQuery := `
 		UPDATE users
 		SET first_name = ?,	last_name = ?, nick_name =?,
@@ -125,7 +140,7 @@ func UpdateUser(user *User) error {
 			status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
 		WHERE id = ?;`
 
-	_, err := sqlDB.Exec(updateQuery,
+	_, err = sqlDB.Exec(updateQuery,
 		user.FirstName, user.LastName, user.NickName,
 		user.Gender, user.BirthDay, user.AboutMe,
 		user.Visibility, user.ProfileImage,
