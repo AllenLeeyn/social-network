@@ -302,11 +302,11 @@ func ReadAllCommentsForPostByUserID(postId int, userID int) ([]Comment, error) {
 			c.status AS comment_status, c.created_at AS comment_created_at, c.updated_at AS comment_updated_at, c.updated_by AS comment_updated_by,
 			c.like_count as comment_like_count, c.dislike_count as comment_dislike_count,
 			CASE 
-                WHEN EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = c.id AND status != 'delete' AND type = 'like' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM comment_feedback WHERE parent_id = c.id AND status != 'delete' AND rating = 1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_liked_by_user,
             CASE 
-                WHEN EXISTS (SELECT 1 FROM comment_likes WHERE comment_id = c.id AND status != 'delete' AND type = 'dislike' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM comment_feedback WHERE parent_id = c.id AND status != 'delete' AND rating = -1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_disliked_by_user
 		FROM comments c
@@ -390,7 +390,7 @@ func ReadAllCommentsForPostByUserID(postId int, userID int) ([]Comment, error) {
 // 		FROM comments c
 // 			INNER JOIN users u
 // 				ON c.user_id = u.id AND c.status != 'delete' AND u.status != 'delete' AND c.post_id = ?
-// 			INNER JOIN comment_likes cl
+// 			INNER JOIN comment_feedback cl
 // 				ON c.id = cl.comment_id AND cl.status != 'delete'
 // 		GROUP BY cl.comment_id;
 // 	`

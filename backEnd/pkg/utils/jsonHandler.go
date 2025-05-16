@@ -35,7 +35,7 @@ func ReturnJsonSuccess(w http.ResponseWriter, message string, data interface{}) 
 	ReturnJson(w, Result{
 		Success: true,
 		Message: message,
-		Data:    nil,
+		Data:    data,
 	})
 }
 

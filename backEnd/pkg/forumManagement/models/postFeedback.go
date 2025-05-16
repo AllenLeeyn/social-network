@@ -11,7 +11,7 @@ import (
 type PostFeedback struct {
 	ID        int                       `json:"id"`
 	Rating    int                       `json:"rating"`
-	PostId    int                       `json:"post_id"`
+	ParentId  int                       `json:"parent_id"`
 	UserId    int                       `json:"user_id"`
 	Status    string                    `json:"status"`
 	CreatedAt time.Time                 `json:"created_at"`
@@ -22,8 +22,8 @@ type PostFeedback struct {
 }
 
 func InsertPostFeedback(postFeedback *PostFeedback) (int, error) {
-	insertQuery := `INSERT INTO post_feedback (rating, post_id, user_id) VALUES (?, ?, ?);`
-	result, insertErr := sqlDB.Exec(insertQuery, postFeedback.Rating, postFeedback.PostId, postFeedback.UserId)
+	insertQuery := `INSERT INTO post_feedback (rating, parent_id, user_id) VALUES (?, ?, ?);`
+	result, insertErr := sqlDB.Exec(insertQuery, postFeedback.Rating, postFeedback.ParentId, postFeedback.UserId)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		var ErrDuplicatePostFeedback = errors.New("duplicate post like")
@@ -49,7 +49,33 @@ func InsertPostFeedback(postFeedback *PostFeedback) (int, error) {
 	return int(lastInsertID), nil
 }
 
-func UpdateStatusFeedback(post_feedback_id int, status string, user_id int) error {
+func UpdatePostFeedback(postFeedback *PostFeedback) error {
+	insertQuery := `UPDATE post_feedback
+		               SET rating = ?,
+			           updated_at = CURRENT_TIMESTAMP,
+			           updated_by = ?
+		               WHERE parent_id = ?
+					   AND user_id = ?;`
+	_, updateErr := sqlDB.Exec(insertQuery, postFeedback.Rating, postFeedback.UserId, postFeedback.ParentId, postFeedback.UserId)
+	if updateErr != nil {
+		// Check if the error is a SQLite constraint violation
+		var ErrDuplicatePostFeedback = errors.New("duplicate post rating")
+		if sqliteErr, ok := updateErr.(interface{ ErrorCode() int }); ok {
+			// if sqliteErr.ErrorCode() == 19 { // SQLite constraint violation error code
+			// 	return -1, sql.ErrNoRows // Return custom error to indicate a duplicate
+			// }
+			if sqliteErr.ErrorCode() == 19 {
+				return ErrDuplicatePostFeedback
+			}
+		}
+
+		return updateErr
+	}
+
+	return nil
+}
+
+func UpdatePostFeedbackStatus(post_feedback_id int, status string, user_id int) error {
 	updateQuery := `UPDATE post_feedback
 		               SET status = ?,
 			           updated_at = CURRENT_TIMESTAMP,
@@ -72,7 +98,7 @@ func ReadAllPostsFeedbacks() ([]PostFeedback, error) {
 			c.id as category_id, c.name as category_name
 		FROM post_feedback pf
 			INNER JOIN posts p
-				ON pf.post_id = p.id	
+				ON pf.parent_id = p.id	
 				AND p.status != 'delete'
 			INNER JOIN users u
 				ON pf.user_id = u.id
@@ -148,7 +174,7 @@ func ReadPostsFeedbacksByUserId(userId int) ([]PostFeedback, error) {
 			c.id as category_id, c.name as category_name
 		FROM post_feedback pf
 			INNER JOIN posts p
-				ON pf.post_id = p.id	
+				ON pf.parent_id = p.id	
 				AND p.status != 'delete'
 			INNER JOIN users u
 				ON pf.user_id = u.id
@@ -225,7 +251,7 @@ func ReadPostsFeedbacksByPostId(postId int) ([]PostFeedback, error) {
 			c.id as category_id, c.name as category_name
 		FROM post_feedback pf
 			INNER JOIN posts p
-				ON pf.post_id = p.id	
+				ON pf.parent_id = p.id	
 				AND p.status != 'delete'
 				AND p.id = ?
 			INNER JOIN users u
@@ -292,19 +318,18 @@ func ReadPostsFeedbacksByPostId(postId int) ([]PostFeedback, error) {
 	return postFeedbacks, nil
 }
 
-func PostHasFeedback(userId int, postID int) (int, string) {
-	var existingLikeId int
-	var existingLikeType string
-	likeCheckQuery := `SELECT id, rating
+func PostHasFeedback(userId int, postID int) int {
+	var existingLikeType int
+	likeCheckQuery := `SELECT rating
 		FROM post_feedback pf
-		WHERE pf.user_id = ? AND pf.post_id = ?
+		WHERE pf.user_id = ? AND pf.parent_id = ?
 		AND status = 'enable'
 	`
-	err := sqlDB.QueryRow(likeCheckQuery, userId, postID).Scan(&existingLikeId, &existingLikeType)
+	err := sqlDB.QueryRow(likeCheckQuery, userId, postID).Scan(&existingLikeType)
 
 	if err == nil { //it means that post has like or dislike
-		return existingLikeId, existingLikeType
+		return existingLikeType
 	} else {
-		return -1, ""
+		return -1000
 	}
 }

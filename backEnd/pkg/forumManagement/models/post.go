@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	userManagementModels "social-network/pkg/userManagement/models"
 	"social-network/pkg/utils"
 	"sort"
@@ -31,9 +30,10 @@ type Post struct {
 	IsDislikedByUser bool                      `json:"disliked"`
 	User             userManagementModels.User `json:"user"` // Embedded user data
 
-	CategoryIds []int      `json:"category_ids"` // List of category ids related to the post
-	Categories  []Category `json:"categories"`   // List of categories related to the post
-	PostFiles   []PostFile `json:"post_files"`   // List of files related to the post
+	CategoryIds     []int             `json:"category_ids"`     // List of category ids related to the post
+	FileAttachments map[string]string `json:"file_attachments"` // List of file attachments
+	Categories      []Category        `json:"categories"`       // List of categories related to the post
+	PostFiles       []PostFile        `json:"post_files"`       // List of files related to the post
 }
 
 func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) (int, error) {
@@ -52,6 +52,7 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 	insertQuery := `INSERT INTO posts (uuid, title, content, user_id, group_id, visibility) VALUES (?, ?, ?, ?, ?, ?);`
 	result, insertErr := tx.Exec(insertQuery, post.UUID, post.Title, post.Content, post.UserId, post.GroupId, post.Visibility)
 	if insertErr != nil {
+		tx.Rollback()
 		return -1, insertErr
 	}
 
@@ -59,7 +60,6 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 	lastInsertID, err := result.LastInsertId()
 	if err != nil {
 		tx.Rollback() // Rollback on error
-		log.Fatal(err)
 		return -1, err
 	}
 
@@ -91,6 +91,7 @@ func UpdatePost(post *Post, categories []int, uploadedFiles map[string]string, u
 		return err
 	}
 
+	//todo: ask whether is it possible to update group of a post
 	updateQuery := `UPDATE posts
 					SET title = ?,
 						content = ?,
@@ -100,6 +101,7 @@ func UpdatePost(post *Post, categories []int, uploadedFiles map[string]string, u
 					WHERE id = ?;`
 	_, updateErr := tx.Exec(updateQuery, post.Title, post.Content, post.Visibility, user_id, post.ID)
 	if updateErr != nil {
+		tx.Rollback()
 		return updateErr
 	}
 
@@ -152,6 +154,7 @@ func UpdateStatusPost(post_id int, status string, user_id int) error {
 					WHERE id = ?;`
 	_, updateErr := tx.Exec(updateQuery, status, user_id, post_id)
 	if updateErr != nil {
+		tx.Rollback()
 		return updateErr
 	}
 
@@ -186,11 +189,11 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 			c.id as category_id, c.name as category_name,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'like' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = 1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_liked_by_user,
             CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'dislike' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = -1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
@@ -204,7 +207,6 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 				AND pc.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
-				AND c.status = 'enable'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
 		ORDER BY p.id desc;
@@ -313,7 +315,6 @@ func ReadPostsByCategoryId(category_id int) ([]Post, error) {
 				AND pc.status = 'enable'
 			INNER JOIN categories c
 				ON pc.category_id = c.id
-				AND c.status = 'enable'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
 		ORDER BY p.id desc;
@@ -335,10 +336,9 @@ func ReadPostsByCategoryId(category_id int) ([]Post, error) {
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy, &post.UserId,
-			&user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 		)
@@ -419,7 +419,6 @@ func FilterPosts(searchTerm string) ([]Post, error) {
 				AND pc.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
-				AND c.status = 'enable'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
       		AND (p.title LIKE ? OR p.content LIKE ?)
@@ -442,10 +441,9 @@ func FilterPosts(searchTerm string) ([]Post, error) {
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy, &post.UserId,
-			&user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 		)
@@ -514,11 +512,11 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
 			c.id as category_id, c.name as category_name,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'like' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = 1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_liked_by_user,
             CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'dislike' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = -1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
@@ -533,7 +531,6 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
 				AND pc.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
-				AND c.status = 'enable'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
 		ORDER BY p.id desc;
@@ -628,31 +625,30 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 			c.id as category_id, c.name as category_name,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'like' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = 1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_liked_by_user,
             CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'dislike' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = -1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
-			INNER JOIN post_likes pl
-				ON pl.post_id = p.id
-				AND pl.status = 'enable'
+			INNER JOIN post_feedback pfeedback
+				ON pfeedback.parent_id = p.id
+				AND pfeedback.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
 			LEFT JOIN post_files pf
 				ON p.id = pf.post_id
 				AND pf.status = 'enable'
 			INNER JOIN users liked_user
-				ON pl.user_id = liked_user.id
+				ON pfeedback.user_id = liked_user.id
 				AND liked_user.id = ?
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
 				AND pc.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
-				AND c.status = 'enable'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
 		ORDER BY p.id desc;
@@ -747,11 +743,11 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 			c.id as category_id, c.name as category_name,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'like' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = 1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_liked_by_user,
             CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'dislike' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = -1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
@@ -766,7 +762,6 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 				AND pc.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
-				AND c.status = 'enable'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete';
     `, checkLikeForUser, checkLikeForUser, postId)
@@ -848,11 +843,11 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 			c.id as category_id, c.name as category_name,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'like' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = 1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_liked_by_user,
             CASE 
-                WHEN EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.id AND status != 'delete' AND type = 'dislike' AND user_id = ?) THEN 1
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = -1 AND user_id = ?) THEN 1
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
@@ -867,7 +862,6 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 				AND pc.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
-				AND c.status = 'enable'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete';
     `, checkLikeForUser, checkLikeForUser, postUUID)
@@ -959,7 +953,6 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
 				AND pc.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
-				AND c.status = 'enable'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete';
     `, postId)

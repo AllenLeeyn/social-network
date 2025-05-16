@@ -16,5 +16,5 @@ func ReadAllCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.ReturnJsonSuccess(w, "Post submitted successfully", categories)
+	utils.ReturnJsonSuccess(w, "Categories fetched successfully", categories)
 }

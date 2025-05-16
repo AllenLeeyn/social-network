@@ -98,8 +98,7 @@ func AdminReadAllCategories() ([]Category, error) {
 				AND pc.status != 'delete'
 				AND pc.category_id = c.id
 			   ) as post_likes_count
-        FROM categories c
-        WHERE c.status != 'delete';
+        FROM categories c;
     `)
 	if selectError != nil {
 		return nil, selectError
@@ -136,8 +135,7 @@ func ReadAllCategories() ([]Category, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
         SELECT c.id as category_id, c.name as category_name
-        FROM categories c
-        WHERE c.status != 'delete';
+        FROM categories c;
     `)
 	if selectError != nil {
 		return nil, selectError
@@ -208,7 +206,7 @@ func ReadCategoryById(categoryId int) (Category, error) {
 func ReadCategoryByName(categoryName string) (Category, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT c.id as category_id, c.name as category_name, c.color as category_color
+        SELECT c.id as category_id, c.name as category_name
         FROM categories c
         WHERE c.name = ?;
     `, categoryName)
