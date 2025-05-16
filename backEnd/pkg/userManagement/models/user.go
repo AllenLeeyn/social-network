@@ -31,6 +31,12 @@ type User struct {
 	UpdatedAt       *time.Time     `json:"updated_at"`
 }
 
+func SelectUserIDByUUID(userUUID string) (int, error) {
+	var userID int
+	err := sqlDB.QueryRow(`SELECT id FROM users WHERE uuid = ?`, userID).Scan(&userID)
+	return userID, err
+}
+
 func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) {
 	if fieldName != "id" && fieldName != "nick_name" && fieldName != "email" {
 		return nil, fmt.Errorf("invalid field")
