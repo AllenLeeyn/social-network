@@ -56,6 +56,14 @@ func checkSessionValidity(r *http.Request) (string, int, string) {
 	return sessionID, s.UserId, s.UserUUID
 }
 
+func GetSessionCredentials(ctx context.Context) (string, int, string, bool) {
+	sessionID, sessionOk := ctx.Value(CtxSessionID).(string)
+	userID, userIDOk := ctx.Value(CtxUserID).(int)
+	userUUID, userUUIDOk := ctx.Value(CtxUserUUID).(string)
+	return sessionID, userID, userUUID,
+		sessionOk && userIDOk && userUUIDOk
+}
+
 func GetSessionID(ctx context.Context) (string, bool) {
 	sessionID, ok := ctx.Value(CtxSessionID).(string)
 	return sessionID, ok

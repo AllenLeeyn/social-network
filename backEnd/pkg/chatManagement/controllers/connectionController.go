@@ -13,13 +13,7 @@ import (
 )
 
 func (cc *ChatController) WSHandler(w http.ResponseWriter, r *http.Request) {
-	sessionId, isOk := middleware.GetSessionID(r.Context())
-	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
-
-	userId, isOk := middleware.GetUserID(r.Context())
+	sessionId, userId, _, isOk := middleware.GetSessionCredentials(r.Context())
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
