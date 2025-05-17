@@ -9,8 +9,8 @@ export default function Navbar() {
   // Logout handler
   const handleLogout = async (e) => {
     e.preventDefault()
+    alert("logging out..")
     await logout()
-    window.location.href = "/"
   }
 
   return (

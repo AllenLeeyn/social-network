@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -10,6 +11,7 @@ import (
 func Posts(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, userID, isValid := checkHttpRequest(w, r, "user", http.MethodGet)
 	if !isValid {
+		fmt.Println("no!")
 		return
 	}
 

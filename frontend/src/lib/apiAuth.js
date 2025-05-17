@@ -32,12 +32,19 @@ export async function logout() {
   const response = await fetch(`${API_URL}/logout`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(userData),
+    credentials: "include", // Ensure cookies are included
   });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Signup failed");
+
+  console.log("Logout response status:", response.status); // Debug log
+
+  if (response.status === 200) {
+    console.log("Logout successful. Redirecting to /login...");
+    window.location.href = "/login"; // Redirect to login
+    return;
   }
 
-  return response.json(); // Return success message or user data
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Logout failed");
+  }
 }
