@@ -4,6 +4,7 @@ import (
 	// "forum/middlewares"
 
 	"errors"
+	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -23,6 +24,7 @@ func ReadAllPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	posts, err := models.ReadAllPosts(userID)
 	if err != nil {
+		fmt.Println("error is: ", err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -31,6 +33,13 @@ func ReadAllPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadPostsByCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
 	categoryName, errUrl := utils.ExtractFromUrl(r.URL.Path, "api/posts")
 	if errUrl == "not found" {
 		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
@@ -43,7 +52,7 @@ func ReadPostsByCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := models.ReadPostsByCategoryId(filteredCategory.ID)
+	posts, err := models.ReadPostsByCategoryId(filteredCategory.ID, userID)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -63,13 +72,20 @@ func ReadPostsByCategoryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func FilterPostsHandler(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
+	userID, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
 	searchTerm, errUrl := utils.ExtractFromUrl(r.URL.Path, "api/filterPosts")
 	if errUrl == "not found" {
 		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 
-	posts, err := models.FilterPosts(searchTerm)
+	posts, err := models.FilterPosts(searchTerm, userID)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -174,9 +190,22 @@ func isValidPostInfo(post *models.Post) error {
 	}
 
 	//todo check post audiences if it has selected visibility
-
+	if post.Visibility == "selected" {
+		if post.SelectedAudienceUserIds == nil {
+			return errors.New("audience ids is required and must be a list of integers")
+		}
+		if post.SelectedAudienceUserIds, isValid = utils.IsValidIntegerList(post.SelectedAudienceUserIds); !isValid {
+			return errors.New("audience ids is required and must be a list of integers")
+		}
+	}
 	if post.Visibility == "" {
 		post.Visibility = "public"
+	}
+	if post.Visibility == "publice" {
+		post.GroupId = 0
+	}
+	if post.Visibility != "public" && post.Visibility != "private" && post.Visibility != "selected" {
+		return errors.New("visibility is required and must be either 'public', 'private' or 'selected'")
 	}
 
 	return nil
