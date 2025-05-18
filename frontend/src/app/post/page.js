@@ -25,7 +25,7 @@ export default function PostPage() {
         const postRes = await fetch(`/api/post?id=${id}`);
         if (!postRes.ok) throw new Error("Post not found");
         const postData = await postRes.json();
-        setPost(postData.post); 
+        setPost(postData.post);
         setComments(postData.comments);
       } catch (err) {
         setError(err.message);
@@ -93,7 +93,7 @@ export default function PostPage() {
             </div>
           )}
 
-          <CommentsSection title="Comments" comments={comments} />
+          <CommentsSection title="Comments" comments={comments || []} />
         </section>
 
         {/* Right Sidebar */}
