@@ -16,7 +16,8 @@ import { usePosts } from '../hooks/usePosts';
 import {
     sampleUsers,
     sampleGroups,
-    sampleConnections
+    sampleConnections,
+    sampleCategories
 } from '../data/mockData';
 
 
@@ -93,8 +94,7 @@ return (
 
                         {showModal && (
                             <Modal onClose={() => setShowModal(false)} title="Create Post">
-                            {/* Post creation form goes here */}
-                            <CreatePost categories={sampleCategories} onClose={() => setShowModal(false)} />
+                                <CreatePost categories={sampleCategories} onClose={() => setShowModal(false)} />
                             </Modal>
                         )}
                 </section>
