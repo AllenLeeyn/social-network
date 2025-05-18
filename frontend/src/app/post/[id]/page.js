@@ -1,8 +1,10 @@
 "use client"; 
 
+// we just need the post.id to use this method
 import { useParams } from 'next/navigation';
-import SidebarSection from '../../components/SidebarSection';
-import CommentsSection from '../../components/CommentSection';
+import { useEffect, useState } from "react";
+import SidebarSection from '../../../components/SidebarSection';
+import CommentsSection from '../../../components/CommentSection';
 import "./post.css";
 
 import {
@@ -12,23 +14,48 @@ import {
     sampleGroups,
     sampleConnections,
     sampleComments,
-} from '../../data/mockData';
+} from '../../../data/mockData';
 
 
 export default function PostPage() {
-    const params = useParams();
-    const postId = params.id;
+const { id } = useParams();
+    const [post, setPost] = useState(null);
+    const [comments, setComments] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Find the post by ID (convert postId to number)
-    // const post = samplePosts.find(p => p.id === Number(postId));
-    const post = postId
-    ? samplePosts.find(p => p.id === Number(postId))
-    : samplePosts[1];
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                // fetch the individual post
+                const postRes = await fetch(`/api/posts/${id}`);
+                if (!postRes.ok) throw new Error("Post not found");
+                const postData = await postRes.json();
+                setPost(postData);
 
-    const commentsForThisPost = post
-    ? sampleComments.filter(comment => comment.postId === post.id)
-    : [];
+                // fetch comments for this post
+                const commentsRes = await fetch(`/api/comments?postId=${id}`);
+                if (commentsRes.ok) {
+                    setComments(await commentsRes.json());
+                }
 
+                // Optionally, fetch categories
+                const catRes = await fetch("/api/posts");
+                if (catRes.ok) {
+                    setCategories(await catRes.json());
+                }
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, [id]);
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
 
     return (
         <main>
