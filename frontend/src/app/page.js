@@ -1,5 +1,3 @@
-// This is our homepage
-
 'use client';
 
 import React,  { useState } from 'react';
