@@ -14,9 +14,11 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	data := &post{}
 	if !getJSON(w, r, data) {
+		//fmt.Println("data")
 		return
 	}
 
+	//fmt.Println("data", data)
 	isValidTitle, title := checkContent(data.Title, 10, 200)
 	isValidContent, content := checkContent(data.Content, 10, 2000)
 	if !isValidTitle || !isValidContent {
