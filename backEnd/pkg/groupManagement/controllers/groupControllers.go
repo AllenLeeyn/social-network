@@ -52,7 +52,7 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = followingModel.InsertFollowing(&following{
+	err = groupModel.InsertGroupMember(&following{
 		LeaderID: userId, FollowerID: userId, GroupID: groupID,
 		Status: "accepted", CreatedBy: userId,
 	})
@@ -86,7 +86,7 @@ func UpdateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !groupModel.IsGroupFollower(g.UUID, userID) {
+	if !groupModel.IsGroupMember(g.UUID, userID) {
 		errorControllers.ErrorHandler(w, r, errorControllers.ForbiddenError)
 		return
 	}
@@ -101,3 +101,13 @@ func UpdateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	userControllers.ExtendSession(w, sessionId)
 	utils.ReturnJsonSuccess(w, "Updated successfully", nil)
 }
+
+// return list of all groups and an array of id for groups joined
+func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {}
+
+func ViewUserGroupHandler(w http.ResponseWriter, r *http.Request) {}
+
+// return detail of groups with
+// list of members uuid and username
+// list of events
+func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {}

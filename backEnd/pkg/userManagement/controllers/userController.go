@@ -133,3 +133,10 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	ExtendSession(w, sessionId)
 	utils.ReturnJsonSuccess(w, "Profile updated successfully", nil)
 }
+
+// get list of user names and uuid
+func ViewUsersHandler(w http.ResponseWriter, r *http.Request)
+
+// get user profile base on uuid
+// need to check privacy or reuqesting for self
+func ViewUserHandler(w http.ResponseWriter, r *http.Request)

@@ -61,13 +61,8 @@ func UpdateGroup(group *Group) error {
 	return err
 }
 
-func IsGroupFollower(groupUUID string, userID int) bool {
-	qry := `SELECT g.id
-			FROM groups g
-			LEFT JOIN following f ON g.id = f.group_id
-			WHERE g.uuid = ? AND f.follower_id = ?`
-
-	var groupID int
-	err := sqlDB.QueryRow(qry, groupUUID, userID).Scan(&groupID)
-	return err == nil
+func SelectGroups() {
+	//qry := `SELECT uuid, title, `
 }
+
+func SelectGroup() {}

@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"database/sql"
 	"net/http"
 
 	chatContollers "social-network/pkg/chatManagement/controllers"
@@ -10,7 +9,7 @@ import (
 	userContollers "social-network/pkg/userManagement/controllers"
 )
 
-func SetupRoutes(sqlDB *sql.DB, cc *chatContollers.ChatController) {
+func SetupRoutes(cc *chatContollers.ChatController) {
 
 	// ---------------------------- user management controller APIs ---------------------------- //
 	http.HandleFunc("/api/register",
@@ -25,11 +24,27 @@ func SetupRoutes(sqlDB *sql.DB, cc *chatContollers.ChatController) {
 	http.HandleFunc("/api/updateUser",
 		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.UpdateUserHandler))
 
+	// to add
+	http.HandleFunc("/api/users",
+		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.ViewUsersHandler))
+
+	// to add
+	http.HandleFunc("/api/user",
+		middleware.CheckHttpRequest("user", http.MethodPost, userContollers.ViewUserHandler))
+
 	http.HandleFunc("/api/ws",
 		middleware.CheckHttpRequest("user", http.MethodGet, cc.WSHandler))
 
 	http.HandleFunc("/api/createGroup",
 		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.CreateGroupHandler))
+
+	// to add
+	http.HandleFunc("/api/groups",
+		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.ViewGroupsHandler))
+
+	// to add
+	http.HandleFunc("/api/group",
+		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.ViewGroupHandler))
 
 	http.HandleFunc("/api/updateGroup",
 		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.UpdateGroupHandler))

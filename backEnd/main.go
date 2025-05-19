@@ -6,23 +6,25 @@ import (
 	"log"
 	"net/http"
 
-	"social-network/pkg/db"
-	"social-network/pkg/routes"
-
 	chatContollers "social-network/pkg/chatManagement/controllers"
 	chatModel "social-network/pkg/chatManagement/models"
+	db "social-network/pkg/databaseManagement"
 	followingModel "social-network/pkg/followingManagement/models"
 	groupModel "social-network/pkg/groupManagement/models"
+	"social-network/pkg/routes"
 	userControllers "social-network/pkg/userManagement/controllers"
 	userModel "social-network/pkg/userManagement/models"
 )
 
 var sqlDB *sql.DB
+var cc = chatContollers.Initialize()
 
 func init() {
 	log.Println("\033[31mInitialise database\033[0m")
 	var err error
-	sqlDB, err = db.OpenDB("sqlite3", "./pkg/db/social_network.db", "file://pkg/db/migrate")
+	sqlDB, err = db.OpenDB("sqlite3",
+		"./pkg/databaseManagement/social_network.db",
+		"file://pkg/db/migrate")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
@@ -33,16 +35,13 @@ func init() {
 	groupModel.Initialize(sqlDB)
 	followingModel.Initialize(sqlDB)
 
+	log.Println("\033[31mInitialise controllers\033[0m")
+	userControllers.Initialize(cc)
 }
 
 func main() {
-
-	log.Println("\033[31mInitialise controllers\033[0m")
-	cc := chatContollers.Initialize()
-	userControllers.Initialize(cc)
-
 	log.Println("\033[31mSetup routes\033[0m")
-	routes.SetupRoutes(sqlDB, cc)
+	routes.SetupRoutes(cc)
 
 	fmt.Println("\033[32mStarting Forum on http://localhost:8080/...\033[0m")
 	log.Fatal(http.ListenAndServe(":8080", nil))

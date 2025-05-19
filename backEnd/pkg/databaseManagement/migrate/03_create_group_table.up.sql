@@ -4,6 +4,7 @@ CREATE TABLE groups (
     title           TEXT NOT NULL,
     description     TEXT,
     banner_image    TEXT,
+    members_count   INTEGER NOT NULL DEFAULT 1,
 
     status      TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
     created_by  INTEGER NOT NULL,
