@@ -54,8 +54,6 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 	insertQuery := `INSERT INTO posts (uuid, title, type, content, user_id, group_id, visibility) VALUES (?, ?, ?, ?, ?, ?);`
 	result, insertErr := tx.Exec(insertQuery, post.UUID, post.Title, post.Type, post.Content, post.UserId, post.GroupId, post.Visibility)
 	if insertErr != nil {
-		fmt.Println("Error inserting post1:", insertErr)
-		fmt.Println(post.UUID, post.Title, post.Type, post.Content, post.UserId, post.GroupId, post.Visibility)
 		tx.Rollback()
 		return -1, insertErr
 	}
@@ -70,16 +68,12 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 	insertPostCategoriesErr := InsertPostCategories(int(lastInsertID), categoryIds, post.UserId, tx)
 	if insertPostCategoriesErr != nil {
 		tx.Rollback() // Rollback on error
-
-		fmt.Println("Error inserting post2:", insertErr)
 		return -1, insertPostCategoriesErr
 	}
 
 	insertPostFilesErr := InsertPostFiles(int(lastInsertID), uploadedFiles, post.UserId, tx)
 	if insertPostFilesErr != nil {
 		tx.Rollback() // Rollback on error
-
-		fmt.Println("Error inserting post3:", insertErr)
 		return -1, insertPostFilesErr
 	}
 
@@ -87,8 +81,6 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 		insertPostSelectedAudienceErr := InsertPostSelectedAudience(int(lastInsertID), post.SelectedAudienceUserIds, post.UserId, tx)
 		if insertPostSelectedAudienceErr != nil {
 			tx.Rollback() // Rollback on error
-
-			fmt.Println("Error inserting post4:", insertErr)
 			return -1, insertPostSelectedAudienceErr
 		}
 	}
