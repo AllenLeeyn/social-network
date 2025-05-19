@@ -1016,7 +1016,7 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, checkLikeForUser, checkLikeForUser, checkLikeForUser, postId, checkLikeForUser, checkLikeForUser, checkLikeForUser)
+    `, checkLikeForUser, checkLikeForUser, postId, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser)
 	if selectError != nil {
 		return Post{}, selectError
 	}
@@ -1156,7 +1156,7 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, checkLikeForUser, checkLikeForUser, checkLikeForUser, postUUID, checkLikeForUser, checkLikeForUser, checkLikeForUser)
+    `, checkLikeForUser, checkLikeForUser, postUUID, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser)
 	if selectError != nil {
 		return Post{}, selectError
 	}
