@@ -85,15 +85,35 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogOut(w http.ResponseWriter, r *http.Request) {
-	sessionCookie, _ := r.Cookie("session-id")
-	if sessionCookie == nil {
+
+	if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+	sessionCookie, err := r.Cookie("session-id")
+	fmt.Println(sessionCookie)
+	if err != nil || sessionCookie == nil {
+		fmt.Println("Error retrieving session cookie:", err)
 		executeJSON(w, MsgData{"You're not logged in"}, http.StatusBadRequest)
 		return
-	} else {
-		s, _ := db.SelectActiveSessionBy("id", sessionCookie.Value)
-		expireSession(w, s)
 	}
-	http.Redirect(w, r, "./", http.StatusSeeOther)
+
+	fmt.Println("Session cookie found:", sessionCookie.Value)
+
+	s, err := db.SelectActiveSessionBy("id", sessionCookie.Value)
+	if err != nil {
+		fmt.Println("Error selecting session from database:", err)
+		executeJSON(w, MsgData{"Error logging out"}, http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("Session found:", s)
+
+	expireSession(w, s)
+	fmt.Println("Session expired successfully")
+
+	executeJSON(w, MsgData{"Logout succesful"}, http.StatusOK)
+	//http.Redirect(w, r, "./login", http.StatusSeeOther)
 }
 
 func checkLoginCredentials(u *user) error {
