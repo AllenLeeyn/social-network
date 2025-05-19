@@ -25,7 +25,7 @@ type Comment struct {
 }
 
 func InsertComment(comment *Comment) (int, error) {
-	// todo: add parent_id
+	// add parent_id if the user didnt provide it
 	var parentId interface{}
 	if comment.ParentId == 0 {
 		parentId = nil
@@ -50,6 +50,7 @@ func InsertComment(comment *Comment) (int, error) {
 
 func UpdateComment(comment *Comment) error {
 	// Start a transaction for atomicity
+	// we can only update the content of the comment not the post_id or parent_id
 	updateQuery := `UPDATE comments
 					SET content = ?,
 						updated_at = CURRENT_TIMESTAMP,

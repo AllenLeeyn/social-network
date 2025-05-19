@@ -33,7 +33,10 @@ func InsertPostFiles(post_id int, uploadedFiles map[string]string, user_id int, 
 				values = append(values, post_id, key, value, user_id)
 			}
 		}
-		query += ";"
+		query += `ON CONFLICT(id) DO UPDATE SET
+					status = 'enable',
+					updated_at = CURRENT_TIMESTAMP,
+					updated_by = excluded.created_by;`
 
 		// Execute the bulk insert query
 		_, err := tx.Exec(query, values...)

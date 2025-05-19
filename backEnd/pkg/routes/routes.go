@@ -52,10 +52,10 @@ func SetupRoutes(sqlDB *sql.DB) {
 		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.FilterPostsHandler))
 
 	http.HandleFunc("/api/submitPost",
-		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.SubmitPostHandler)) /*post method*/ //todo fill post audiences
+		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.SubmitPostHandler)) /*post method*/
 
 	http.HandleFunc("/api/updatePost",
-		middleware.CheckHttpRequest("user", http.MethodPut, forumControllers.UpdatePostHandler)) /*put method*/ //todo search for duplicate handling while updating categories
+		middleware.CheckHttpRequest("user", http.MethodPut, forumControllers.UpdatePostHandler)) /*put method*/
 
 	http.HandleFunc("/api/deletePost",
 		middleware.CheckHttpRequest("user", http.MethodDelete, forumControllers.DeletePostHandler)) /*delete method*/

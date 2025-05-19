@@ -51,11 +51,11 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 		return -1, err
 	}
 
-	insertQuery := `INSERT INTO posts (uuid, title, content, user_id, group_id, visibility) VALUES (?, ?, ?, ?, ?, ?);`
-	result, insertErr := tx.Exec(insertQuery, post.UUID, post.Title, post.Content, post.UserId, post.GroupId, post.Visibility)
+	insertQuery := `INSERT INTO posts (uuid, title, type, content, user_id, group_id, visibility) VALUES (?, ?, ?, ?, ?, ?);`
+	result, insertErr := tx.Exec(insertQuery, post.UUID, post.Title, post.Type, post.Content, post.UserId, post.GroupId, post.Visibility)
 	if insertErr != nil {
 		fmt.Println("Error inserting post1:", insertErr)
-		fmt.Println(post.UUID, post.Title, post.Content, post.UserId, post.GroupId, post.Visibility)
+		fmt.Println(post.UUID, post.Title, post.Type, post.Content, post.UserId, post.GroupId, post.Visibility)
 		tx.Rollback()
 		return -1, insertErr
 	}
@@ -112,12 +112,14 @@ func UpdatePost(post *Post, categories []int, uploadedFiles map[string]string, u
 	//todo: ask whether is it possible to update group of a post
 	updateQuery := `UPDATE posts
 					SET title = ?,
+						type = ?,
+						group_id = ?,
 						content = ?,
 						visibility = ?,
 						updated_at = CURRENT_TIMESTAMP,
 						updated_by = ?
 					WHERE id = ?;`
-	_, updateErr := tx.Exec(updateQuery, post.Title, post.Content, post.Visibility, user_id, post.ID)
+	_, updateErr := tx.Exec(updateQuery, post.Title, post.Type, post.GroupId, post.Content, post.Visibility, user_id, post.ID)
 	if updateErr != nil {
 		tx.Rollback()
 		return updateErr
@@ -249,12 +251,12 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-				AND post.type = 'user'
+				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-				AND post.type = 'group'
+				AND p.type = 'group'
 				AND follow_user.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
@@ -396,12 +398,12 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-				AND post.type = 'user'
+				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-				AND post.type = 'group'
+				AND p.type = 'group'
 				AND follow_user.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
@@ -539,12 +541,12 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-				AND post.type = 'user'
+				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-				AND post.type = 'group'
+				AND p.type = 'group'
 				AND follow_user.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
@@ -690,24 +692,18 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-				AND post.type = 'user'
+				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-				AND post.type = 'group'
+				AND p.type = 'group'
 				AND follow_user.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
-            AND (
-			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
 		ORDER BY p.id desc;
-    `, userId, userId, userId, userId, userId, userId, userId)
+    `, userId, userId, userId)
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -847,24 +843,18 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-				AND post.type = 'user'
+				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-				AND post.type = 'group'
+				AND p.type = 'group'
 				AND follow_user.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
-            AND (
-			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
 		ORDER BY p.id desc;
-    `, userId, userId, userId, userId, userId, userId, userId)
+    `, userId, userId, userId)
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -999,12 +989,12 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-				AND post.type = 'user'
+				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-				AND post.type = 'group'
+				AND p.type = 'group'
 				AND follow_user.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
@@ -1138,12 +1128,12 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-				AND post.type = 'user'
+				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-				AND post.type = 'group'
+				AND p.type = 'group'
 				AND follow_user.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
@@ -1228,7 +1218,7 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 
 	// If no rows were returned, the post doesn't exist
 	if post.ID == 0 {
-		return Post{}, fmt.Errorf("post with UUID %s not found", postUUID)
+		return Post{}, fmt.Errorf("uuid not found")
 	}
 
 	post.User = user
@@ -1270,12 +1260,12 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-				AND post.type = 'user'
+				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-				AND post.type = 'group'
+				AND p.type = 'group'
 				AND follow_user.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'

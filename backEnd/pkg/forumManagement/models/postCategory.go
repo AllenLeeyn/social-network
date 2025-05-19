@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 )
 
@@ -31,14 +30,14 @@ func InsertPostCategories(post_id int, categories []int, user_id int, tx *sql.Tx
 			query += "(?, ?, ?)"
 			values = append(values, post_id, categoryID, user_id)
 		}
-		query += ";"
+		query += `ON CONFLICT(post_id, category_id) DO UPDATE SET
+					status = 'enable',
+					updated_at = CURRENT_TIMESTAMP,
+					updated_by = excluded.created_by;`
 
 		// Execute the bulk insert query
 		_, err := tx.Exec(query, values...)
 		if err != nil {
-			fmt.Println("Error inserting post categories:", err)
-			fmt.Println(query)
-			fmt.Println(values)
 			tx.Rollback() // Rollback on error
 			return err
 		}

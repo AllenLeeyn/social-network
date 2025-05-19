@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -12,6 +11,53 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+// validators for comment id
+func isValidCommentId(comment *models.Comment) error {
+	isValid := false
+
+	if comment.ID, isValid = utils.IsValidId(comment.ID); !isValid {
+		return errors.New("comment id is required and must be numeric")
+	}
+
+	return nil
+}
+
+// validators for comment data
+func isValidCommentInfo(comment *models.Comment) error {
+	isValid := false
+
+	if comment.PostId, isValid = utils.IsValidId(comment.PostId); !isValid {
+		return errors.New("post id is required and must be numeric")
+	}
+	if comment.Content, isValid = utils.IsValidContent(comment.Content, 3, 1000); !isValid {
+		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
+	}
+
+	//check parent_id
+	if comment.ParentId < 0 {
+		return errors.New("must be a number greater than 0")
+	} else if comment.ParentId > 0 {
+		if comment.ParentId, isValid = utils.IsValidId(comment.ParentId); !isValid {
+			return errors.New("must be a number greater than 0")
+		}
+	}
+
+	return nil
+}
+
+// validators for update comment data
+func isValidUpdateCommentInfo(comment *models.Comment) error {
+	isValid := false
+	if comment.Content, isValid = utils.IsValidContent(comment.Content, 3, 1000); !isValid {
+		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
+	}
+
+	if errValidCommentId := isValidCommentId(comment); errValidCommentId != nil {
+		return errValidCommentId
+	}
+	return nil
+}
 
 func ReadAllCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	comments, err := models.ReadAllComments()
@@ -59,29 +105,6 @@ func ReadPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Comments fetched successfully", comments)
 }
 
-func isValidCommentInfo(comment *models.Comment) error {
-	isValid := false
-
-	if comment.PostId, isValid = utils.IsValidId(comment.PostId); !isValid {
-		return errors.New("post id is required and must be numeric")
-	}
-	if comment.Content, isValid = utils.IsValidContent(comment.Content, 3, 1000); !isValid {
-		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
-	}
-
-	//todo check parent_id
-	if comment.ParentId < 0 {
-		return errors.New("must be a number greater than 0")
-	} else if comment.ParentId > 0 {
-		if comment.ParentId, isValid = utils.IsValidId(comment.ParentId); !isValid {
-			return errors.New("must be a number greater than 0")
-		}
-	}
-
-	return nil
-}
-
-// todo
 func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
@@ -93,7 +116,6 @@ func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	comment := &models.Comment{}
 	comment.UserId = userID
 	if err := utils.ReadJSON(w, r, comment); err != nil {
-		fmt.Println("Error reading JSON:", err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -106,7 +128,6 @@ func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	// Insert a record while checking duplicates
 	_, insertError := models.InsertComment(comment)
 	if insertError != nil {
-		fmt.Println("Error inserting comment:", insertError)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -114,17 +135,6 @@ func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Comment submitted successfully", nil)
 }
 
-func isValidUpdateCommentInfo(comment *models.Comment) error {
-	isValid := false
-
-	if comment.ID, isValid = utils.IsValidId(comment.ID); !isValid {
-		return errors.New("comment id is required and must be numeric")
-	}
-
-	return isValidCommentInfo(comment)
-}
-
-// todo
 func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
@@ -155,7 +165,6 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Comment updated successfully", nil)
 }
 
-// todo
 func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
@@ -170,8 +179,8 @@ func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, isValid := utils.IsValidId(comment.ID); !isValid {
-		errorControllers.CustomErrorHandler(w, r, "comment id is required and must be numeric", http.StatusBadRequest)
+	if err := isValidCommentId(comment); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
 	}
 

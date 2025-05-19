@@ -4,7 +4,6 @@ import (
 	// "forum/middlewares"
 
 	"errors"
-	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -13,6 +12,86 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+// validators for post id
+func isValidPostId(post *models.Post) error {
+	isValid := false
+
+	if post.ID, isValid = utils.IsValidId(post.ID); !isValid {
+		return errors.New("comment id is required and must be numeric")
+	}
+
+	return nil
+}
+
+// validators for post data
+func isValidPostInfo(post *models.Post) error {
+	isValid := false
+
+	if post.Title, isValid = utils.IsValidContent(post.Title, 3, 100); !isValid {
+		return errors.New("title is required and must be between 3 to 100 alphanumeric characters, '_' or '-'")
+	}
+	if post.Content, isValid = utils.IsValidContent(post.Content, 3, 1000); !isValid {
+		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
+	}
+	// if post.CategoryIds, isValid = utils.IsValidCategoryIdsList(post.CategoryIds); !isValid {
+	if post.CategoryIds, isValid = utils.IsValidIntegerList(post.CategoryIds); !isValid {
+		return errors.New("category is required and must be a list of integers")
+	}
+
+	if post.Visibility == "selected" {
+		if post.SelectedAudienceUserIds == nil {
+			return errors.New("audience ids is required and must be a list of integers")
+		}
+		if post.SelectedAudienceUserIds, isValid = utils.IsValidIntegerList(post.SelectedAudienceUserIds); !isValid {
+			return errors.New("audience ids is required and must be a list of integers")
+		}
+	}
+	if post.Visibility == "" {
+		post.Visibility = "public"
+	}
+	if post.Visibility == "public" {
+		post.GroupId = 0
+	}
+	if post.Visibility != "public" && post.Visibility != "private" && post.Visibility != "selected" {
+		return errors.New("visibility is required and must be either 'public', 'private' or 'selected'")
+	}
+
+	if post.Type == "" {
+		post.Type = "user"
+	} else if post.Type != "group" && post.Type != "user" {
+		return errors.New("type is required and must be either 'group' or 'user'")
+	}
+
+	if post.Type == "user" && post.GroupId != 0 {
+		return errors.New("group id is not required for user type")
+	} else if post.Type == "group" && post.GroupId == 0 {
+		return errors.New("group id is required and must be numeric")
+	} else if post.Type == "group" && post.GroupId != 0 {
+		if post.GroupId, isValid = utils.IsValidId(post.GroupId); !isValid {
+			return errors.New("group id is required and must be numeric")
+		}
+	}
+	return nil
+}
+
+// validators for update post data
+func isValidUpdatePostInfo(post *models.Post) error {
+	isValid := false
+
+	if post.ID, isValid = utils.IsValidId(post.ID); !isValid {
+		return errors.New("post id is required and must be numeric")
+	}
+
+	if errValidPostId := isValidPostId(post); errValidPostId != nil {
+		return errValidPostId
+	}
+
+	if errisValidPostInfo := isValidPostInfo(post); errisValidPostInfo != nil {
+		return errisValidPostInfo
+	}
+	return nil
+}
 
 func ReadAllPostsHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
@@ -24,7 +103,6 @@ func ReadAllPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	posts, err := models.ReadAllPosts(userID)
 	if err != nil {
-		fmt.Println("error is: ", err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -152,6 +230,10 @@ func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post, err := models.ReadPostByUUID(uuid, userID)
 	if err != nil {
+		if err.Error() == "uuid not found" {
+			errorControllers.CustomErrorHandler(w, r, "post with this uuid not found for you", errorControllers.NotFoundError.CodeNumber)
+			return
+		}
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -175,43 +257,6 @@ func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post fetched successfully", data_obj_sender)
 }
 
-func isValidPostInfo(post *models.Post) error {
-	isValid := false
-
-	if post.Title, isValid = utils.IsValidContent(post.Title, 3, 100); !isValid {
-		return errors.New("title is required and must be between 3 to 100 alphanumeric characters, '_' or '-'")
-	}
-	if post.Content, isValid = utils.IsValidContent(post.Content, 3, 1000); !isValid {
-		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
-	}
-	// if post.CategoryIds, isValid = utils.IsValidCategoryIdsList(post.CategoryIds); !isValid {
-	if post.CategoryIds, isValid = utils.IsValidIntegerList(post.CategoryIds); !isValid {
-		return errors.New("content is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
-	}
-
-	//todo check post audiences if it has selected visibility
-	if post.Visibility == "selected" {
-		if post.SelectedAudienceUserIds == nil {
-			return errors.New("audience ids is required and must be a list of integers")
-		}
-		if post.SelectedAudienceUserIds, isValid = utils.IsValidIntegerList(post.SelectedAudienceUserIds); !isValid {
-			return errors.New("audience ids is required and must be a list of integers")
-		}
-	}
-	if post.Visibility == "" {
-		post.Visibility = "public"
-	}
-	if post.Visibility == "publice" {
-		post.GroupId = 1
-	}
-	if post.Visibility != "public" && post.Visibility != "private" && post.Visibility != "selected" {
-		return errors.New("visibility is required and must be either 'public', 'private' or 'selected'")
-	}
-
-	return nil
-}
-
-// todo
 func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
@@ -235,7 +280,6 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Insert a record while checking duplicates
 	_, insertError := models.InsertPost(post, post.CategoryIds, post.FileAttachments)
 	if insertError != nil {
-		fmt.Println("Error inserting post:", insertError)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -243,17 +287,6 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post submitted successfully", nil)
 }
 
-func isValidUpdatePostInfo(post *models.Post) error {
-	isValid := false
-
-	if post.ID, isValid = utils.IsValidId(post.ID); !isValid {
-		return errors.New("post id is required and must be numeric")
-	}
-
-	return isValidPostInfo(post)
-}
-
-// todo
 func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
@@ -298,8 +331,8 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, isValid := utils.IsValidId(post.ID); !isValid {
-		errorControllers.CustomErrorHandler(w, r, "post id is required and must be numeric", http.StatusBadRequest)
+	if err := isValidPostId(post); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
 	}
 

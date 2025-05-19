@@ -87,6 +87,9 @@ func IsValidRating(input int) (int, bool) {
 }
 
 func IsValidIntegerList(input []int) ([]int, bool) {
+	if len(input) == 0 {
+		return []int{}, false
+	}
 	for _, value := range input {
 		if value < 0 {
 			return []int{}, false

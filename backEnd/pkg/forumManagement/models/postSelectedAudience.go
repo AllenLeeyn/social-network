@@ -16,18 +16,29 @@ type PostSelectedAudience struct {
 }
 
 func InsertPostSelectedAudience(postId int, selectedAudienceUserIds []int, userId int, tx *sql.Tx) error {
-	if len(selectedAudienceUserIds) == 0 {
-		return nil
-	}
+	if len(selectedAudienceUserIds) > 0 {
+		query := `INSERT INTO post_selected_audience (post_id, user_id, created_by) VALUES `
+		values := make([]any, 0, len(selectedAudienceUserIds)*3)
 
-	insertQuery := `INSERT INTO post_selected_audience (post_id, user_id, created_at, created_by) VALUES (?, ?, CURRENT_TIMESTAMP, ?);`
-	for _, userId := range selectedAudienceUserIds {
-		_, err := tx.Exec(insertQuery, postId, userId, userId)
+		for i, categoryID := range selectedAudienceUserIds {
+			if i > 0 {
+				query += ", "
+			}
+			query += "(?, ?, ?)"
+			values = append(values, postId, categoryID, userId)
+		}
+		query += `ON CONFLICT(post_id, user_id) DO UPDATE SET
+					status = 'enable',
+					updated_at = CURRENT_TIMESTAMP,
+					updated_by = excluded.created_by;`
+
+		// Execute the bulk insert query
+		_, err := tx.Exec(query, values...)
 		if err != nil {
+			tx.Rollback() // Rollback on error
 			return err
 		}
 	}
-
 	return nil
 }
 
