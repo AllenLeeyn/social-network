@@ -17,6 +17,7 @@ CREATE TABLE posts_new (
     dislike_count   INTEGER NOT NULL DEFAULT 0,
     comment_count   INTEGER NOT NULL DEFAULT 0,
 
+    type        TEXT NOT NULL CHECK(type IN ('group', 'user')),
     status      TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',
     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by  INTEGER,

@@ -202,7 +202,7 @@ func isValidPostInfo(post *models.Post) error {
 		post.Visibility = "public"
 	}
 	if post.Visibility == "publice" {
-		post.GroupId = 0
+		post.GroupId = 1
 	}
 	if post.Visibility != "public" && post.Visibility != "private" && post.Visibility != "selected" {
 		return errors.New("visibility is required and must be either 'public', 'private' or 'selected'")
@@ -235,6 +235,7 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Insert a record while checking duplicates
 	_, insertError := models.InsertPost(post, post.CategoryIds, post.FileAttachments)
 	if insertError != nil {
+		fmt.Println("Error inserting post:", insertError)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}

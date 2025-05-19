@@ -20,6 +20,7 @@ type Post struct {
 	LikeCount    int        `json:"like_count"`
 	DisikeCount  int        `json:"dilike_count"`
 	CommentCount int        `json:"comment_count"`
+	Type         string     `json:"type"`
 	Status       string     `json:"status"`
 	CreatedAt    time.Time  `json:"created_at"`
 	UpdatedAt    *time.Time `json:"updated_at"`
@@ -53,6 +54,8 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 	insertQuery := `INSERT INTO posts (uuid, title, content, user_id, group_id, visibility) VALUES (?, ?, ?, ?, ?, ?);`
 	result, insertErr := tx.Exec(insertQuery, post.UUID, post.Title, post.Content, post.UserId, post.GroupId, post.Visibility)
 	if insertErr != nil {
+		fmt.Println("Error inserting post1:", insertErr)
+		fmt.Println(post.UUID, post.Title, post.Content, post.UserId, post.GroupId, post.Visibility)
 		tx.Rollback()
 		return -1, insertErr
 	}
@@ -67,12 +70,16 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 	insertPostCategoriesErr := InsertPostCategories(int(lastInsertID), categoryIds, post.UserId, tx)
 	if insertPostCategoriesErr != nil {
 		tx.Rollback() // Rollback on error
+
+		fmt.Println("Error inserting post2:", insertErr)
 		return -1, insertPostCategoriesErr
 	}
 
 	insertPostFilesErr := InsertPostFiles(int(lastInsertID), uploadedFiles, post.UserId, tx)
 	if insertPostFilesErr != nil {
 		tx.Rollback() // Rollback on error
+
+		fmt.Println("Error inserting post3:", insertErr)
 		return -1, insertPostFilesErr
 	}
 
@@ -80,6 +87,8 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 		insertPostSelectedAudienceErr := InsertPostSelectedAudience(int(lastInsertID), post.SelectedAudienceUserIds, post.UserId, tx)
 		if insertPostSelectedAudienceErr != nil {
 			tx.Rollback() // Rollback on error
+
+			fmt.Println("Error inserting post4:", insertErr)
 			return -1, insertPostSelectedAudienceErr
 		}
 	}
@@ -207,7 +216,7 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 	// Query the records
 	// todo check: update left join groups to inner join groups
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
@@ -222,14 +231,14 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
 				AND pc.status = 'enable'
+            LEFT JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
 			LEFT JOIN post_files pf
@@ -240,19 +249,24 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-                AND follow_user.status = 'enable'
+				AND post.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-                AND follow_group.status = 'enable'
+				AND post.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
-            p.visibility = 'public'
+			p.user_id = ?
+            OR p.visibility = 'public'
             OR (p.visibility = 'selected' AND psa.user_id = ?)
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser)
+    `, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser)
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -271,7 +285,7 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Visibility, &post.Status,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
@@ -353,7 +367,7 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
@@ -382,19 +396,24 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-                AND follow_user.status = 'enable'
+				AND post.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-                AND follow_group.status = 'enable'
+				AND post.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
-            p.visibility = 'public'
+			p.user_id = ?
+            OR p.visibility = 'public'
             OR (p.visibility = 'selected' AND psa.user_id = ?)
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, category_id, checkForUser, checkForUser, checkForUser)
+    `, category_id, checkForUser, checkForUser, checkForUser, checkForUser)
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -413,7 +432,7 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
@@ -495,7 +514,7 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
@@ -520,20 +539,25 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-                AND follow_user.status = 'enable'
+				AND post.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-                AND follow_group.status = 'enable'
+				AND post.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
       		AND (p.title LIKE ? OR p.content LIKE ?)
             AND (
-            p.visibility = 'public'
+			p.user_id = ?
+            OR p.visibility = 'public'
             OR (p.visibility = 'selected' AND psa.user_id = ?)
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, searchPattern, searchPattern, checkForUser, checkForUser, checkForUser)
+    `, searchPattern, searchPattern, checkForUser, checkForUser, checkForUser, checkForUser)
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -552,7 +576,7 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
@@ -632,7 +656,7 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 func ReadPostsByUserId(userId int) ([]Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
@@ -666,19 +690,24 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-                AND follow_user.status = 'enable'
+				AND post.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-                AND follow_group.status = 'enable'
+				AND post.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
-            p.visibility = 'public'
+			p.user_id = ?
+            OR p.visibility = 'public'
             OR (p.visibility = 'selected' AND psa.user_id = ?)
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, userId, userId, userId, userId, userId, userId)
+    `, userId, userId, userId, userId, userId, userId, userId)
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -697,7 +726,7 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
@@ -779,7 +808,7 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
 func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
@@ -818,19 +847,24 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-                AND follow_user.status = 'enable'
+				AND post.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-                AND follow_group.status = 'enable'
+				AND post.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
-            p.visibility = 'public'
+			p.user_id = ?
+            OR p.visibility = 'public'
             OR (p.visibility = 'selected' AND psa.user_id = ?)
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, userId, userId, userId, userId, userId, userId)
+    `, userId, userId, userId, userId, userId, userId, userId)
 	if selectError != nil {
 		return nil, selectError
 	}
@@ -849,7 +883,7 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
@@ -931,7 +965,7 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
@@ -965,19 +999,24 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-                AND follow_user.status = 'enable'
+				AND post.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-                AND follow_group.status = 'enable'
+				AND post.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
-            p.visibility = 'public'
+			p.user_id = ?
+            OR p.visibility = 'public'
             OR (p.visibility = 'selected' AND psa.user_id = ?)
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, checkLikeForUser, checkLikeForUser, postId, checkLikeForUser, checkLikeForUser, checkLikeForUser)
+    `, checkLikeForUser, checkLikeForUser, checkLikeForUser, postId, checkLikeForUser, checkLikeForUser, checkLikeForUser)
 	if selectError != nil {
 		return Post{}, selectError
 	}
@@ -993,7 +1032,7 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 		var PostSelectedAudience PostSelectedAudience
 
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
@@ -1065,7 +1104,7 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
@@ -1099,20 +1138,25 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-                AND follow_user.status = 'enable'
+				AND post.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-                AND follow_group.status = 'enable'
+				AND post.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
 			AND u.status != 'delete'
             AND (
-            p.visibility = 'public'
+			p.user_id = ?
+            OR p.visibility = 'public'
             OR (p.visibility = 'selected' AND psa.user_id = ?)
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, checkLikeForUser, checkLikeForUser, postUUID, checkLikeForUser, checkLikeForUser, checkLikeForUser)
+    `, checkLikeForUser, checkLikeForUser, checkLikeForUser, postUUID, checkLikeForUser, checkLikeForUser, checkLikeForUser)
 	if selectError != nil {
 		return Post{}, selectError
 	}
@@ -1131,7 +1175,7 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 		var PostSelectedAudience PostSelectedAudience
 
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
@@ -1200,7 +1244,7 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 func ReadPostByUserID(postId int, userID int) (Post, error) {
 	// Updated query to join comments with posts
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			p.user_id as post_user_id, u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
@@ -1226,19 +1270,24 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
                 AND psa.status = 'enable'
             LEFT JOIN following follow_user
                 ON follow_user.leader_id = p.user_id
-                AND follow_user.status = 'enable'
+				AND post.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
-                AND follow_group.status = 'enable'
+				AND post.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
-            p.visibility = 'public'
+			p.user_id = ?
+            OR p.visibility = 'public'
             OR (p.visibility = 'selected' AND psa.user_id = ?)
             OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
             )
 		ORDER BY p.id desc;
-    `, postId, userID, userID, userID)
+    `, postId, userID, userID, userID, userID)
 	if selectError != nil {
 		return Post{}, selectError
 	}
@@ -1254,7 +1303,7 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
 		var PostSelectedAudience PostSelectedAudience
 		var Type string
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Status,
+			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy, &post.UserId,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,

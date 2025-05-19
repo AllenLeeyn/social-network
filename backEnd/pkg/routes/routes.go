@@ -32,7 +32,7 @@ func SetupRoutes(sqlDB *sql.DB) {
 		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadAllCategoriesHandler))
 
 	http.HandleFunc("/api/allPosts/",
-		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadAllPostsHandler)) //todo read only my visible posts
+		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadAllPostsHandler))
 
 	http.HandleFunc("/api/myCreatedPosts/",
 		middleware.CheckHttpRequest("user", http.MethodGet, forumControllers.ReadMyCreatedPostsHandler))

@@ -3,6 +3,7 @@ CREATE TABLE following (
     follower_id INTEGER NOT NULL,
     group_id    INTEGER,
 
+    type        TEXT NOT NULL CHECK(type IN ('group', 'user')),
     status      TEXT NOT NULL CHECK(status IN ('requested', 'invited', 'accepted', 'declined', 'inactive')),
     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by  INTEGER NOT NULL,

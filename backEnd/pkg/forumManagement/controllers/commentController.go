@@ -43,7 +43,7 @@ func ReadPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ReturnJson(w, res)
 		return
 	}
-	//todo get post id from url end
+	//post id from url end
 	postId, err := strconv.Atoi(postIdStr)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -70,6 +70,13 @@ func isValidCommentInfo(comment *models.Comment) error {
 	}
 
 	//todo check parent_id
+	if comment.ParentId < 0 {
+		return errors.New("must be a number greater than 0")
+	} else if comment.ParentId > 0 {
+		if comment.ParentId, isValid = utils.IsValidId(comment.ParentId); !isValid {
+			return errors.New("must be a number greater than 0")
+		}
+	}
 
 	return nil
 }
