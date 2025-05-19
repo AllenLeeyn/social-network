@@ -6,7 +6,7 @@ func (db *DBContainer) InsertMessage(m *Message) error {
 	qry := `INSERT INTO messages 
 			(sender_id, receiver_id, content) 
 			VALUES (?, ?, ?)`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		m.SenderID,
 		m.ReceiverID,
 		m.Content,
@@ -16,7 +16,7 @@ func (db *DBContainer) InsertMessage(m *Message) error {
 
 func (db *DBContainer) UpdateMessage(m *Message) error {
 	qry := `UPDATE messages SET read_at = ? WHERE id = ?`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		m.ReadAt,
 		m.ID,
 	)
@@ -39,7 +39,7 @@ func (db *DBContainer) SelectMessages(id_1, id_2 int, msgIdStr string) (*[]Messa
 			ORDER BY created_at DESC
 			LIMIT 10`
 
-	rows, err := db.conn.Query(qry, id_1, id_2, id_2, id_1, msgId)
+	rows, err := db.Conn.Query(qry, id_1, id_2, id_2, id_1, msgId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (db *DBContainer) SelectUnreadMessages(senderID, receiverID int) (*[]Messag
 	qry := `SELECT * FROM messages
 			WHERE (sender_id = ? AND receiver_id = ? AND read_at IS NULL)`
 
-	rows, err := db.conn.Query(qry, senderID, receiverID)
+	rows, err := db.Conn.Query(qry, senderID, receiverID)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (db *DBContainer) SelectUserList(receiverID int) (*[]string, *[]int, error)
 			GROUP BY u.nick_name, u.id
 			ORDER BY MAX(m.created_at) DESC, LOWER(u.nick_name) ASC`
 
-	rows, err := db.conn.Query(qry, receiverID, receiverID, receiverID, receiverID)
+	rows, err := db.Conn.Query(qry, receiverID, receiverID, receiverID, receiverID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -141,7 +141,7 @@ func (db *DBContainer) SelectUnreadMsgList(receiverID int) (*[]int, error) {
 			JOIN users u ON m.sender_id = u.id
 			WHERE (m.receiver_id = ?) AND read_at IS NULL`
 
-	rows, err := db.conn.Query(qry, receiverID)
+	rows, err := db.Conn.Query(qry, receiverID)
 	if err != nil {
 		return nil, err
 	}

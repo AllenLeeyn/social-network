@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"social-network/pkg/utils"
 
-	"github.com/gofrs/uuid"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -122,8 +122,11 @@ func generateUuids(sqlDB *sql.DB, table string) error {
 		if err := rows.Scan(&id); err != nil {
 			return err
 		}
-		uuid, _ := uuid.NewV4()
-		uuidMap[id] = uuid.String()
+
+		uuidMap[id], err = utils.GenerateUuid()
+		if err != nil {
+			return err
+		}
 	}
 	rows.Close()
 

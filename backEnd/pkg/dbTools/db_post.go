@@ -69,7 +69,7 @@ func (db *DBContainer) SelectPosts(filterBy, orderBy string, catId, userID int) 
 			LEFT JOIN post_feedback pf ON pf.parent_id = v_posts.id AND pf.user_id = ?` +
 		getWhereQuery(filterBy, catId) +
 		getOrderByQuery(orderBy)
-	rows, err := db.conn.Query(qry, userID)
+	rows, err := db.Conn.Query(qry, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (db *DBContainer) SelectPost(id, userID int) (*Post, error) {
 	var p Post
 	var catIDs string
 	var rating sql.NullInt64
-	err := db.conn.QueryRow(qry, userID, id).Scan(
+	err := db.Conn.QueryRow(qry, userID, id).Scan(
 		&p.ID,
 		&p.UserID,
 		&p.UserName,
@@ -155,7 +155,7 @@ func (db *DBContainer) InsertPost(p *Post) (int, error) {
 			(user_id, title, content)
 			VALUES (?, ?, ?)`
 
-	res, err := db.conn.Exec(qry,
+	res, err := db.Conn.Exec(qry,
 		p.UserID,
 		p.Title,
 		p.Content,
@@ -168,7 +168,7 @@ func (db *DBContainer) InsertPost(p *Post) (int, error) {
 		return -1, err
 	}
 	for _, catID := range p.Categories {
-		_, err = db.conn.Exec(`INSERT INTO post_categories (post_id, category_id)
+		_, err = db.Conn.Exec(`INSERT INTO post_categories (post_id, category_id)
 							   VALUES (?, ?)`, postID, catID)
 	}
 	return int(postID), err
@@ -177,19 +177,19 @@ func (db *DBContainer) InsertPost(p *Post) (int, error) {
 // db.UpdatePost() for updating post when user make changes
 func (db *DBContainer) UpdatePost(p *Post) error {
 	qry := `UPDATE posts SET title = ?, content = ?	WHERE id = ?`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		p.Title,
 		p.Content, p.ID)
 	if err != nil {
 		return err
 	}
 	qry = `DELETE FROM post_categories WHERE post_id = ?`
-	_, err = db.conn.Exec(qry, p.ID)
+	_, err = db.Conn.Exec(qry, p.ID)
 	if err != nil {
 		return err
 	}
 	for _, catID := range p.Categories {
-		_, err = db.conn.Exec(`INSERT INTO post_categories (post_id, category_id)
+		_, err = db.Conn.Exec(`INSERT INTO post_categories (post_id, category_id)
 							   VALUES (?, ?)`, p.ID, catID)
 	}
 	return err

@@ -18,7 +18,7 @@ func (db *DBContainer) SelectActiveSessionBy(field string, id interface{}) (*Ses
 	}
 	var s Session
 	qry := `SELECT * FROM sessions WHERE ` + field + ` = ? AND is_active = 1`
-	err := db.conn.QueryRow(qry, id).Scan(
+	err := db.Conn.QueryRow(qry, id).Scan(
 		&s.ID,
 		&s.UserID,
 		&s.IsActive,
@@ -31,7 +31,7 @@ func (db *DBContainer) SelectActiveSessionBy(field string, id interface{}) (*Ses
 func (db *DBContainer) SelectActiveSessions() (*[]Session, error) {
 	qry := `SELECT * FROM sessions WHERE is_active = 1`
 
-	rows, err := db.conn.Query(qry)
+	rows, err := db.Conn.Query(qry)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (db *DBContainer) InsertSession(s *Session) error {
 	qry := `INSERT INTO sessions
 			(id, user_id, is_active, expire_time)
 			VALUES ( ?, ?, ?, ?)`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		s.ID,
 		s.UserID,
 		s.IsActive,
@@ -76,7 +76,7 @@ func (db *DBContainer) UpdateSession(s *Session) error {
 	qry := `UPDATE sessions
 			SET is_active = ?, expire_time = ?, last_access= ?
 			WHERE id = ?`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		s.IsActive,
 		s.ExpireTime,
 		s.LastAccess,

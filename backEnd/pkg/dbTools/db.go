@@ -24,9 +24,11 @@ import (
 This should be easier to reference the database and call its functions.
 */
 type DBContainer struct {
-	conn       *sql.DB
+	Conn       *sql.DB
 	Categories []string // stores categories recorded in db.
 }
+
+var DB *DBContainer
 
 // openDB() opens a sql database with the driver and dataSource given.
 func OpenDB(driver, dataSource, migrateSource string) (*DBContainer, error) {
@@ -48,7 +50,7 @@ func OpenDB(driver, dataSource, migrateSource string) (*DBContainer, error) {
 		log.Fatal("Error migrating database: ", err)
 	}
 
-	return &DBContainer{conn: conn}, nil
+	return &DBContainer{Conn: conn}, nil
 }
 
 func migrateDB(conn *sql.DB, migrateSource string) error {
@@ -163,7 +165,7 @@ func checkErrNoRows(err error) error {
 
 // db.selectFieldFromTable() is a generic function to grab a column of data from a table.
 func (db *DBContainer) SelectFieldFromTable(field, table string) ([]string, error) {
-	rows, err := db.conn.Query("SELECT " + field + " FROM " + table)
+	rows, err := db.Conn.Query("SELECT " + field + " FROM " + table)
 	if err != nil {
 		return nil, err
 	}
@@ -197,5 +199,44 @@ func (db *DBContainer) isValidCategories(categories []int) error {
 }
 
 func (db *DBContainer) Close() {
-	db.conn.Close()
+	db.Conn.Close()
+}
+
+// db.deleteAllusers() for testing purposes
+func (db *DBContainer) DeleteAllUsers() error {
+	query := "DELETE FROM users"
+	_, err := db.Conn.Exec(query)
+	db.vacuumDB()
+	return err
+}
+
+// db.deleteAllSessions() for testing purposes
+func (db *DBContainer) DeleteAllSessions() error {
+	query := "DELETE FROM sessions"
+	_, err := db.Conn.Exec(query)
+	db.vacuumDB()
+	return err
+}
+
+// db.deleteAllPosts() for testing purposes
+func (db *DBContainer) DeleteAllComments() error {
+	query := "DELETE FROM comments"
+	_, err := db.Conn.Exec(query)
+	db.vacuumDB()
+	return err
+}
+
+// db.deleteAllPosts() for testing purposes
+func (db *DBContainer) DeleteAllPosts() error {
+	query := "DELETE FROM posts"
+	_, err := db.Conn.Exec(query)
+	db.vacuumDB()
+	return err
+}
+
+// db.vacuumDB) for testing purposes
+func (db *DBContainer) vacuumDB() error {
+	query := "VACUUM"
+	_, err := db.Conn.Exec(query)
+	return err
 }
