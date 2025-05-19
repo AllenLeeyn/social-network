@@ -22,7 +22,7 @@ func (db *DBContainer) SelectComments(id, userID int, orderBy string) (*[]Commen
 	}
 	qry += orderByQry
 
-	rows, err := db.conn.Query(qry, userID, id)
+	rows, err := db.Conn.Query(qry, userID, id)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -67,7 +67,7 @@ func (db *DBContainer) InsertComment(c *Comment) error {
 	} else {
 		parentID = nil
 	}
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		c.UserID,
 		c.UserName,
 		c.PostID,
@@ -80,7 +80,7 @@ func (db *DBContainer) InsertComment(c *Comment) error {
 // db.UpdateComment() based on changes in comment
 func (db *DBContainer) UpdateComment(c *Comment) error {
 	qry := `UPDATE comments	SET content = ?	WHERE id = ?`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		c.Content,
 		c.ID)
 	return err

@@ -8,7 +8,7 @@ func (db *DBContainer) SelectUserByField(fieldName string, fieldValue interface{
 	}
 	qry := `SELECT * FROM users WHERE ` + fieldName + ` = ?`
 	var u User
-	err := db.conn.QueryRow(qry, fieldValue).Scan(
+	err := db.Conn.QueryRow(qry, fieldValue).Scan(
 		&u.ID,
 		&u.TypeID,
 		&u.FirstName,
@@ -31,7 +31,7 @@ func (db *DBContainer) InsertUser(u *User) (int, error) {
 	qry := `INSERT INTO users 
 			(type_id, first_name, last_name, nick_name, gender, age, email, pw_hash) 
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-	res, err := db.conn.Exec(qry,
+	res, err := db.Conn.Exec(qry,
 		u.TypeID,
 		u.FirstName,
 		u.LastName,
@@ -55,7 +55,7 @@ func (db *DBContainer) UpdateUser(u *User) error {
 	qry := `UPDATE users
 			SET first_name = ?, last_name = ?, gender = ?, age = ?, pw_hash = ?, last_login = ?
 			WHERE id = ?`
-	_, err := db.conn.Exec(qry,
+	_, err := db.Conn.Exec(qry,
 		u.FirstName,
 		u.LastName,
 		u.Gender,
