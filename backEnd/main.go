@@ -24,7 +24,7 @@ func init() {
 	var err error
 	sqlDB, err = db.OpenDB("sqlite3",
 		"./pkg/databaseManagement/social_network.db",
-		"file://pkg/db/migrate")
+		"file://pkg/databaseManagement/migrate")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}

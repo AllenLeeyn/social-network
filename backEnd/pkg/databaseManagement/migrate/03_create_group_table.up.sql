@@ -63,5 +63,5 @@ INSERT INTO groups (
     'Please be kind and respect one another',
     NULL,
     'enable',
-    1
+    0
 );

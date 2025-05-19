@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
@@ -102,12 +103,45 @@ func UpdateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Updated successfully", nil)
 }
 
-// return list of all groups and an array of id for groups joined
-func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {}
+func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
+	userID, isOk := middleware.GetUserID(r.Context())
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
 
-func ViewUserGroupHandler(w http.ResponseWriter, r *http.Request) {}
+	joinedOnly := false
+	if val := r.URL.Query().Get("joined"); val == "true" {
+		joinedOnly = true
+	}
+
+	groups, err := groupModel.SelectGroups(userID, joinedOnly)
+	if err != nil {
+		log.Println(err.Error())
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	utils.ReturnJsonSuccess(w, "query successfully", groups)
+}
 
 // return detail of groups with
 // list of members uuid and username
 // list of events
-func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {}
+func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {
+	userID, isOk := middleware.GetUserID(r.Context())
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	groupUUID := r.URL.Query().Get("id")
+	groups, err := groupModel.SelectGroup(userID, groupUUID)
+	if err != nil {
+		log.Println(err.Error())
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	utils.ReturnJsonSuccess(w, "query successfully", groups)
+}

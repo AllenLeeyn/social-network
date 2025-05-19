@@ -38,13 +38,11 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 	http.HandleFunc("/api/createGroup",
 		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.CreateGroupHandler))
 
-	// to add
 	http.HandleFunc("/api/groups",
-		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.ViewGroupsHandler))
+		middleware.CheckHttpRequest("user", http.MethodGet, groupContollers.ViewGroupsHandler))
 
-	// to add
 	http.HandleFunc("/api/group",
-		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.ViewGroupHandler))
+		middleware.CheckHttpRequest("user", http.MethodGet, groupContollers.ViewGroupHandler))
 
 	http.HandleFunc("/api/updateGroup",
 		middleware.CheckHttpRequest("user", http.MethodPost, groupContollers.UpdateGroupHandler))

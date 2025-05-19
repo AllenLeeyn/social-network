@@ -10,12 +10,24 @@ type Group struct {
 	UUID         string     `json:"uuid"`
 	Title        string     `json:"title"`
 	Description  string     `json:"description"`
-	Banner_image string     `json:"banner_image"`
+	BannerImage  string     `json:"banner_image"`
+	MembersCount int        `json:"members_count"`
 	Status       string     `json:"status"`
 	CreatedBy    int        `json:"created_by"`
 	CreatedAt    *time.Time `json:"created_at"`
 	UpdatedBy    int        `json:"updated_by"`
 	UpdatedAt    *time.Time `json:"updated_at"`
+}
+
+type groupResponse struct {
+	UUID         string `json:"uuid"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	BannerImage  string `json:"banner_image"`
+	MembersCount int    `json:"members_count"`
+	CreatorName  string `json:"creator_name"`
+	CreatorUUID  string `json:"creator_uuid"`
+	Joined       bool   `json:"joined"`
 }
 
 func InsertGroup(group *Group) (int, string, error) {
@@ -32,7 +44,7 @@ func InsertGroup(group *Group) (int, string, error) {
 			) VALUES (?, ?, ?, ?, ?);`
 	result, err := sqlDB.Exec(qry,
 		group.UUID,
-		group.Title, group.Description, group.Banner_image,
+		group.Title, group.Description, group.BannerImage,
 		group.CreatedBy)
 	if err != nil {
 		return -1, "", err
@@ -53,7 +65,7 @@ func UpdateGroup(group *Group) error {
 		WHERE uuid = ?;`
 
 	_, err := sqlDB.Exec(updateQuery,
-		group.Title, group.Description, group.Banner_image,
+		group.Title, group.Description, group.BannerImage,
 		group.UpdatedBy,
 		group.UUID,
 	)
@@ -61,8 +73,67 @@ func UpdateGroup(group *Group) error {
 	return err
 }
 
-func SelectGroups() {
-	//qry := `SELECT uuid, title, `
+func SelectGroups(userID int, joinedOnly bool) (*[]groupResponse, error) {
+	joinedOnlyQry := ``
+	if joinedOnly {
+		joinedOnlyQry = ` AND f.status = 'accepted'`
+	}
+	qry := `SELECT
+				g.uuid AS group_uuid, g.title,
+				g.description, g.banner_image, g.members_count,
+				u.nick_name AS creator_name, u.uuid AS creator_uuid,
+				f.follower_id IS NOT NULL AS joined
+			FROM groups g
+			JOIN users u ON g.created_by = u.id
+			LEFT JOIN following f ON f.group_id = g.id 
+				AND f.follower_id = ? 
+				AND f.status = 'accepted'
+			WHERE g.status = 'enable' AND g.id != 1` + joinedOnlyQry + `
+			ORDER BY g.created_at DESC;`
+
+	rows, err := sqlDB.Query(qry, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var groups []groupResponse
+	for rows.Next() {
+		var g groupResponse
+		err := rows.Scan(
+			&g.UUID, &g.Title,
+			&g.Description, &g.BannerImage, &g.MembersCount,
+			&g.CreatorName, &g.CreatorUUID,
+			&g.Joined)
+		if err != nil {
+			return nil, checkErrNoRows(err)
+		}
+		groups = append(groups, g)
+	}
+	return &groups, nil
 }
 
-func SelectGroup() {}
+func SelectGroup(userID int, groupUUID string) (*groupResponse, error) {
+	qry := `SELECT
+				g.uuid AS group_uuid, g.title,
+				g.description, g.banner_image, g.members_count,
+				u.nick_name AS creator_name, u.uuid AS creator_uuid,
+				f.follower_id IS NOT NULL AS joined
+			FROM groups g
+			JOIN users u ON g.created_by = u.id
+			LEFT JOIN following f 
+				ON f.group_id = g.id 
+				AND f.follower_id = ? 
+				AND f.status = 'accepted'
+			WHERE g.status = 'enable' AND g.id != 1 AND g.uuid = ?;`
+	var g groupResponse
+	err := sqlDB.QueryRow(qry, userID, groupUUID).Scan(
+		&g.UUID, &g.Title,
+		&g.Description, &g.BannerImage, &g.MembersCount,
+		&g.CreatorName, &g.CreatorUUID,
+		&g.Joined)
+	if err != nil {
+		return nil, err
+	}
+	return &g, nil
+}
