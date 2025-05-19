@@ -69,7 +69,6 @@ func UpdateGroup(group *Group) error {
 		group.UpdatedBy,
 		group.UUID,
 	)
-
 	return err
 }
 
@@ -106,9 +105,12 @@ func SelectGroups(userID int, joinedOnly bool) (*[]groupResponse, error) {
 			&g.CreatorName, &g.CreatorUUID,
 			&g.Joined)
 		if err != nil {
-			return nil, checkErrNoRows(err)
+			return nil, err
 		}
 		groups = append(groups, g)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return &groups, nil
 }

@@ -71,4 +71,16 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodPost,
 			followingContollers.UnfollowHandler))
 
+	http.HandleFunc("/api/removeFollower",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			followingContollers.RemoveFollowerHandler))
+
+	http.HandleFunc("/api/followingRequests",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			followingContollers.ViewFollowingRequestsHandler))
+
+	// to return data if user is follower or profile is public
+	http.HandleFunc("/api/followings",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			followingContollers.ViewFollowingsHandler))
 }

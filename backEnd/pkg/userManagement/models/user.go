@@ -156,3 +156,13 @@ func UpdateUser(user *User) error {
 
 	return err
 }
+
+func IsPublic(userUUID string) bool {
+	qry := `SELECT id 
+			FROM users 
+			WHERE uuid = ? AND visibility = 'public'`
+
+	var existingID int
+	err := sqlDB.QueryRow(qry, userUUID).Scan(&existingID)
+	return err == nil
+}
