@@ -9,13 +9,12 @@ export function WebSocketProvider( {children} ) {
     const [isConnected, setIsConnected] = useState(false);
     const [connectionParams, setConnectionParams] = useState({
         sessionId: null,
-        userId: null
     });
     const ws = useRef(null);
 
     // Main useEffect for ws lifecycle
     useEffect(() => {
-        if (!connectionParams.sessionId || !connectionParams.userId) return;
+        if (!connectionParams.sessionId) return;
 
         const connectWebSocket = () => {
 
@@ -24,7 +23,7 @@ export function WebSocketProvider( {children} ) {
 
             // Create new connection
             ws.current = new WebSocket(
-                `ws://localhost:8080/ws?session=${connectionParams.sessionId}&user=${connectionParams.userId}`
+                `ws://localhost:8080/ws?session=${connectionParams.sessionId}`
             );
 
             // event handling
@@ -63,11 +62,11 @@ export function WebSocketProvider( {children} ) {
                 ws.current.close();
             }
         };
-    }, [connectionParams.sessionId, connectionParams.userId]); // reconnect when any of these changes
+    }, [connectionParams.sessionId]); // reconnect when any of these changes
 
     // Connection Handler
-    const connect = (sessionId, userId) => {
-        setConnectionParams({ sessionId, userId });
+    const connect = (sessionId) => {
+        setConnectionParams({ sessionId });
     };
 
     const sendMessage = (message) => {

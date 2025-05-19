@@ -10,14 +10,15 @@ import CategoriesList from "../components/CategoriesList";
 import PostList from "../components/PostList";
 import CreatePost from "../components/CreatePost";
 import Modal from "../components/Modal";
+
 import { fetchPosts } from "../lib/apiPosts";
 import { usePosts } from "../hooks/usePosts";
 
+import { useWebsocket } from '../contexts/WebSocketContext';
+
 import {
-  sampleUsers,
   sampleGroups,
   sampleConnections,
-  sampleCategories,
 } from "../data/mockData";
 
 export default function HomePage() {
@@ -26,6 +27,9 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const router = useRouter(); 
+
+  const { isConnected, connect } = useWebsocket();
+  const sessionId = localStorage.getItem('session-id'); // Or from cookies/auth context
 
   useEffect(() => {
     async function checkAccess() {
@@ -41,10 +45,6 @@ export default function HomePage() {
     checkAccess();
   }, [router]);
 
-  if (!isAuthorized) {
-    // Prevent rendering the homepage until access is verified
-    return null;
-  }
 
   // Filter logic
   const filteredPosts = selectedCategory
@@ -64,8 +64,21 @@ export default function HomePage() {
     setSelectedCategory((prev) => (prev === cat ? null : cat));
   };
 
+    useEffect(() => {
+    if (sessionId && !isConnected) {
+      connect(sessionId); // Trigger connection
+    }
+  }, [sessionId, connect, isConnected]);
+
+  if (!isAuthorized) {
+    // Prevent rendering the homepage until access is verified
+    return null;
+  }
+
+
   return (
     <main>
+      <h1>WebSocket Status: {isConnected ? '✅ Connected' : '❌ Disconnected'}</h1>
       <div className="homepage-layout">
         {/* Left Sidebar */}
         <aside className="sidebar left-sidebar">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useWebsocket } from "../hooks/useWebsocket";
 
-export default function ChatComponent({ userId, sessionId }) {
+export default function ChatComponent({ sessionId }) {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState("");
 
@@ -14,7 +14,7 @@ export default function ChatComponent({ userId, sessionId }) {
     };
 
     const { sendMessage } = useWebsocket(
-        `ws://localhost:8080/ws?session=${sessionId}&user=${userId}`, handleAction
+        `ws://localhost:8080/ws?session=${sessionId}`, handleAction
     );
 
     const handleSendMessage = (e) => {
@@ -24,7 +24,6 @@ export default function ChatComponent({ userId, sessionId }) {
         const newMessage = {
             action: "message",
             content: inputMessage,
-            senderId: userId,
             timestamp: new Date().toISOString(),
             // can add more keys: value for data
         };

@@ -17,7 +17,7 @@ return (
                 <main>
                     {children}
                 </main>
-            <Footer />
+                <Footer />
             </WebSocketProvider>
         </body>
     </html>
