@@ -51,6 +51,7 @@ CREATE TABLE group_event_responses (
     FOREIGN KEY (updated_by)    REFERENCES users(id)
 );
 INSERT INTO groups (
+    id,
     uuid,
     title,
     description,
@@ -58,6 +59,7 @@ INSERT INTO groups (
     status,
     created_by
 ) VALUES (
+    0,
     '00000000-0000-0000-0000-000000000000',
     'Public',
     'Please be kind and respect one another',

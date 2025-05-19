@@ -6,12 +6,15 @@ import (
 	"time"
 
 	errorController "social-network/pkg/errorManagement/controllers"
+	middleware "social-network/pkg/middleware"
 	userModel "social-network/pkg/userManagement/models"
 )
 
 type session = userModel.Session
 
-func ExtendSession(w http.ResponseWriter, sessionID string) error {
+func ExtendSession(w http.ResponseWriter, r *http.Request) error {
+
+	sessionID, _ := middleware.GetSessionID(r.Context())
 	// generate a uuid for the session and set it into a cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session-id",

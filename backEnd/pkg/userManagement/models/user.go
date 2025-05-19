@@ -33,7 +33,7 @@ type User struct {
 
 func SelectUserIDByUUID(userUUID string) (int, error) {
 	var userID int
-	err := sqlDB.QueryRow(`SELECT id FROM users WHERE uuid = ?`, userID).Scan(&userID)
+	err := sqlDB.QueryRow(`SELECT id FROM users WHERE uuid = ?`, userUUID).Scan(&userID)
 	return userID, err
 }
 

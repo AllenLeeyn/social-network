@@ -31,7 +31,7 @@ func isValidGroupInfo(g *group) error {
 
 func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	g := &group{}
-	if err := utils.ReadJSON(w, r, g); err != nil {
+	if err := utils.ReadJSON(r, g); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -47,14 +47,14 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	g.CreatedBy = userId
 
-	groupID, groupUUID, err := groupModel.InsertGroup(g)
+	_, groupUUID, err := groupModel.InsertGroup(g)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	err = groupModel.InsertGroupMember(&following{
-		LeaderID: userId, FollowerID: userId, GroupID: groupID,
+		LeaderID: userId, FollowerID: userId, GroupUUID: groupUUID,
 		Status: "accepted", CreatedBy: userId,
 	})
 	if err != nil {
@@ -62,8 +62,7 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionId, _ := middleware.GetSessionID(r.Context())
-	userControllers.ExtendSession(w, sessionId)
+	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "Group created successfully",
 		struct {
 			GroupUUID string `json:"group_uuid"`
@@ -72,7 +71,7 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 
 func UpdateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	g := &group{}
-	if err := utils.ReadJSON(w, r, g); err != nil {
+	if err := utils.ReadJSON(r, g); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -98,8 +97,7 @@ func UpdateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionId, _ := middleware.GetSessionID(r.Context())
-	userControllers.ExtendSession(w, sessionId)
+	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "Updated successfully", nil)
 }
 
@@ -122,12 +120,10 @@ func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "query successfully", groups)
 }
 
-// return detail of groups with
-// list of members uuid and username
-// list of events
 func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
@@ -143,5 +139,6 @@ func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "query successfully", groups)
 }

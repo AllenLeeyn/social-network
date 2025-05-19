@@ -88,7 +88,7 @@ func SelectGroups(userID int, joinedOnly bool) (*[]groupResponse, error) {
 			LEFT JOIN following f ON f.group_id = g.id 
 				AND f.follower_id = ? 
 				AND f.status = 'accepted'
-			WHERE g.status = 'enable' AND g.id != 1` + joinedOnlyQry + `
+			WHERE g.status = 'enable' AND g.id != 0` + joinedOnlyQry + `
 			ORDER BY g.created_at DESC;`
 
 	rows, err := sqlDB.Query(qry, userID)
@@ -125,7 +125,7 @@ func SelectGroup(userID int, groupUUID string) (*groupResponse, error) {
 				ON f.group_id = g.id 
 				AND f.follower_id = ? 
 				AND f.status = 'accepted'
-			WHERE g.status = 'enable' AND g.id != 1 AND g.uuid = ?;`
+			WHERE g.status = 'enable' AND g.id != 0 AND g.uuid = ?;`
 	var g groupResponse
 	err := sqlDB.QueryRow(qry, userID, groupUUID).Scan(
 		&g.UUID, &g.Title,

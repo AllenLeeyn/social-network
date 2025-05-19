@@ -16,7 +16,7 @@ type user = userModel.User
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
-	if err := utils.ReadJSON(w, r, u); err != nil {
+	if err := utils.ReadJSON(r, u); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -53,7 +53,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
-	if err := utils.ReadJSON(w, r, u); err != nil {
+	if err := utils.ReadJSON(r, u); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -94,19 +94,19 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
-	userId, isOk := middleware.GetUserID(r.Context())
+	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	currentUserInfo, err := userModel.SelectUserByField("id", userId)
+	currentUserInfo, err := userModel.SelectUserByField("id", userID)
 	if currentUserInfo == nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	u := &user{}
-	if err := utils.ReadJSON(w, r, u); err != nil {
+	if err := utils.ReadJSON(r, u); err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -129,8 +129,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionId, _ := middleware.GetSessionID(r.Context())
-	ExtendSession(w, sessionId)
+	ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "Profile updated successfully", nil)
 }
 
