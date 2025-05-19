@@ -61,7 +61,11 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 
 	http.HandleFunc("/api/followRequest",
 		middleware.CheckHttpRequest("user", http.MethodPost,
-			followingContollers.SendFollowingRequestHandler))
+			followingContollers.FollowingRequestHandler))
+
+	http.HandleFunc("/api/followResponse",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			followingContollers.FollowingResponseHandler))
 
 	http.HandleFunc("/api/unfollowRequest",
 		middleware.CheckHttpRequest("user", http.MethodPost,
