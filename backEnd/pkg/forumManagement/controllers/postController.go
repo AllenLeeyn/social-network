@@ -336,7 +336,6 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update a record while checking duplicates
 	updateError := models.UpdateStatusPost(post.ID, "delete", userID)
 	if updateError != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
