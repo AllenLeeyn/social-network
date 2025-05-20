@@ -1,15 +1,30 @@
 'use client';
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 
+// Add reconnection logic
 export function useWebsocket(url, onMessage) {
     const ws = useRef(null);
+    const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
+        if (!url) return;
+
         ws.current = new window.WebSocket(url);
 
-        ws.current.onopen = () => console.log('Websocket Connected');
-        ws.current.onclose = () => console.log('Websocket disconnected');
-        ws.current.onerror = (err) => console.error('WebSocket error', err);
+        ws.current.onopen = () => {
+            setIsConnected(true);
+            console.log('Websocket Connected');
+        };
+
+        ws.current.onclose = () => {
+            setIsConnected(false);
+            console.log('Websocket disconnected');
+        };
+
+        ws.current.onerror = (err) => {
+            setIsConnected(false);
+            console.error('WebSocket error', err);
+        };
         
         ws.current.onmessage = (event) => {
             try {
@@ -20,7 +35,9 @@ export function useWebsocket(url, onMessage) {
             }
         };
 
-        return () => ws.current?.close();
+        return () => {
+            ws.current?.close();
+        };
     }, [url, onMessage]);
 
     const sendMessage = useCallback((msg) => {
@@ -29,5 +46,5 @@ export function useWebsocket(url, onMessage) {
         }
     }, []);
 
-    return { sendMessage }
+    return { isConnected, sendMessage };
 }
