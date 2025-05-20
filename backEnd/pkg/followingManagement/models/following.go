@@ -79,10 +79,7 @@ func SelectStatus(f *Following) (string, error) {
 
 	var status string
 	err := sqlDB.QueryRow(qry, f.FollowerID, f.LeaderID, f.GroupID).Scan(&status)
-	if err != nil {
-		return "", err
-	}
-	return status, nil
+	return status, checkErrNoRows(err)
 }
 
 func UpdateFollowing(f *Following) error {
@@ -101,7 +98,21 @@ func UpdateFollowing(f *Following) error {
 	return nil
 }
 
-func SelectFollowings(userID int, fStatus string) (*[]FollowingResponse, error) {
+func IsFollower(userID int, tgtUUID string) bool {
+	qry := `SELECT 1
+			FROM following f
+			JOIN users u ON u.id = f.leader_id
+			WHERE u.uuid = ? 
+				AND f.follower_id = ? 
+				AND f.group_id = 0 
+				AND f.status = 'accepted'
+			LIMIT 1;`
+
+	var exists int
+	err := sqlDB.QueryRow(qry, tgtUUID, userID).Scan(&exists)
+	return err == nil
+}
+func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingResponse, error) {
 	if fStatus != "accepted" {
 		fStatus = "requested"
 	}
@@ -111,19 +122,19 @@ func SelectFollowings(userID int, fStatus string) (*[]FollowingResponse, error) 
 				f.status, f.created_at
 			FROM following f
 				JOIN users follower ON f.follower_id = follower.id
-				JOIN users leader   ON f.leader_id   = leader.id
-			WHERE (f.leader_id = ? OR f.follower_id = ?)
+				JOIN users leader   ON f.leader_id = leader.id
+			WHERE (follower.uuid = ? OR leader.uuid = ?)
 				AND f.status = ?
 				AND f.group_id = 0
 			ORDER BY f.created_at DESC;`
 
-	rows, err := sqlDB.Query(qry, userID, userID, fStatus)
+	rows, err := sqlDB.Query(qry, tgtUUID, tgtUUID, fStatus)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var requests []FollowingResponse
+	var fResponses []FollowingResponse
 	for rows.Next() {
 		var fr FollowingResponse
 		err := rows.Scan(
@@ -133,10 +144,10 @@ func SelectFollowings(userID int, fStatus string) (*[]FollowingResponse, error) 
 		if err != nil {
 			return nil, err
 		}
-		requests = append(requests, fr)
+		fResponses = append(fResponses, fr)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return &requests, nil
+	return &fResponses, nil
 }

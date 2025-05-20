@@ -33,13 +33,6 @@ func isValidUserInfo(u *user) error {
 	if u.NickName, isValid = utils.IsValidUserName(u.NickName); !isValid {
 		return errors.New("nick name must be between 3 to 16 alphanumeric characters, '_' or '-'")
 	}
-	if u.Password, isValid = utils.IsValidPassword(u.Password); !isValid {
-		return errors.New("password must be 8 characters or longer.\n" +
-			"Include at least a lower case character, an upper case character, a number and one of '@$!%*?&'")
-	}
-	if u.Password != u.ConfirmPassword {
-		return errors.New("passwords do not match")
-	}
 	if u.Email, isValid = utils.IsValidEmail(u.Email); !isValid {
 		return errors.New("invalid email")
 	}
@@ -56,6 +49,27 @@ func isValidUserInfo(u *user) error {
 	return nil
 }
 
+func isPasswordConfirmed(u *user) error {
+	isValid := false
+	if u.Password, isValid = utils.IsValidPassword(u.Password); !isValid {
+		return errors.New("password must be 8 characters or longer.\n" +
+			"Include at least a lower case character, an upper case character, a number and one of '@$!%*?&'")
+	}
+	if u.Password != u.ConfirmPassword {
+		return errors.New("passwords do not match")
+	}
+	return nil
+}
+
+func isValidRegistration(u *user) error {
+	if err := isValidUserInfo(u); err != nil {
+		return err
+	}
+	if err := isPasswordConfirmed(u); err != nil {
+		return err
+	}
+	return nil
+}
 func isValidLogin(u *user) error {
 	isValid := false
 

@@ -10,25 +10,92 @@ import (
 
 // User struct represents the user data model
 type User struct {
-	ID              int            `json:"id"`
-	UUID            string         `json:"uuid"`
-	TypeId          int            `json:"type_id"`
-	FirstName       string         `json:"first_name"`
-	LastName        string         `json:"last_name"`
-	Gender          string         `json:"gender"`
-	BirthDay        time.Time      `json:"birthday"`
-	Email           string         `json:"email"`
-	Password        string         `json:"password"`
-	ConfirmPassword string         `json:"confirmPassword"`
-	PasswordHash    string         `json:"pw_hash"`
-	NickName        string         `json:"nick_name"`
-	ProfileImage    sql.NullString `json:"profile_image"`
-	AboutMe         string         `json:"about_me"`
-	Visibility      string         `json:"visibility"`
-	Status          string         `json:"status"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedBy       int            `json:"updated_by"`
-	UpdatedAt       *time.Time     `json:"updated_at"`
+	ID              int        `json:"id"`
+	UUID            string     `json:"uuid"`
+	TypeId          int        `json:"type_id"`
+	FirstName       string     `json:"first_name"`
+	LastName        string     `json:"last_name"`
+	Gender          string     `json:"gender"`
+	BirthDay        time.Time  `json:"birthday"`
+	Email           string     `json:"email"`
+	Password        string     `json:"password"`
+	ConfirmPassword string     `json:"confirmPassword"`
+	PasswordHash    string     `json:"pw_hash"`
+	NickName        string     `json:"nick_name"`
+	ProfileImage    string     `json:"profile_image"`
+	AboutMe         string     `json:"about_me"`
+	Visibility      string     `json:"visibility"`
+	Status          string     `json:"status"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedBy       int        `json:"updated_by"`
+	UpdatedAt       *time.Time `json:"updated_at"`
+}
+
+type UserResponse struct {
+	UUID         string `json:"uuid"`
+	NickName     string `json:"nick_name"`
+	ProfileImage string `json:"profile_image"`
+	Visibility   string `json:"visibility"`
+}
+
+type UserProfile struct {
+	UUID         string    `json:"uuid"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	Gender       string    `json:"gender"`
+	BirthDay     time.Time `json:"birthday"`
+	Email        string    `json:"email"`
+	NickName     string    `json:"nick_name"`
+	ProfileImage string    `json:"profile_image"`
+	AboutMe      string    `json:"about_me"`
+	Visibility   string    `json:"visibility"`
+}
+
+func SelectUsers() (*[]UserResponse, error) {
+	qry := `SELECT uuid, nick_name, profile_image, visibility
+			FROM users
+			WHERE id != 0`
+
+	rows, err := sqlDB.Query(qry)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var uRepsonses []UserResponse
+	for rows.Next() {
+		var ur UserResponse
+		err := rows.Scan(&ur.UUID, &ur.NickName, &ur.ProfileImage, &ur.Visibility)
+		if err != nil {
+			return nil, err
+		}
+		uRepsonses = append(uRepsonses, ur)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return &uRepsonses, nil
+}
+
+func SelectUser(tgtUUID string) (*UserProfile, error) {
+	qry := `SELECT
+				uuid, first_name, last_name,
+				gender, birthday,
+				email, nick_name,
+				profile_image, about_me, visibility
+			FROM users
+			WHERE uuid = ?
+			LIMIT 1;`
+	var uProfile UserProfile
+	err := sqlDB.QueryRow(qry, tgtUUID).Scan(
+		&uProfile.UUID, &uProfile.FirstName, &uProfile.LastName,
+		&uProfile.Gender, &uProfile.BirthDay,
+		&uProfile.Email, &uProfile.NickName,
+		&uProfile.ProfileImage, &uProfile.AboutMe, &uProfile.Visibility)
+	if err != nil {
+		return nil, err
+	}
+	return &uProfile, nil
 }
 
 func SelectUserIDByUUID(userUUID string) (int, error) {

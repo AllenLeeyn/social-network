@@ -63,7 +63,7 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, "Group created successfully",
+	utils.ReturnJsonSuccess(w, "group created",
 		struct {
 			GroupUUID string `json:"group_uuid"`
 		}{groupUUID})
@@ -98,13 +98,18 @@ func UpdateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, "Updated successfully", nil)
+	utils.ReturnJsonSuccess(w, "group info updated", nil)
 }
 
 func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
-	userID, isOk := middleware.GetUserID(r.Context())
-	if !isOk {
+	tgtUUID, statusCode := userControllers.GetTgtUUID(r)
+	if statusCode == http.StatusInternalServerError {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	} else if statusCode == http.StatusForbidden {
+		errorControllers.CustomErrorHandler(w, r,
+			"access denied: private profile and user is not follower",
+			http.StatusForbidden)
 		return
 	}
 
@@ -113,7 +118,7 @@ func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
 		joinedOnly = true
 	}
 
-	groups, err := groupModel.SelectGroups(userID, joinedOnly)
+	groups, err := groupModel.SelectGroups(tgtUUID, joinedOnly)
 	if err != nil {
 		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -121,7 +126,7 @@ func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, "query successfully", groups)
+	utils.ReturnJsonSuccess(w, "group list retrieved", groups)
 }
 
 func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {
@@ -140,5 +145,5 @@ func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, "query successfully", groups)
+	utils.ReturnJsonSuccess(w, "group info retrieved", groups)
 }

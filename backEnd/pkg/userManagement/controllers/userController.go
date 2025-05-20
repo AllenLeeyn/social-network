@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
+	followingModel "social-network/pkg/followingManagement/models"
 	middleware "social-network/pkg/middleware"
 	userModel "social-network/pkg/userManagement/models"
 	"social-network/pkg/utils"
@@ -21,7 +22,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := isValidUserInfo(u); err != nil {
+	if err := isValidRegistration(u); err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -133,9 +134,50 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Profile updated successfully", nil)
 }
 
-// get list of user names and uuid
-func ViewUsersHandler(w http.ResponseWriter, r *http.Request) {}
+func ViewUsersHandler(w http.ResponseWriter, r *http.Request) {
+	users, err := userModel.SelectUsers()
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+	ExtendSession(w, r)
+	utils.ReturnJsonSuccess(w, "user list retrieved", users)
+}
 
-// get user profile base on uuid
-// need to check privacy or reuqesting for self
-func ViewUserHandler(w http.ResponseWriter, r *http.Request) {}
+func GetTgtUUID(r *http.Request) (string, int) {
+	_, userID, userUUID, isOk := middleware.GetSessionCredentials(r.Context())
+	if !isOk {
+		return "", http.StatusInternalServerError
+	}
+	tgtUUID := r.URL.Query().Get("id")
+	if tgtUUID == "" {
+		tgtUUID = userUUID
+	} else {
+		if !userModel.IsPublic(tgtUUID) && !followingModel.IsFollower(userID, tgtUUID) {
+			return "",
+				http.StatusForbidden
+		}
+	}
+	return tgtUUID, 200
+}
+
+func ViewUserHandler(w http.ResponseWriter, r *http.Request) {
+	tgtUUID, statusCode := GetTgtUUID(r)
+	if statusCode == http.StatusInternalServerError {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	} else if statusCode == http.StatusForbidden {
+		errorControllers.CustomErrorHandler(w, r,
+			"access denied: private profile and user is not follower",
+			http.StatusForbidden)
+		return
+	}
+
+	uProfile, err := userModel.SelectUser(tgtUUID)
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+	ExtendSession(w, r)
+	utils.ReturnJsonSuccess(w, "user profile retrieved", uProfile)
+}

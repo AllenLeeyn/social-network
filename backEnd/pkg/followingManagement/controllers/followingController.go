@@ -44,9 +44,10 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	f.Status = "requested"
 
-	operation := followingModel.InsertFollowing
+	operation, message := followingModel.InsertFollowing, "request send"
 	followingStatus, err := followingModel.SelectStatus(f)
 	if err != nil {
+		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -67,14 +68,14 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	// check if leader profile is public, and accept request. Need to test
 	if userModel.IsPublic(f.LeaderUUID) {
-		f.Status = "accepted"
+		f.Status, message = "accepted", "request accepted"
 	}
 	if err := operation(f); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, "request send", nil)
+	utils.ReturnJsonSuccess(w, message, nil)
 }
 
 func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
@@ -166,12 +167,12 @@ func FollowingResponseHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewFollowingRequestsHandler(w http.ResponseWriter, r *http.Request) {
-	userID, isOk := middleware.GetUserID(r.Context())
+	userUUID, isOk := middleware.GetUserUUID(r.Context())
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	pendingFollowing, err := followingModel.SelectFollowings(userID, "requested")
+	pendingFollowing, err := followingModel.SelectFollowings(userUUID, "requested")
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -181,15 +182,21 @@ func ViewFollowingRequestsHandler(w http.ResponseWriter, r *http.Request) {
 
 // show data if is follower or public
 func ViewFollowingsHandler(w http.ResponseWriter, r *http.Request) {
-	userID, isOk := middleware.GetUserID(r.Context())
-	if !isOk {
+	tgtUUID, statusCode := userControllers.GetTgtUUID(r)
+	if statusCode == http.StatusInternalServerError {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
+	} else if statusCode == http.StatusForbidden {
+		errorControllers.CustomErrorHandler(w, r,
+			"access denied: private profile and user is not follower",
+			http.StatusForbidden)
+		return
 	}
-	pendingFollowing, err := followingModel.SelectFollowings(userID, "accepted")
+
+	followings, err := followingModel.SelectFollowings(tgtUUID, "accepted")
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	utils.ReturnJsonSuccess(w, "Data OK", pendingFollowing)
+	utils.ReturnJsonSuccess(w, "Data OK", followings)
 }

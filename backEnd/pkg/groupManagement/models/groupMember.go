@@ -13,12 +13,13 @@ func UpdateGroupMember() {}
 func SelectGroupMembers() {}
 
 func IsGroupMember(groupUUID string, userID int) bool {
-	qry := `SELECT g.id
+	qry := `SELECT 1
 			FROM groups g
 			LEFT JOIN following f ON g.id = f.group_id
-			WHERE g.uuid = ? AND f.follower_id = ?`
+			WHERE g.uuid = ? AND f.follower_id = ?
+			LIMIT 1;`
 
-	var groupID int
-	err := sqlDB.QueryRow(qry, groupUUID, userID).Scan(&groupID)
+	var exists int
+	err := sqlDB.QueryRow(qry, groupUUID, userID).Scan(&exists)
 	return err == nil
 }

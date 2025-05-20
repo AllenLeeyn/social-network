@@ -72,7 +72,7 @@ func UpdateGroup(group *Group) error {
 	return err
 }
 
-func SelectGroups(userID int, joinedOnly bool) (*[]groupResponse, error) {
+func SelectGroups(userUUID string, joinedOnly bool) (*[]groupResponse, error) {
 	joinedOnlyQry := ``
 	if joinedOnly {
 		joinedOnlyQry = ` AND f.status = 'accepted'`
@@ -81,16 +81,17 @@ func SelectGroups(userID int, joinedOnly bool) (*[]groupResponse, error) {
 				g.uuid AS group_uuid, g.title,
 				g.description, g.banner_image, g.members_count,
 				u.nick_name AS creator_name, u.uuid AS creator_uuid,
-				f.follower_id IS NOT NULL AS joined
+				true AS joined
 			FROM groups g
 			JOIN users u ON g.created_by = u.id
-			LEFT JOIN following f ON f.group_id = g.id 
-				AND f.follower_id = ? 
+			LEFT JOIN users u2 ON u2.uuid = ?
+			LEFT JOIN following f ON f.group_id = g.id
+				AND f.follower_id = u2.id
 				AND f.status = 'accepted'
 			WHERE g.status = 'enable' AND g.id != 0` + joinedOnlyQry + `
 			ORDER BY g.created_at DESC;`
 
-	rows, err := sqlDB.Query(qry, userID)
+	rows, err := sqlDB.Query(qry, userUUID)
 	if err != nil {
 		return nil, err
 	}

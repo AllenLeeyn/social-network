@@ -29,14 +29,12 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodPost,
 			userContollers.UpdateUserHandler))
 
-	// to add
 	http.HandleFunc("/api/users",
-		middleware.CheckHttpRequest("user", http.MethodPost,
+		middleware.CheckHttpRequest("user", http.MethodGet,
 			userContollers.ViewUsersHandler))
 
-	// to add
 	http.HandleFunc("/api/user",
-		middleware.CheckHttpRequest("user", http.MethodPost,
+		middleware.CheckHttpRequest("user", http.MethodGet,
 			userContollers.ViewUserHandler))
 
 	http.HandleFunc("/api/ws",

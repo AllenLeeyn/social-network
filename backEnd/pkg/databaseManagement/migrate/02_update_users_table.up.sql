@@ -11,7 +11,7 @@ CREATE TABLE users_new (
     email           TEXT NOT NULL UNIQUE,
     pw_hash         TEXT NOT NULL,
     nick_name       TEXT NOT NULL UNIQUE,
-    profile_image   TEXT UNIQUE,
+    profile_image   TEXT DEFAULT "",
     about_me        TEXT NOT NULL DEFAULT '',
     visibility      TEXT NOT NULL DEFAULT 'private' CHECK(visibility IN ('private', 'public')),
 
