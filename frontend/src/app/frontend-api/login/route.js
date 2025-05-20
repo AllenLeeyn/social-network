@@ -1,5 +1,5 @@
 export async function POST(req) {
-  const backendUrl = "http://localhost:8080/login"; // Backend login endpoint
+  const backendUrl = "http://localhost:8080/api/login"; // Backend login endpoint
 
   try {
     const body = await req.json(); // Parse the request body

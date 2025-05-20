@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
 
-export async function POST(req) {
-  const backendUrl = "http://localhost:8080/create-post";
+export async function GET() {
+  const backendUrl = "http://localhost:8080/api/allPosts"; // Backend endpoint
+
   try {
-    // Get session-id cookie
+    // Retrieve the session-id cookie
     const cookieStore = await cookies();
     const sessionId = cookieStore.get("session-id")?.value;
 
@@ -14,24 +15,28 @@ export async function POST(req) {
       );
     }
 
-    // Get post data from request body
-    const body = await req.json();
-
-    // Forward to backend
+    // Forward the session-id cookie to the backend
     const response = await fetch(backendUrl, {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Cookie: `session-id=${sessionId}`,
+        Cookie: `session-id=${sessionId}`, // Include the session-id cookie
       },
-      body: JSON.stringify(body),
     });
 
+    if (!response.ok) {
+      return new Response(
+        JSON.stringify({ message: "Failed to fetch posts" }),
+        {
+          status: response.status,
+        }
+      );
+    }
+
     const data = await response.json();
-    console.log("id", data)
-    return new Response(JSON.stringify(data), { status: response.status });
+    return new Response(JSON.stringify(data), { status: 200 });
   } catch (error) {
-    console.error("Error creating post:", error);
+    console.error("Error fetching posts:", error);
     return new Response(JSON.stringify({ message: "Internal Server Error" }), {
       status: 500,
     });

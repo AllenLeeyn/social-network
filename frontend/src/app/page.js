@@ -50,13 +50,8 @@ export default function HomePage() {
   const filteredPosts = selectedCategory
     ? posts.filter(
         (post) =>
-          // If your post has a catNames string (e.g. "General, sqlite3")
-          post.catNames &&
-          post.catNames
-            .split(",")
-            .map((s) => s.trim())
-            .includes(selectedCategory)
-        // If your post has categories as array of names: post.categories.includes(selectedCategory)
+          post.categories &&
+          post.categories.some((cat) => cat.name === selectedCategory)
       )
     : posts;
 

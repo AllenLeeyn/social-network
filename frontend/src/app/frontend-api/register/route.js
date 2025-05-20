@@ -1,5 +1,5 @@
 export async function POST(req) {
-    const backendUrl = "http://localhost:8080/signup"; 
+    const backendUrl = "http://localhost:8080/api/register"; 
   
     try {
       const body = await req.json(); 

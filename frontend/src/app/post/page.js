@@ -22,11 +22,12 @@ export default function PostPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const postRes = await fetch(`/api/post?id=${id}`);
+        const postRes = await fetch(`/frontend-api/post?id=${id}`);
         if (!postRes.ok) throw new Error("Post not found");
         const postData = await postRes.json();
-        setPost(postData.post);
-        setComments(postData.comments);
+        // Update this after backend response structure change
+        setPost(postData.data.Post);
+        setComments(postData.data.Comments);
       } catch (err) {
         setError(err.message);
       } finally {

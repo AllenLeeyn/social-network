@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
 export async function GET(req) {
-  const backendUrl = "http://localhost:8080/post";
+  const backendUrl = "http://localhost:8080/api/post";
   try {
     // Get the post id from the query string
     const { searchParams } = new URL(req.url);
@@ -25,8 +25,8 @@ export async function GET(req) {
       );
     }
 
-    // Forward the session-id cookie and id to the backend
-    const response = await fetch(`${backendUrl}?id=${id}`, {
+    // Forward the session-id cookie and id (as path param) to the backend
+    const response = await fetch(`${backendUrl}/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

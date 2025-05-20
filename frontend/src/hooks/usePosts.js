@@ -13,7 +13,7 @@ export function usePosts() {
     async function loadPosts() {
       try {
         const data = await fetchPosts();
-        setPosts(data.posts); 
+        setPosts(data.data); // <-- changed from data.posts to data.data
         setCategories(data.categories);
         setUsers(data.users);
       } catch (err) {

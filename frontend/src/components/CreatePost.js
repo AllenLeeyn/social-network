@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import "../styles/CreatePost.css";
+import { createPost } from "../lib/apiPosts";
 
 export default function CreatePost({ categories, onClose }) {
   // state for title, content, selected categories (store names)
@@ -33,20 +34,14 @@ export default function CreatePost({ categories, onClose }) {
 
     const postData = { title, content, categories: categoryIds };
     try {
-      const res = await fetch("/api/create-post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(postData),
-      });
-      const data = await res.json();
-      if (res.ok && data && data.message) {
-        // MsgData contains the new post ID as per backend
-        window.location.href = `/post?id=${data.message}`;
+      const data = await createPost(postData);
+      if (data && data.message) {
+        window.location.href = `/post?id=${data.uuid}`;
       } else {
         alert(data.message || "Failed to create post");
       }
     } catch (err) {
-      alert("Error creating post");
+      alert(err.message || "Error creating post");
     }
     if (onClose) onClose();
   }

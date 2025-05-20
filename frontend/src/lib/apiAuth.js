@@ -1,10 +1,10 @@
-const API_URL = "/api";
+const API_URL = "/frontend-api";
 
 export async function login(email, password) {
   const response = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nickName: "", email, password }),
+    body: JSON.stringify({email, password }),
   });
   if (!response.ok) {
     const errorData = await response.json();
@@ -15,7 +15,7 @@ export async function login(email, password) {
 }
 
 export async function signup(userData) {
-  const response = await fetch(`${API_URL}/signup`, {
+  const response = await fetch(`${API_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData),
