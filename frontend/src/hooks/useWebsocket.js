@@ -17,12 +17,20 @@ export function useWebsocket(
     const reconnectDelay = useRef(initialDelay);
     const attempts = useRef(0);
     const reconnectTimeout = useRef(null);
+    const isMounted = useRef(true);
     const [isConnected, setIsConnected] = useState(false);
 
     // Core conn / re-conn logic
     const connectWebSocket = useCallback(() => {
+        // Close old connection if it exists and is not already closed
+        // if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
+        //     ws.current.close();
+        // }
         // no url, return
-        if (!url || url.includes('session=undefined')) return;
+        if (!url || url.includes('session=undefined')) {
+            console.warn('Skipping WebSocket connection - invalid URL');
+            return;
+        }
 
         // max retries limit 
         if (maxAttempts !== null && attempts.current >= maxAttempts) {
@@ -46,24 +54,18 @@ export function useWebsocket(
         ws.current.onclose = () => {
             if (!isMounted.current) return;
             setIsConnected(false);
-/*             attempts.current += 1;
+/*          const jitter = Math.random() * 1000;
+            const nextDelay = Math.min(reconnectDelay.current * backoffFactor, maxDelay) + jitter;
+            reconnectDelay.current = nextDelay;
 
-            // calc new delay(exponential backoff with max cap)
-            const nextDelay = Math.min(reconnectDelay.current * backoffFactor, maxDelay);
-            reconnectDelay.current = Math.min(nextDelay, maxDelay);
-
-            console.log(`Websocket Disconnected. Reconnecting in ${reconnectDelay.current}ms...`);
-            reconnectTimeout.current = setTimeout(connectWebSocket, reconnectDelay.current); */
+            console.log(`Reconnecting in ${Math.round(nextDelay)}ms...`);
+            reconnectTimeout.current = setTimeout(connectWebSocket, nextDelay); */
         };
 
         // err handler
         ws.current.onerror = (err) => {
             if (!isMounted.current) return;
-            setIsConnected(false);
-            // console.error('Websocket error', err);
-            if (err && Object.keys(err).length > 0) {
-                    console.error('Websocket error:', err);
-                }
+            console.error('WebSocket error:', err);
             ws.current?.close();        // triggers onclose and goes into re-conn
         }
 
@@ -82,7 +84,7 @@ export function useWebsocket(
     // Manage conn lifecycle
     // useEffect / onRender
 
-    const isMounted = useRef(true);
+
 
     useEffect(() => {
         isMounted.current = true;
@@ -92,14 +94,20 @@ export function useWebsocket(
         return () => {
             isMounted.current = false;
             clearTimeout(reconnectTimeout.current);
-            ws.current?.close();
+            // Only close if connection is open/connecting
+            if (ws.current?.readyState === WebSocket.OPEN  ) {
+                ws.current.close();
+            }
         };
     }, [ connectWebSocket ]);
+
 
     // message sending func
     const sendAction = useCallback((msg) =>  {
         if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify(msg));
+        } else {
+            console.warn('Cannot send message - WebSocket not open');
         }
     }, []);
 

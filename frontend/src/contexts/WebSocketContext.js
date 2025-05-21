@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useCallback, useState } from "react";
+import { createContext, useContext, useCallback, useState, useEffect } from "react";
 import { useWebsocket } from "../hooks/useWebsocket";
 
 
@@ -11,9 +11,14 @@ export function WebSocketProvider( { children } ) {
     const [currentChatId, setCurrentChatId] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
-    const [sessionId, setSessionId] = useState(
-        typeof window !== 'undefined' ? localStorage.getItem('session-id') : null
-    );
+    const [sessionId, setSessionId] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const id = localStorage.getItem('session-id');
+            return id || null;
+        }
+    })
+
+
     // using hook for connection logic
     const { isConnected, sendAction } = useWebsocket(
         sessionId ? `ws://localhost:8080/ws?session=${sessionId}` : null,
@@ -85,21 +90,29 @@ export function WebSocketProvider( { children } ) {
     );
     // console.log('sending Session ID', sessionId)
 
+    // Sync session ID with localStorage
+    useEffect(() => {
+        const handleStorage = () => {
+        const newSession = localStorage.getItem('session-id');
+        if (newSession !== sessionId) {
+            setSessionId(newSession);
+        }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, [sessionId]);
+
     // conn handling
     const connect = useCallback((newSessionId) => {
+        localStorage.setItem('session-id', newSessionId);
         setSessionId(newSessionId);
     }, []);
 
     return (
-        <WebSocketContext.Provider value ={{
-            userList,
-            isConnected,
-            connect,
-            sendAction
-        }}>
+        <WebSocketContext.Provider value={{ isConnected, sendAction, connect }}>
             {children}
-        </WebSocketContext.Provider>
-    );
+            </WebSocketContext.Provider>
+        );
 }
 
 export const useWebsocketContext = () => useContext(WebSocketContext);
