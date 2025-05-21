@@ -38,60 +38,60 @@ type Post struct {
 	PostSelectedAudiences   []PostSelectedAudience `json:"post_selected_audiences"`    // List of selected audience related to the post
 }
 
-func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) (int, error) {
+func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) (string, error) {
 	// Start a transaction for atomicity
 	tx, err := sqlDB.Begin()
 	if err != nil {
-		return -1, err
+		return "", err
 	}
 
 	post.UUID, err = utils.GenerateUuid()
 	if err != nil {
 		tx.Rollback() // Rollback if UUID generation fails
-		return -1, err
+		return "", err
 	}
 
-	insertQuery := `INSERT INTO posts (uuid, title, type, content, user_id, group_id, visibility) VALUES (?, ?, ?, ?, ?, ?);`
+	insertQuery := `INSERT INTO posts (uuid, title, type, content, user_id, group_id, visibility) VALUES (?, ?, ?, ?, ?, ?, ?);`
 	result, insertErr := tx.Exec(insertQuery, post.UUID, post.Title, post.Type, post.Content, post.UserId, post.GroupId, post.Visibility)
 	if insertErr != nil {
 		tx.Rollback()
-		return -1, insertErr
+		return "", insertErr
 	}
 
 	// Retrieve the last inserted ID
 	lastInsertID, err := result.LastInsertId()
 	if err != nil {
 		tx.Rollback() // Rollback on error
-		return -1, err
+		return "", err
 	}
 
 	insertPostCategoriesErr := InsertPostCategories(int(lastInsertID), categoryIds, post.UserId, tx)
 	if insertPostCategoriesErr != nil {
 		tx.Rollback() // Rollback on error
-		return -1, insertPostCategoriesErr
+		return "", insertPostCategoriesErr
 	}
 
 	insertPostFilesErr := InsertPostFiles(int(lastInsertID), uploadedFiles, post.UserId, tx)
 	if insertPostFilesErr != nil {
 		tx.Rollback() // Rollback on error
-		return -1, insertPostFilesErr
+		return "", insertPostFilesErr
 	}
 
 	if post.Visibility == "selected" {
 		insertPostSelectedAudienceErr := InsertPostSelectedAudience(int(lastInsertID), post.SelectedAudienceUserIds, post.UserId, tx)
 		if insertPostSelectedAudienceErr != nil {
 			tx.Rollback() // Rollback on error
-			return -1, insertPostSelectedAudienceErr
+			return "", insertPostSelectedAudienceErr
 		}
 	}
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
 		tx.Rollback() // Rollback on error
-		return -1, err
+		return "", err
 	}
 
-	return int(lastInsertID), nil
+	return post.UUID, nil
 }
 
 func UpdatePost(post *Post, categories []int, uploadedFiles map[string]string, user_id int) error {

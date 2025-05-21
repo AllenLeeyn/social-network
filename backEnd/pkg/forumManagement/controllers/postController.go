@@ -280,13 +280,13 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert a record while checking duplicates
-	_, insertError := models.InsertPost(post, post.CategoryIds, post.FileAttachments)
+	createdPostUUID, insertError := models.InsertPost(post, post.CategoryIds, post.FileAttachments)
 	if insertError != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	utils.ReturnJsonSuccess(w, "Post submitted successfully", nil)
+	utils.ReturnJsonSuccess(w, "Post submitted successfully", createdPostUUID)
 }
 
 func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
