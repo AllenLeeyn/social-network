@@ -7,7 +7,7 @@ import { createPost } from "../lib/apiPosts";
 export default function CreatePost({ categories, onClose }) {
   // state for title, content, selected categories (store names)
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [content, setcontent] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
 
   // handleChange for inputs and checkboxes
@@ -32,10 +32,10 @@ export default function CreatePost({ categories, onClose }) {
       (name) => categoryNameToId[name]
     );
 
-    const postData = { title, content, categories: categoryIds };
+    const postData = { title, content, category_ids: categoryIds};
     try {
       const data = await createPost(postData);
-      if (data && data.message) {
+      if (data) {
         window.location.href = `/post?id=${data.uuid}`;
       } else {
         alert(data.message || "Failed to create post");
@@ -60,15 +60,15 @@ export default function CreatePost({ categories, onClose }) {
           required
         />
       </div>
-      {/* Content textarea */}
-      <label htmlFor="content">Content</label>
+      {/* content textarea */}
+      <label htmlFor="content">content</label>
       <div className="input-group">
         <textarea
           name="content"
           placeholder="Write your post here..."
           rows={10}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => setcontent(e.target.value)}
           required
         />
       </div>
