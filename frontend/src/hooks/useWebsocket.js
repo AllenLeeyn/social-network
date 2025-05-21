@@ -46,14 +46,14 @@ export function useWebsocket(
         ws.current.onclose = () => {
             if (!isMounted.current) return;
             setIsConnected(false);
-            attempts.current += 1;
+/*             attempts.current += 1;
 
             // calc new delay(exponential backoff with max cap)
             const nextDelay = Math.min(reconnectDelay.current * backoffFactor, maxDelay);
             reconnectDelay.current = Math.min(nextDelay, maxDelay);
 
             console.log(`Websocket Disconnected. Reconnecting in ${reconnectDelay.current}ms...`);
-            reconnectTimeout.current = setTimeout(connectWebSocket, reconnectDelay.current);
+            reconnectTimeout.current = setTimeout(connectWebSocket, reconnectDelay.current); */
         };
 
         // err handler

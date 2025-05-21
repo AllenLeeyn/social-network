@@ -103,3 +103,55 @@ export const sampleConnections = [
     { id: 1, username: "UserD", fullName: "Dana Doe" },
     { id: 2, username: "UserE", fullName: "Evan Evans" }
 ];
+
+
+export const sampleConversations = [
+  {
+    id: 'conv1',
+    name: 'Alice Smith',
+    type: 'individual',
+    unread: 2
+  },
+  {
+    id: 'conv2',
+    name: 'Bob Johnson',
+    type: 'individual',
+    unread: 0
+  },
+  {
+    id: 'conv3',
+    name: 'Project Team',
+    type: 'group',
+    unread: 0
+  },
+  {
+    id: 'conv4',
+    name: 'Friends Group',
+    type: 'group',
+    unread: 3
+  }
+];
+
+export const sampleMessages = [
+  {
+    id: 'msg1',
+    content: 'Hey, how are you?',
+    senderId: 'user1',
+    timestamp: '2025-05-20T10:00:00Z',
+    conversationId: 'conv1'
+  },
+  {
+    id: 'msg2',
+    content: 'Are we meeting tomorrow?',
+    senderId: 'user2',
+    timestamp: '2025-05-20T11:30:00Z',
+    conversationId: 'conv1'
+  },
+  {
+    id: 'msg3',
+    content: 'Check out this link!',
+    senderId: 'user3',
+    timestamp: '2025-05-21T09:15:00Z',
+    conversationId: 'conv3'
+  }
+];
