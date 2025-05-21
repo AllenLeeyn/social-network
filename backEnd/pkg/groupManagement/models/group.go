@@ -27,7 +27,7 @@ type groupResponse struct {
 	MembersCount int    `json:"members_count"`
 	CreatorName  string `json:"creator_name"`
 	CreatorUUID  string `json:"creator_uuid"`
-	Joined       bool   `json:"joined"`
+	Status       string `json:"status"`
 }
 
 func InsertGroup(group *Group) (int, string, error) {
@@ -81,13 +81,12 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]groupResponse, error) {
 				g.uuid AS group_uuid, g.title,
 				g.description, g.banner_image, g.members_count,
 				u.nick_name AS creator_name, u.uuid AS creator_uuid,
-				true AS joined
+				f.status as status
 			FROM groups g
 			JOIN users u ON g.created_by = u.id
 			LEFT JOIN users u2 ON u2.uuid = ?
 			LEFT JOIN following f ON f.group_id = g.id
 				AND f.follower_id = u2.id
-				AND f.status = 'accepted'
 			WHERE g.status = 'enable' AND g.id != 0` + joinedOnlyQry + `
 			ORDER BY g.created_at DESC;`
 
@@ -104,7 +103,7 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]groupResponse, error) {
 			&g.UUID, &g.Title,
 			&g.Description, &g.BannerImage, &g.MembersCount,
 			&g.CreatorName, &g.CreatorUUID,
-			&g.Joined)
+			&g.Status)
 		if err != nil {
 			return nil, err
 		}
@@ -121,22 +120,35 @@ func SelectGroup(userID int, groupUUID string) (*groupResponse, error) {
 				g.uuid AS group_uuid, g.title,
 				g.description, g.banner_image, g.members_count,
 				u.nick_name AS creator_name, u.uuid AS creator_uuid,
-				f.follower_id IS NOT NULL AS joined
+				f.status as status
 			FROM groups g
 			JOIN users u ON g.created_by = u.id
 			LEFT JOIN following f 
 				ON f.group_id = g.id 
 				AND f.follower_id = ? 
-				AND f.status = 'accepted'
 			WHERE g.status = 'enable' AND g.id != 0 AND g.uuid = ?;`
 	var g groupResponse
 	err := sqlDB.QueryRow(qry, userID, groupUUID).Scan(
 		&g.UUID, &g.Title,
 		&g.Description, &g.BannerImage, &g.MembersCount,
 		&g.CreatorName, &g.CreatorUUID,
-		&g.Joined)
+		&g.Status)
 	if err != nil {
 		return nil, err
 	}
 	return &g, nil
+}
+
+func SelectGroupIDfromUUID(groupUUID string) (int, error) {
+	var groupID int
+	err := sqlDB.QueryRow(`SELECT id FROM groups WHERE uuid = ?`, groupUUID).
+		Scan(&groupID)
+	return groupID, err
+}
+
+func SelectCreatedByFromUUID(groupUUID string) (int, error) {
+	var createdBy int
+	err := sqlDB.QueryRow(`SELECT created_by FROM groups WHERE uuid = ?`, groupUUID).
+		Scan(&createdBy)
+	return createdBy, err
 }

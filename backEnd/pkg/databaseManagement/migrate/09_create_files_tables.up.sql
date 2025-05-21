@@ -1,6 +1,6 @@
 CREATE TABLE message_files (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-    group_id           INTEGER,
+    group_id           INTEGER NOT NULL DEFAULT 0,
     message_id         INTEGER NOT NULL,
     file_uploaded_name TEXT NOT NULL,
     file_real_name     TEXT NOT NULL,

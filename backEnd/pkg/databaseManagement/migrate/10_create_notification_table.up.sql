@@ -2,7 +2,7 @@ CREATE TABLE notifications (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     receiver_id  INTEGER NOT NULL,
     sender_id     INTEGER NOT NULL,
-    group_id      INTEGER,
+    group_id      INTEGER NOT NULL DEFAULT 0,
     event_id      INTEGER,
     
     type          TEXT NOT NULL CHECK (type IN (

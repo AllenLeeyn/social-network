@@ -2,7 +2,7 @@ CREATE TABLE messages_new (
     id          INTEGER PRIMARY KEY,
     sender_id   INTEGER NOT NULL,
     receiver_id INTEGER NOT NULL,
-    group_id    INTEGER,
+    group_id    INTEGER NOT NULL DEFAULT 0,
     content     TEXT NOT NULL,
     
     status      TEXT NOT NULL CHECK ("status" IN ('enable', 'disable', 'delete')) DEFAULT 'enable',

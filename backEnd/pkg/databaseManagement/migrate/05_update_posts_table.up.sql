@@ -9,7 +9,7 @@ CREATE TABLE posts_new (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid            TEXT NOT NULL UNIQUE,
     user_id         INTEGER NOT NULL,
-    group_id        INTEGER,
+    group_id        INTEGER NOT NULL DEFAULT 0,
     title           TEXT NOT NULL,
     content         TEXT NOT NULL,
     visibility      TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'private', 'selected')),

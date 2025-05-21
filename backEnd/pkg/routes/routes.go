@@ -77,8 +77,36 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			followingContollers.ViewFollowingRequestsHandler))
 
-	// to return data if user is follower or profile is public
 	http.HandleFunc("/api/followings",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			followingContollers.ViewFollowingsHandler))
+
+	http.HandleFunc("/api/groupInviteRequest",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			groupContollers.GroupInviteRequestHandler))
+
+	//not done
+	http.HandleFunc("/api/groupJoinRequest",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			groupContollers.GroupJoinRequestHandler))
+
+	http.HandleFunc("/api/groupQuitRequest",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			groupContollers.QuitGroupHandler))
+
+	http.HandleFunc("/api/group/members",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			groupContollers.ViewGroupMembersHandle))
+
+	http.HandleFunc("/api/group/memberRequets",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			groupContollers.ViewGroupMemberRequestsHandle))
+
+	http.HandleFunc("/api/group/membershipResponse",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			groupContollers.GroupMembershipResponseHandler))
+
+	http.HandleFunc("/api/group/removeMember",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			groupContollers.RemoveGroupMemberHandler))
 }

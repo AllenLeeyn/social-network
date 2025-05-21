@@ -13,31 +13,35 @@ import (
 	"social-network/pkg/utils"
 )
 
-func processFollowingRequest(r *http.Request, userType string) (*followingModel.Following, error) {
-	f := &followingModel.Following{}
-	if err := utils.ReadJSON(r, f); err != nil {
-		return nil, err
-	}
-
+func ProcessFollowingIDs(r *http.Request) (*followingModel.Following, int, string, error) {
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
-		return nil, fmt.Errorf("error getting userID")
+		return nil, -1, "", fmt.Errorf("error getting userID")
 	}
-	switch userType {
-	case "follower":
+
+	f := &followingModel.Following{}
+	if err := utils.ReadJSON(r, f); err != nil {
+		return nil, -1, "", err
+	}
+	if f.FollowerUUID == "" {
 		f.FollowerID = userID
-	case "leader":
+	} else {
 		f.LeaderID = userID
 	}
 
 	if err := followingModel.SelectIDsFromUUIDs(f); err != nil {
-		return nil, err
+		return nil, -1, "", err
 	}
-	return f, nil
+
+	followingStatus, err := followingModel.SelectStatus(f)
+	if err != nil {
+		return nil, -1, "", err
+	}
+	return f, userID, followingStatus, nil
 }
 
 func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
-	f, err := processFollowingRequest(r, "follower")
+	f, userID, followingStatus, err := ProcessFollowingIDs(r)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -45,28 +49,23 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	f.Status = "requested"
 
 	operation, message := followingModel.InsertFollowing, "request send"
-	followingStatus, err := followingModel.SelectStatus(f)
-	if err != nil {
-		log.Println(err.Error())
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
 
 	switch followingStatus {
 	case "accepted":
-		errorControllers.CustomErrorHandler(w, r, "You are a follower", http.StatusBadRequest)
+		errorControllers.CustomErrorHandler(w, r,
+			"you are a follower", http.StatusBadRequest)
 		return
 	case "requested", "invited":
-		errorControllers.CustomErrorHandler(w, r, "Response pending. Please wait", http.StatusBadRequest)
+		errorControllers.CustomErrorHandler(w, r,
+			"Response pending. Please wait", http.StatusBadRequest)
 		return
 	case "declined", "inactive":
 		operation = followingModel.UpdateFollowing
-		f.UpdatedBy = f.FollowerID
+		f.UpdatedBy = userID
 	default:
-		f.CreatedBy = f.FollowerID
+		f.CreatedBy = userID
 	}
 
-	// check if leader profile is public, and accept request. Need to test
 	if userModel.IsPublic(f.LeaderUUID) {
 		f.Status, message = "accepted", "request accepted"
 	}
@@ -79,19 +78,14 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
-	f, err := processFollowingRequest(r, "follower")
+	f, userID, followingStatus, err := ProcessFollowingIDs(r)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	f.UpdatedBy, f.Status = f.FollowerID, "inactive"
+	f.UpdatedBy, f.Status = userID, "inactive"
 
 	message := "not following user"
-	followingStatus, err := followingModel.SelectStatus(f)
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
 
 	switch followingStatus {
 	case "accepted":
@@ -112,20 +106,16 @@ func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RemoveFollowerHandler(w http.ResponseWriter, r *http.Request) {
-	f, err := processFollowingRequest(r, "leader")
+	f, userID, followingStatus, err := ProcessFollowingIDs(r)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	f.UpdatedBy, f.Status = f.LeaderID, "declined"
+	f.UpdatedBy, f.Status = userID, "declined"
 
-	followingStatus, err := followingModel.SelectStatus(f)
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
 	if followingStatus != "accepted" {
-		errorControllers.CustomErrorHandler(w, r, "User is not a current follower", http.StatusBadRequest)
+		errorControllers.CustomErrorHandler(w, r,
+			"User is not a current follower", http.StatusBadRequest)
 		return
 	}
 
@@ -138,20 +128,16 @@ func RemoveFollowerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func FollowingResponseHandler(w http.ResponseWriter, r *http.Request) {
-	f, err := processFollowingRequest(r, "leader")
+	f, userID, followingStatus, err := ProcessFollowingIDs(r)
 	if err != nil {
 		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	f.UpdatedBy = f.LeaderID
+	f.UpdatedBy = userID
 
-	message := "request accepted"
-	if f.Status == "declined" {
-		message = "request declined"
-	}
+	message := "request " + f.Status
 
-	followingStatus, _ := followingModel.SelectStatus(f)
 	if followingStatus != "requested" || (f.Status != "accepted" && f.Status != "declined") {
 		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
@@ -177,10 +163,10 @@ func ViewFollowingRequestsHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "Data OK", pendingFollowing)
 }
 
-// show data if is follower or public
 func ViewFollowingsHandler(w http.ResponseWriter, r *http.Request) {
 	tgtUUID, statusCode := userControllers.GetTgtUUID(r)
 	if statusCode == http.StatusInternalServerError {
@@ -198,5 +184,6 @@ func ViewFollowingsHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "Data OK", followings)
 }

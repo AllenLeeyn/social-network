@@ -22,21 +22,23 @@ type Following struct {
 }
 
 type FollowingResponse struct {
-	LeaderUUID   string     `json:"leader_uuid"`
-	LeaderName   string     `json:"leader_name"`
+	LeaderUUID   string     `json:"leader_uuid,omitempty"`
+	LeaderName   string     `json:"leader_name,omitempty"`
 	FollowerUUID string     `json:"follower_uuid"`
 	FollowerName string     `json:"follower_name"`
 	GroupUUID    string     `json:"group_uuid"`
 	Status       string     `json:"status"`
-	CreatedAt    *time.Time `json:"created_at"`
-	UpdatedAt    *time.Time `json:"updated_at"`
+	CreatedAt    *time.Time `json:"created_at,omitempty"`
+	UpdatedAt    *time.Time `json:"updated_at,omitempty"`
 }
 
+var publicGroupUUID = "00000000-0000-0000-0000-000000000000"
+
 func SelectIDsFromUUIDs(f *Following) error {
-	if f.LeaderID == 0 {
+	if f.LeaderID == 0 && f.GroupUUID == publicGroupUUID {
 		leaderID, err := userModel.SelectUserIDByUUID(f.LeaderUUID)
 		if err != nil {
-			return fmt.Errorf("user not found")
+			return fmt.Errorf("leader not found")
 		}
 		f.LeaderID = leaderID
 	}
@@ -44,10 +46,11 @@ func SelectIDsFromUUIDs(f *Following) error {
 	if f.FollowerID == 0 {
 		followerID, err := userModel.SelectUserIDByUUID(f.FollowerUUID)
 		if err != nil {
-			return fmt.Errorf("user not found")
+			return fmt.Errorf("follower not found")
 		}
 		f.FollowerID = followerID
 	}
+
 	return nil
 }
 
@@ -112,6 +115,7 @@ func IsFollower(userID int, tgtUUID string) bool {
 	err := sqlDB.QueryRow(qry, tgtUUID, userID).Scan(&exists)
 	return err == nil
 }
+
 func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingResponse, error) {
 	if fStatus != "accepted" {
 		fStatus = "requested"
