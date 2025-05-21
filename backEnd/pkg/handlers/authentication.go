@@ -58,7 +58,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if !getJSON(w, r, u) {
 		return
 	}
-	fmt.Println("hello")
 	fmt.Println("Login request received for:", u.Email, u.NickName, u.Passwd) // Debug: Log user credentials
 
 	if err := checkLoginCredentials(u); err != nil {
@@ -80,8 +79,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if e == nil {
 		expireSession(w, s)
 	}
-	createSession(w, user)
-	executeJSON(w, MsgData{"Login succesful"}, http.StatusOK)
+	// createSession(w, user)
+	// executeJSON(w, MsgData{"Login succesful"}, http.StatusOK)
+	sessionID := createSession(w, user)
+	executeJSON(w, LoginResponse{
+        Message:   "Login successful",
+        SessionID: sessionID,
+    }, http.StatusOK)
 }
 
 func LogOut(w http.ResponseWriter, r *http.Request) {
@@ -134,15 +138,40 @@ func checkLoginCredentials(u *user) error {
 }
 
 /*----------- authenticaton nefore handshake-----------*/
+// func WS(w http.ResponseWriter, r *http.Request) {
+// 	sessionCookie, userID, isValid := checkHttpRequest(w, r, "user", http.MethodGet)
+// 	if !isValid {
+// 		return
+// 	}
+// 	u, err := db.SelectUserByField("id", userID)
+// 	if err != nil || u == nil {
+// 		executeJSON(w, MsgData{"User not found."}, http.StatusBadRequest)
+// 		return
+// 	}
+// 	m.WebSocketUpgrade(w, r, sessionCookie.Value, u)
+// }
+
 func WS(w http.ResponseWriter, r *http.Request) {
-	sessionCookie, userID, isValid := checkHttpRequest(w, r, "user", http.MethodGet)
-	if !isValid {
-		return
-	}
-	u, err := db.SelectUserByField("id", userID)
-	if err != nil || u == nil {
-		executeJSON(w, MsgData{"User not found."}, http.StatusBadRequest)
-		return
-	}
-	m.WebSocketUpgrade(w, r, sessionCookie.Value, u)
+    sessionID := r.URL.Query().Get("session")
+    if sessionID == "" {
+        executeJSON(w, MsgData{"Session ID required"}, http.StatusBadRequest)
+        return
+    }
+
+    // Validate sessionID against your database
+	session, err := validateSession(sessionID)
+    if err != nil || session == nil {
+        executeJSON(w, MsgData{"Invalid session"}, http.StatusUnauthorized)
+        return
+    }
+
+    // Get user by ID
+    user, err := db.SelectUserByField("id", session.UserID)
+    if err != nil || user == nil {
+        executeJSON(w, MsgData{"User not found."}, http.StatusBadRequest)
+        return
+    }
+
+    // Proceed with WebSocket upgrade
+    m.WebSocketUpgrade(w, r, sessionID, user)
 }

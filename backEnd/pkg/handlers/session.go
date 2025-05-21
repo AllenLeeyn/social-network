@@ -8,7 +8,7 @@ import (
 
 	"github.com/gofrs/uuid"
 )
-
+// for HTTP
 func checkSessionValidity(w http.ResponseWriter, r *http.Request) (*http.Cookie, int) {
 	sessionCookie, err := r.Cookie("session-id")
 	if err != nil || sessionCookie == nil {
@@ -24,7 +24,17 @@ func checkSessionValidity(w http.ResponseWriter, r *http.Request) (*http.Cookie,
 	return sessionCookie, s.UserID
 }
 
-func createSession(w http.ResponseWriter, user *user) {
+// for WS
+func validateSession(sessionID string) (*session, error) {
+    s, err := db.SelectActiveSessionBy("id", sessionID)
+    if err != nil || s == nil || s.ExpireTime.Before(time.Now()) {
+        return nil, err
+    }
+    return s, nil
+}
+
+
+func createSession(w http.ResponseWriter, user *user) string {
 	// generate a uuid for the session and set it into a cookie
 	id, _ := uuid.NewV4()
 	cookie := &http.Cookie{
@@ -46,8 +56,7 @@ func createSession(w http.ResponseWriter, user *user) {
 	if err != nil {
         fmt.Println("Error inserting session:", err) // Debug: Log session insertion errors
     }
-
-
+	return id.String() 
 }
 
 func extendSession(w http.ResponseWriter, sessionCookie *http.Cookie) {

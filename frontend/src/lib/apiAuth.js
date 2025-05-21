@@ -6,12 +6,14 @@ export async function login(email, password, nickName = '') {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ nickName, email, password }),
   });
+  const data = await response.json();
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.message || "Login failed");
   }
 
-  return response.json(); // Return user data or success message
+  // return response.json(); // Return user data or success message
+  return data;
 }
 
 export async function signup(userData) {

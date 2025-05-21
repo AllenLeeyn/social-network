@@ -10,11 +10,12 @@ import CategoriesList from "../components/CategoriesList";
 import PostList from "../components/PostList";
 import CreatePost from "../components/CreatePost";
 import Modal from "../components/Modal";
+import UsersList from "../components/UsersList";
 
 import { fetchPosts } from "../lib/apiPosts";
 import { usePosts } from "../hooks/usePosts";
 
-import { useWebsocket } from '../contexts/WebSocketContext';
+import { useWebsocketContext } from '../contexts/WebSocketContext';
 
 import {
   sampleGroups,
@@ -28,8 +29,14 @@ export default function HomePage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const router = useRouter(); 
 
-  const { isConnected, connect } = useWebsocket();
-  const sessionId = localStorage.getItem('session-id'); // Or from cookies/auth context
+  const { isConnected, connect } = useWebsocketContext();
+  const [sessionId, setSessionId] = useState(null);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSessionId(localStorage.getItem('session-id'));
+    }
+  }, []);
+  //const sessionId = localStorage.getItem('session-id'); // Or from cookies/auth context
 
   useEffect(() => {
     async function checkAccess() {
@@ -41,7 +48,7 @@ export default function HomePage() {
         router.push("/login");
       }
     }
-
+    console.log('Session ID:', localStorage.getItem('session-id'));
     checkAccess();
   }, [router]);
 
@@ -140,7 +147,7 @@ export default function HomePage() {
           {showModal && (
             <Modal onClose={() => setShowModal(false)} title="Create Post">
               <CreatePost
-                categories={sampleCategories}
+                categories={categories}
                 onClose={() => setShowModal(false)}
               />
             </Modal>
@@ -149,7 +156,9 @@ export default function HomePage() {
 
         {/* Right Sidebar */}
         <aside className="sidebar right-sidebar">
-          <SidebarSection title="Active Users"></SidebarSection>
+          <SidebarSection title="Active Users">
+            <UsersList />
+          </SidebarSection>
         </aside>
       </div>
     </main>

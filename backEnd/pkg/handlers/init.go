@@ -43,6 +43,11 @@ type MsgData struct {
 	Message string `json:"message"`
 }
 
+type LoginResponse struct {
+    Message   string `json:"message"`
+    SessionID string `json:"sessionId"`
+}
+
 // Initializes all html files in templates folder
 func Init(dbMain *dbTools.DBContainer, messenger messenger.Messenger) {
 	db = dbMain

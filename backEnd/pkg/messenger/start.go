@@ -11,7 +11,11 @@ import (
 )
 
 var db *dbTools.DBContainer
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 type message = dbTools.Message
 type user = dbTools.User

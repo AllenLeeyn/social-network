@@ -13,6 +13,9 @@ export function useAuth() {
     try {
       const userData = await login(nickName, email, password)
       setUser(userData) // Save user data after successful login
+      console.log(userData)
+      localStorage.setItem('session-id', userData.sessionId);
+      return userData.sessionId;
     } catch (err) {
       setError(err.message)
     } finally {

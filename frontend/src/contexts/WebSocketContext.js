@@ -1,90 +1,49 @@
 'use client';
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useCallback, useState } from "react";
+import { useWebsocket } from "../hooks/useWebsocket";
+
 
 const WebSocketContext = createContext();
 
-export function WebSocketProvider( {children} ) {
+export function WebSocketProvider( { children } ) {
     const [userList, setUserList] = useState([]);
-    const [isConnected, setIsConnected] = useState(false);
-    const [connectionParams, setConnectionParams] = useState({
-        sessionId: null,
-    });
-    const ws = useRef(null);
+    const [sessionId, setSessionId] = useState(null);
 
-    // Main useEffect for ws lifecycle
-    useEffect(() => {
-        if (!connectionParams.sessionId) return;
-
-        const connectWebSocket = () => {
-
-            // if socket already open, return,
-            if (ws.current?.readyState === WebSocket.OPEN) return;
-
-            // Create new connection
-            ws.current = new WebSocket(
-                `ws://localhost:8080/ws?session=${connectionParams.sessionId}`
-            );
-
-            // event handling
-            ws.current.onopen = () => {
-                setIsConnected(true);
-                console.log('Global Websocket connected')
-            };
-
-            // actions
-            ws.current.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                // Actions
-                if (data.action === 'userListUpdate') {
-                    setUserList(data.users);
-                }
-                // add more here
-            };
-
-            // when connection is closed, try to reestablish
-            ws.current.onclose = () => {
-                setIsConnected(false);
-                console.log('Attempting reconnect...');
-                setTimeout(connectWebSocket, 5000);
-            };
-
-            ws.current.onerror = (error) => {
-                console.error('Websocket error:', error)
-            };
-        };
-        
-        
-        connectWebSocket();
-        
-        return () => {
-            if (ws.current?.readyState === WebSocket.OPEN) {
-                ws.current.close();
+    // using hook for connection logic
+    const { isConnected, sendAction } = useWebsocket(
+        sessionId ? `ws://localhost:8080/ws?session=${sessionId}` : null,
+        (data) => {
+            if (data.action === 'userListUpdate') {
+                setUserList(data.users)
             }
-        };
-    }, [connectionParams.sessionId]); // reconnect when any of these changes
-
-    // Connection Handler
-    const connect = (sessionId) => {
-        setConnectionParams({ sessionId });
-    };
-
-    const sendMessage = (message) => {
-        if (ws.current?.readyState === WebSocket.OPEN) {
-            ws.current.send(JSON.stringify(message));
+            // Add more msg handler 
+        },
+        {
+            initialDelay: 1000,
+            maxDelay: 30000,
+            backoffFactor: 2,
+            maxAttempts: null
         }
-    };
+    );
+    // console.log('sending Session ID', sessionId)
+
+    // conn handling
+    const connect = useCallback((newSessionId) => {
+        setSessionId(newSessionId);
+    }, []);
 
     return (
-        <WebSocketContext.Provider value={{
+        <WebSocketContext.Provider value ={{
             userList,
             isConnected,
             connect,
-            sendMessage,
+            sendAction
         }}>
             {children}
         </WebSocketContext.Provider>
     );
 }
 
-export const useWebsocket = () => useContext(WebSocketContext);
+export const useWebsocketContext = () => useContext(WebSocketContext);
+
