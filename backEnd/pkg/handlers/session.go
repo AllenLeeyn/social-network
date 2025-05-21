@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 func checkSessionValidity(w http.ResponseWriter, r *http.Request) (*http.Cookie, int) {
 	sessionCookie, err := r.Cookie("session-id")
 	if err != nil || sessionCookie == nil {
+		log.Println(err)
 		return nil, -1
 	}
 	sessionID := sessionCookie.Value
@@ -33,12 +36,18 @@ func createSession(w http.ResponseWriter, user *user) {
 	}
 	http.SetCookie(w, cookie)
 
-	db.InsertSession(&session{
+	err := db.InsertSession(&session{
 		ID:         id.String(),
 		UserID:     user.ID,
 		IsActive:   true,
 		ExpireTime: time.Now().Add(2 * time.Hour),
 	})
+
+	if err != nil {
+        fmt.Println("Error inserting session:", err) // Debug: Log session insertion errors
+    }
+
+
 }
 
 func extendSession(w http.ResponseWriter, sessionCookie *http.Cookie) {

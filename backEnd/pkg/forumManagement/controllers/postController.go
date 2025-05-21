@@ -4,6 +4,7 @@ import (
 	// "forum/middlewares"
 
 	"errors"
+	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -215,6 +216,7 @@ func ReadMyLikedPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("we get here")
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
@@ -278,13 +280,13 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert a record while checking duplicates
-	_, insertError := models.InsertPost(post, post.CategoryIds, post.FileAttachments)
+	createdPostUUID, insertError := models.InsertPost(post, post.CategoryIds, post.FileAttachments)
 	if insertError != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	utils.ReturnJsonSuccess(w, "Post submitted successfully", nil)
+	utils.ReturnJsonSuccess(w, "Post submitted successfully", createdPostUUID)
 }
 
 func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {

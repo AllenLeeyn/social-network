@@ -3,6 +3,7 @@ package controller
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
@@ -57,6 +58,7 @@ func isValidUserInfo(u *user) error {
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
 	if err := utils.ReadJSON(w, r, u); err != nil {
+		fmt.Println(err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -123,6 +125,7 @@ func isValidLogin(u *user) error {
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
 	if err := utils.ReadJSON(w, r, u); err != nil {
+		fmt.Println(err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
