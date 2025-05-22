@@ -1,18 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../styles/CreatePost.css";
-import { createPost } from "../lib/apiPosts";
+import { createPost, fetchCategories } from "../lib/apiPosts";
 
-export default function CreatePost({ categories, onClose }) {
-  // state for title, content, selected categories (store names)
+export default function CreatePost({ onClose }) {
   const [title, setTitle] = useState("");
   const [content, setcontent] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // handleChange for inputs and checkboxes
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await fetchCategories();
+        setCategories(data.data); // Adjust if your API returns a different shape
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCategories();
+  }, []);
+
   function handleCategoryChange(e) {
-    const value = e.target.value; // use category name (string)
+    const value = e.target.value;
     setSelectedCategories((prev) =>
       prev.includes(value)
         ? prev.filter((cat) => cat !== value)
@@ -20,10 +35,8 @@ export default function CreatePost({ categories, onClose }) {
     );
   }
 
-  // handlesubmit for the form
   async function handleSubmit(e) {
     e.preventDefault();
-    // Map selected category names to IDs
     const categoryNameToId = {};
     categories.forEach((cat) => {
       categoryNameToId[cat.name] = cat.id;
@@ -32,7 +45,7 @@ export default function CreatePost({ categories, onClose }) {
       (name) => categoryNameToId[name]
     );
 
-    const postData = { title, content, category_ids: categoryIds};
+    const postData = { title, content, category_ids: categoryIds };
     try {
       const data = await createPost(postData);
       if (data) {
@@ -45,6 +58,9 @@ export default function CreatePost({ categories, onClose }) {
     }
     if (onClose) onClose();
   }
+
+  if (loading) return <div>Loading categories...</div>;
+  if (error) return <div>Error loading categories: {error}</div>;
 
   return (
     <form onSubmit={handleSubmit}>

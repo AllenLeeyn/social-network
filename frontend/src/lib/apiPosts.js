@@ -34,3 +34,11 @@ export async function createPost(postData) {
   }
   return data;
 }
+
+export async function fetchCategories() {
+  const response = await fetch("/frontend-api/categories", {
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error("Failed to fetch categories");
+  return response.json();
+}
