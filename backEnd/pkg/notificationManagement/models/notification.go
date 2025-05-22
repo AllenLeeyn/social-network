@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	userManagementModels "social-network/pkg/userManagement/models"
 	"time"
@@ -9,19 +10,19 @@ import (
 
 // Post struct represents the user data model
 type Notification struct {
-	ID                 int        `json:"id"`
-	ToUserId           int        `json:"to_user_id"`
-	FromUserId         int        `json:"from_user_id"`
-	TargetType         string     `json:"target_type"`
-	TargetDetailedType string     `json:"target_detailed_type"`
-	TargetId           int        `json:"target_id"`
-	Message            string     `json:"message"`
-	IsRead             int        `json:"is_read"`
-	Data               string     `json:"data"`
-	Status             string     `json:"status"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          *time.Time `json:"updated_at"`
-	UpdatedBy          *int       `json:"updated_by"`
+	ID                 int              `json:"id"`
+	ToUserId           int              `json:"to_user_id"`
+	FromUserId         int              `json:"from_user_id"`
+	TargetType         string           `json:"target_type"`
+	TargetDetailedType string           `json:"target_detailed_type"`
+	TargetId           int              `json:"target_id"`
+	Message            string           `json:"message"`
+	IsRead             int              `json:"is_read"`
+	Data               *json.RawMessage `json:"data"`
+	Status             string           `json:"status"`
+	CreatedAt          time.Time        `json:"created_at"`
+	UpdatedAt          *time.Time       `json:"updated_at"`
+	UpdatedBy          *int             `json:"updated_by"`
 
 	ToUser   userManagementModels.User `json:"to_user"`   // Embedded to user data
 	FromUser userManagementModels.User `json:"from_user"` // Embedded from user data
@@ -34,8 +35,23 @@ func Initialize(dbMain *sql.DB) {
 }
 
 func InsertNotification(notification *Notification) (int, error) {
+	selectQuery := `SELECT id FROM notifications WHERE to_user_id = ? AND from_user_id = ? AND target_detailed_type = ? AND target_id = ?;`
+	rows, selectErr := sqlDB.Query(selectQuery, notification.ToUserId, notification.FromUserId, notification.TargetDetailedType, notification.TargetId)
+	if selectErr != nil {
+		return -1, selectErr
+	}
+	defer rows.Close()
+	var existingNotificationID int
+	if rows.Next() {
+		if err := rows.Scan(&existingNotificationID); err != nil {
+			return -1, fmt.Errorf("error scanning row: %v", err)
+		}
+		// If a notification already exists, return its ID
+		return -1, fmt.Errorf("same notification exists")
+	}
+
 	insertQuery := `INSERT INTO notifications (to_user_id, from_user_id, target_type, target_detailed_type, target_id, message, data) VALUES (?, ?, ?, ?, ?, ?, ?);`
-	result, insertErr := sqlDB.Exec(insertQuery, notification.ToUser, notification.FromUser, notification.TargetType, notification.TargetDetailedType, notification.TargetId, notification.Message, notification.Data)
+	result, insertErr := sqlDB.Exec(insertQuery, notification.ToUserId, notification.FromUserId, notification.TargetType, notification.TargetDetailedType, notification.TargetId, notification.Message, notification.Data)
 	if insertErr != nil {
 		return -1, insertErr
 	}
@@ -49,7 +65,7 @@ func InsertNotification(notification *Notification) (int, error) {
 	return int(lastInsertID), nil
 }
 
-func UpdateNotificationReedStatus(notification_id int, is_read int, user_id int) error {
+func UpdateNotificationReadStatus(notification_id int, is_read int, user_id int) error {
 	updateQuery := `UPDATE notifications
 					SET is_read = ?,
 						updated_at = CURRENT_TIMESTAMP,

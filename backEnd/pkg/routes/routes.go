@@ -79,8 +79,8 @@ func SetupRoutes(sqlDB *sql.DB) {
 	http.HandleFunc("/api/submitNotification",
 		middleware.CheckHttpRequest("user", http.MethodPost, notificationControllers.SubmitNotificationHandler)) /*post method*/
 
-	http.HandleFunc("/api/updateNotificationReedStatus",
-		middleware.CheckHttpRequest("user", http.MethodPost, notificationControllers.UpdateNotificationReedStatusHandler)) /*post method*/
+	http.HandleFunc("/api/updateNotificationReadStatus",
+		middleware.CheckHttpRequest("user", http.MethodPost, notificationControllers.UpdateNotificationReadStatusHandler)) /*post method*/
 
 	http.HandleFunc("/api/deleteNotification",
 		middleware.CheckHttpRequest("user", http.MethodPost, notificationControllers.DeleteNotificationHandler)) /*post method*/

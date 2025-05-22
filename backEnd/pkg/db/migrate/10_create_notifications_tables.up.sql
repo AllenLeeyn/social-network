@@ -18,3 +18,6 @@ CREATE TABLE notifications (
     FOREIGN KEY (from_user_id)   REFERENCES users(id),
     FOREIGN KEY (updated_by)      REFERENCES users(id)
 );
+
+CREATE UNIQUE INDEX idx_unique_notification_strict
+ON notifications(to_user_id, from_user_id, target_id, target_detailed_type);

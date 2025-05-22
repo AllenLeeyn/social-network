@@ -25,6 +25,15 @@ func isValidNotificationId(notification *models.Notification) error {
 	return nil
 }
 
+// validators for read status
+func isValidNotificationReadStatus(notification *models.Notification) error {
+	if notification.IsRead != 0 && notification.IsRead != 1 {
+		return errors.New("read status is required and must be numeric either 0 or 1")
+	}
+
+	return nil
+}
+
 // validators for notification data
 func isValidNotificationInfo(notification *models.Notification) error {
 	isValid := false
@@ -37,7 +46,7 @@ func isValidNotificationInfo(notification *models.Notification) error {
 	if notification.TargetType == "" || (notification.TargetType != "follow" && notification.TargetType != "group" && notification.TargetType != "group_event") {
 		return errors.New("target type is required and must be either 'follow', 'group' or 'group_event'")
 	}
-	if notification.TargetDetailedType == "" || (notification.TargetDetailedType != "follow" && notification.TargetDetailedType != "group" && notification.TargetDetailedType != "group_event") {
+	if notification.TargetDetailedType == "" || (notification.TargetDetailedType != "follow_request" && notification.TargetDetailedType != "group_invite" && notification.TargetDetailedType != "group_request" && notification.TargetDetailedType != "group_event") {
 		return errors.New("target detailed type is required and must be either 'follow_request', 'group_invite', 'group_request' or 'group_event'")
 	}
 	if notification.TargetId, isValid = utils.IsValidId(notification.TargetId); !isValid {
@@ -129,6 +138,10 @@ func SubmitNotificationHandler(w http.ResponseWriter, r *http.Request) {
 
 	instertedNotificationId, insertHttpStatusCode, insertErr := insertNotification(notification)
 	if insertErr != nil {
+		if insertErr.Error() == "same notification exists" {
+			errorControllers.CustomErrorHandler(w, r, "same notification exists", http.StatusBadRequest)
+			return
+		}
 		errorControllers.CustomErrorHandler(w, r, insertErr.Error(), insertHttpStatusCode)
 		return
 	}
@@ -136,7 +149,7 @@ func SubmitNotificationHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Notification submitted successfully", instertedNotificationId)
 }
 
-func UpdateNotificationReedStatusHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateNotificationReadStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
@@ -155,7 +168,12 @@ func UpdateNotificationReedStatusHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	updateError := models.UpdateNotificationReedStatus(notification.ID, notification.IsRead, userID)
+	if err := isValidNotificationReadStatus(notification); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	updateError := models.UpdateNotificationReadStatus(notification.ID, notification.IsRead, userID)
 	if updateError != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
