@@ -3,7 +3,6 @@ export async function POST(req) {
 
   try {
     const body = await req.json(); // Parse the request body
-    console.log(body);
     const response = await fetch(backendUrl, {
       method: "POST",
       headers: {

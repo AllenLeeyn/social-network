@@ -11,7 +11,7 @@ import {
   sampleConnections,
 } from "../../data/mockData";
 import { usePosts } from "../../hooks/usePosts";
-import { fetchPostById } from "../../lib/apiPosts";
+import { fetchPostById, submitPostFeedback } from "../../lib/apiPosts";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -49,6 +49,17 @@ export default function PostPage() {
       setComments(postData.data.Comments);
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const handlePostFeedback = async (rating) => {
+    try {
+      await submitPostFeedback({ parent_id: post.id, rating });
+      // Refresh post data to update like/dislike counts
+      const postData = await fetchPostById(id);
+      setPost(postData.data.Post);
+    } catch (err) {
+      alert(err.message || "Failed to submit feedback");
     }
   };
 
@@ -109,24 +120,21 @@ export default function PostPage() {
               </p>
               <p>{post.content}</p>
               <div className="post-actions" style={{ marginTop: "1em" }}>
-                <label>
-                  <input
-                    type="radio"
-                    name={`like-dislike-post-${post.id}`}
-                    checked={post.liked}
-                    readOnly
-                  />
+                <button
+                  onClick={() => handlePostFeedback(1)}
+                  disabled={post.liked}
+                  aria-label="Like"
+                >
                   👍 Like {post.like_count}
-                </label>
-                <label style={{ marginLeft: "1em" }}>
-                  <input
-                    type="radio"
-                    name={`like-dislike-post-${post.id}`}
-                    checked={post.disliked}
-                    readOnly
-                  />
+                </button>
+                <button
+                  onClick={() => handlePostFeedback(-1)}
+                  disabled={post.disliked}
+                  aria-label="Dislike"
+                  style={{ marginLeft: "1em" }}
+                >
                   👎 Dislike {post.dilike_count}
-                </label>
+                </button>
               </div>
             </div>
           ) : (

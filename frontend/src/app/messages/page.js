@@ -22,7 +22,6 @@ export default function MessagePage() {
         const ws = new WebSocket('ws://localhost:8080/ws');
 
         ws.onopen = () => {
-            console.log('WebSocket connected');
         };
 
         ws.onmessage = (event) => {

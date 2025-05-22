@@ -6,7 +6,6 @@ export async function GET(req) {
     // Get the post id from the query string
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-    console.log("Fetching post with id:", id);
 
     if (!id) {
       return new Response(JSON.stringify({ message: "Missing post id" }), {
@@ -41,7 +40,6 @@ export async function GET(req) {
     }
 
     const data = await response.json();
-    console.log("data is: ",data)
     return new Response(JSON.stringify(data), { status: 200 });
   } catch (error) {
     console.error("Error fetching post:", error);

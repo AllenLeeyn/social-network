@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
 export async function POST(req) {
-  const backendUrl = "http://localhost:8080/api/submitPost";
+  const backendUrl = "http://localhost:8080/api/commentFeedback";
   try {
     // Get session-id cookie
     const cookieStore = await cookies();
@@ -14,7 +14,7 @@ export async function POST(req) {
       );
     }
 
-    // Get post data from request body
+    // Get feedback data from request body
     const body = await req.json();
 
     // Forward to backend
@@ -30,7 +30,7 @@ export async function POST(req) {
     const data = await response.json();
     return new Response(JSON.stringify(data), { status: response.status });
   } catch (error) {
-    console.error("Error creating post:", error);
+    console.error("Error submitting comment feedback:", error);
     return new Response(JSON.stringify({ message: "Internal Server Error" }), {
       status: 500,
     });

@@ -3,6 +3,7 @@
 
 import CommentForm from "./CommentForm";
 import "../styles/Comments.css";
+import { submitCommentFeedback } from "../lib/apiPosts";
 
 export default function CommentSection({
   comments = [],
@@ -10,12 +11,25 @@ export default function CommentSection({
   postId,
   onCommentSubmitted,
 }) {
+  // Sort comments by id (ascending)
+  const sortedComments = [...comments].sort((a, b) => a.id - b.id);
+
+  // Add handlers for like/dislike
+  const handleFeedback = async (commentId, rating) => {
+    try {
+      await submitCommentFeedback({ parent_id: commentId, rating });
+      if (onCommentSubmitted) onCommentSubmitted(); // Refresh comments
+    } catch (err) {
+      alert(err.message || "Failed to submit feedback");
+    }
+  };
+
   return (
     <div className="comments-section">
       <h4>{title}</h4>
       <ul className="comments-list">
-        {comments.length === 0 && <li>No comments yet.</li>}
-        {comments.map((comment) => (
+        {sortedComments.length === 0 && <li>No comments yet.</li>}
+        {sortedComments.map((comment) => (
           <li key={comment.id} className="comment-item">
             <div className="comment-author">
               <strong>{comment.user.nick_name}</strong>
@@ -25,24 +39,21 @@ export default function CommentSection({
               {new Date(comment.created_at).toLocaleString()}
             </div>
             <div className="comment-actions">
-              <label>
-                <input
-                  type="radio"
-                  name={`like-dislike-${comment.id}`}
-                  checked={comment.liked}
-                  readOnly
-                />
+              <button
+                onClick={() => handleFeedback(comment.id, 1)}
+                aria-label="Like"
+                disabled={comment.liked}
+              >
                 👍 Like {comment.like_count}
-              </label>
-              <label style={{ marginLeft: "1em" }}>
-                <input
-                  type="radio"
-                  name={`like-dislike-${comment.id}`}
-                  checked={comment.disliked}
-                  readOnly
-                />
+              </button>
+              <button
+                onClick={() => handleFeedback(comment.id, -1)}
+                aria-label="Dislike"
+                style={{ marginLeft: "1em" }}
+                disabled={comment.disliked}
+              >
                 👎 Dislike {comment.dislike_count}
-              </label>
+              </button>
             </div>
           </li>
         ))}
