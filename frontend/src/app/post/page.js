@@ -11,6 +11,7 @@ import {
   sampleConnections,
 } from "../../data/mockData";
 import { usePosts } from "../../hooks/usePosts";
+import { fetchPostById } from "../../lib/apiPosts";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -30,10 +31,7 @@ export default function PostPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const postRes = await fetch(`/frontend-api/post?id=${id}`);
-        if (!postRes.ok) throw new Error("Post not found");
-        const postData = await postRes.json();
-        // Update this after backend response structure change
+        const postData = await fetchPostById(id);
         setPost(postData.data.Post);
         setComments(postData.data.Comments);
       } catch (err) {
@@ -44,6 +42,15 @@ export default function PostPage() {
     }
     if (id) fetchData();
   }, [id]);
+
+  const refreshComments = async () => {
+    try {
+      const postData = await fetchPostById(id);
+      setComments(postData.data.Comments);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -128,7 +135,12 @@ export default function PostPage() {
             </div>
           )}
 
-          <CommentsSection title="Comments" comments={comments || []} />
+          <CommentsSection
+            title="Comments"
+            comments={comments || []}
+            postId={post.id}
+            onCommentSubmitted={refreshComments}
+          />
         </section>
 
         {/* Right Sidebar */}

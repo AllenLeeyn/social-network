@@ -42,3 +42,17 @@ export async function fetchCategories() {
   if (!response.ok) throw new Error("Failed to fetch categories");
   return response.json();
 }
+
+export async function submitComment(commentData) {
+  const response = await fetch("/frontend-api/submitComment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(commentData),
+    credentials: "include",
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to submit comment");
+  }
+  return data;
+}

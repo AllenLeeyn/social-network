@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -116,11 +117,14 @@ func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	comment := &models.Comment{}
 	comment.UserId = userID
 	if err := utils.ReadJSON(r, comment); err != nil {
+		fmt.Println("wrr, ",err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	if err := isValidCommentInfo(comment); err != nil {
+		fmt.Println(comment.PostId)
+		fmt.Println("wrr2, ",err)
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
 	}
