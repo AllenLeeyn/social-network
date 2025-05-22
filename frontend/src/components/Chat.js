@@ -4,6 +4,9 @@ import { useWebsocket } from "../hooks/useWebsocket";
 export default function ChatComponent({ sessionId }) {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState("");
+    const [userList, setUserList] = useState([]);
+    const [isTyping, setIsTyping] = useState(false);
+    const [currentChatId, setCurrentChatId] = useState(null);
 
     const handleAction = (data) => {
         // Handle different actions. message, typing, and other we implement

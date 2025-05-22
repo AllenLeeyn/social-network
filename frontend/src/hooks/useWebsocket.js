@@ -22,10 +22,15 @@ export function useWebsocket(
 
     // Core conn / re-conn logic
     const connectWebSocket = useCallback(() => {
+
         // Close old connection if it exists and is not already closed
-        // if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
-        //     ws.current.close();
-        // }
+        if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
+            //ws.current.close();
+        }
+        // setting new ws conn
+        ws.current = new WebSocket(url);
+
+
         // no url, return
         if (!url || url.includes('session=undefined')) {
             console.warn('Skipping WebSocket connection - invalid URL');
@@ -38,8 +43,6 @@ export function useWebsocket(
             return;
         }
 
-        // setting new ws conn
-        ws.current = new WebSocket(url);
 
         // conn established handler
         ws.current.onopen = () => {
