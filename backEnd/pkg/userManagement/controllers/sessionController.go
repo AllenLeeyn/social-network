@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	errorController "social-network/pkg/errorManagement/controllers"
 	middleware "social-network/pkg/middleware"
+
+	errorController "social-network/pkg/errorManagement/controllers"
 	userModel "social-network/pkg/userManagement/models"
 )
 

@@ -5,12 +5,14 @@ import (
 	"log"
 	"net/http"
 
-	errorControllers "social-network/pkg/errorManagement/controllers"
-	followingModel "social-network/pkg/followingManagement/models"
 	middleware "social-network/pkg/middleware"
-	userControllers "social-network/pkg/userManagement/controllers"
-	userModel "social-network/pkg/userManagement/models"
 	"social-network/pkg/utils"
+
+	followingModel "social-network/pkg/followingManagement/models"
+	userModel "social-network/pkg/userManagement/models"
+
+	errorControllers "social-network/pkg/errorManagement/controllers"
+	userControllers "social-network/pkg/userManagement/controllers"
 )
 
 func ProcessFollowingIDs(r *http.Request) (*followingModel.Following, int, string, error) {

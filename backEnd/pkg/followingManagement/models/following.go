@@ -22,7 +22,7 @@ type Following struct {
 	UpdatedAt    *time.Time `json:"updated_at"`
 }
 
-type FollowingResponse struct {
+type FollowingView struct {
 	LeaderUUID   string     `json:"leader_uuid,omitempty"`
 	LeaderName   string     `json:"leader_name,omitempty"`
 	FollowerUUID string     `json:"follower_uuid"`
@@ -80,7 +80,7 @@ func SelectStatus(f *Following) (string, error) {
 	return status, checkErrNoRows(err)
 }
 
-func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingResponse, error) {
+func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingView, error) {
 	if fStatus != "accepted" && fStatus != "requested" {
 		return nil, fmt.Errorf("invalid status")
 	}
@@ -103,28 +103,25 @@ func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingResponse, error) {
 	}
 	defer rows.Close()
 
-	var fResponses []FollowingResponse
+	var fViews []FollowingView
 	for rows.Next() {
-		var fr FollowingResponse
+		var fv FollowingView
 		err := rows.Scan(
-			&fr.FollowerUUID, &fr.FollowerName,
-			&fr.LeaderUUID, &fr.LeaderName,
-			&fr.Status, &fr.CreatedAt)
+			&fv.FollowerUUID, &fv.FollowerName,
+			&fv.LeaderUUID, &fv.LeaderName,
+			&fv.Status, &fv.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
-		fResponses = append(fResponses, fr)
+		fViews = append(fViews, fv)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return &fResponses, nil
+	return &fViews, nil
 }
 
 func InsertFollowing(f *Following) error {
-	if err := SelectIDsFromUUIDs(f); err != nil {
-		return err
-	}
 	if f.GroupID == 0 {
 		f.GroupUUID = publicGroupUUID
 	}

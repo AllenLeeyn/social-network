@@ -5,12 +5,14 @@ import (
 	"log"
 	"net/http"
 
-	errorControllers "social-network/pkg/errorManagement/controllers"
+	middleware "social-network/pkg/middleware"
+	"social-network/pkg/utils"
+
 	followingModel "social-network/pkg/followingManagement/models"
 	groupModel "social-network/pkg/groupManagement/models"
-	middleware "social-network/pkg/middleware"
+
+	errorControllers "social-network/pkg/errorManagement/controllers"
 	userControllers "social-network/pkg/userManagement/controllers"
-	"social-network/pkg/utils"
 
 	_ "github.com/mattn/go-sqlite3"
 )

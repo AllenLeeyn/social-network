@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	errorControllers "social-network/pkg/errorManagement/controllers"
-	followingControllers "social-network/pkg/followingManagement/controllers"
+
+	middleware "social-network/pkg/middleware"
+	"social-network/pkg/utils"
+
 	followingModel "social-network/pkg/followingManagement/models"
 	groupModel "social-network/pkg/groupManagement/models"
-	middleware "social-network/pkg/middleware"
+
+	errorControllers "social-network/pkg/errorManagement/controllers"
+	followingControllers "social-network/pkg/followingManagement/controllers"
 	userControllers "social-network/pkg/userManagement/controllers"
-	"social-network/pkg/utils"
 )
 
 func processMembersIDs(r *http.Request) (*followingModel.Following, int, string, error) {
