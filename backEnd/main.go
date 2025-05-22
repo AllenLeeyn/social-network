@@ -13,6 +13,9 @@ import (
 	groupModel "social-network/pkg/groupManagement/models"
 	"social-network/pkg/routes"
 	userControllers "social-network/pkg/userManagement/controllers"
+
+	categoryModel "social-network/pkg/forumManagement/models"
+	notificationModel "social-network/pkg/notificationManagement/models"
 	userModel "social-network/pkg/userManagement/models"
 )
 
@@ -30,13 +33,19 @@ func init() {
 	}
 
 	log.Println("\033[31mInitialise models\033[0m")
-	userModel.Initialize(sqlDB)
-	chatModel.Initialize(sqlDB)
-	groupModel.Initialize(sqlDB)
-	followingModel.Initialize(sqlDB)
+	modelsInitDb(sqlDB)
 
 	log.Println("\033[31mInitialise controllers\033[0m")
 	userControllers.Initialize(cc)
+}
+
+func modelsInitDb(db *sql.DB) {
+	userModel.Initialize(db)
+	chatModel.Initialize(sqlDB)
+	groupModel.Initialize(sqlDB)
+	followingModel.Initialize(sqlDB)
+	categoryModel.Initialize(db)
+	notificationModel.Initialize(db)
 }
 
 func main() {

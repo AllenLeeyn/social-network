@@ -4,6 +4,7 @@ CREATE TABLE following (
     follower_id     INTEGER NOT NULL,
     group_id        INTEGER NOT NULL DEFAULT 0,
 
+    type        TEXT NOT NULL CHECK(type IN ('group', 'user')) DEFAULT 'user',
     status      TEXT NOT NULL CHECK(status IN ('requested', 'invited', 'accepted', 'declined', 'inactive')),
     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by  INTEGER NOT NULL,

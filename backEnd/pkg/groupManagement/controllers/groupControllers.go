@@ -46,14 +46,14 @@ func GroupCreateHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 	}
 
-	_, groupUUID, err := groupModel.InsertGroup(g)
+	groupId, groupUUID, err := groupModel.InsertGroup(g)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 	err = groupModel.InsertGroupMember(&following{
-		LeaderID: userId, FollowerID: userId, GroupUUID: groupUUID,
-		Status: "accepted", CreatedBy: userId,
+		LeaderID: userId, FollowerID: userId, GroupID: groupId, GroupUUID: groupUUID,
+		Type: "group", Status: "accepted", CreatedBy: userId,
 	})
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -97,14 +97,8 @@ func GroupUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
 	tgtUUID, statusCode := userControllers.GetTgtUUID(r, "api/groups")
-	if statusCode == http.StatusInternalServerError {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-
-	} else if statusCode == http.StatusForbidden {
-		errorControllers.CustomErrorHandler(w, r,
-			"access denied: private profile and user is not follower",
-			http.StatusForbidden)
+	if statusCode != http.StatusOK {
+		errorControllers.CustomErrorHandler(w, r, tgtUUID, statusCode)
 		return
 	}
 
@@ -129,14 +123,13 @@ func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {
 
 	groupUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group")
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 
 	groups, err := groupModel.SelectGroup(userID, groupUUID)
 	if err != nil {
-		log.Println(err.Error())
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 	userControllers.ExtendSession(w, r)

@@ -28,6 +28,7 @@ func ProcessFollowingIDs(r *http.Request) (*followingModel.Following, int, strin
 	} else {
 		f.LeaderID = userID
 	}
+	f.Type = "user"
 
 	if err := followingModel.SelectIDsFromUUIDs(f); err != nil {
 		return nil, -1, "", err
@@ -43,6 +44,7 @@ func ProcessFollowingIDs(r *http.Request) (*followingModel.Following, int, strin
 func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	f, userID, followingStatus, err := ProcessFollowingIDs(r)
 	if err != nil {
+		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -70,6 +72,7 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := operation(f); err != nil {
+		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}

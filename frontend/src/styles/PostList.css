@@ -1,0 +1,19 @@
+/* Post card styling */
+.post-item {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.post-list ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.post-item h2 {
+    margin-top: 0.7rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.7rem;
+}

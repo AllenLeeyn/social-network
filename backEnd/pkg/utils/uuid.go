@@ -21,16 +21,13 @@ func GenerateUuid() (string, error) {
 func ExtractUUIDFromUrl(path string, desiredUrl string) (string, error) {
 	path = strings.Trim(path, "/")
 
-	prefix := desiredUrl
-	if !strings.HasPrefix(path, prefix) {
+	if !strings.HasPrefix(path, desiredUrl) {
 		return "", fmt.Errorf("path does not start with expected prefix")
 	}
 
-	remaining := strings.TrimPrefix(path, prefix)
+	remaining := strings.TrimPrefix(path, desiredUrl)
 	remaining = strings.Trim(remaining, "/")
-
 	parts := strings.SplitN(remaining, "/", 2)
-	id := parts[0]
 
-	return id, nil
+	return parts[0], nil
 }

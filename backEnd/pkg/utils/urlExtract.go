@@ -6,8 +6,8 @@ import (
 
 func ExtractFromUrl(path string, desiredUrl string) (string, string) {
 	if strings.HasPrefix(path, "/"+desiredUrl+"/") {
-		id := strings.TrimPrefix(path, "/"+desiredUrl+"/")
-		return id, ""
+		extractedStr := strings.TrimPrefix(path, "/"+desiredUrl+"/")
+		return extractedStr, ""
 	} else {
 		return "", "not found"
 	}

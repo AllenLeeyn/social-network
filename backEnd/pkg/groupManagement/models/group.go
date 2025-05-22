@@ -142,6 +142,6 @@ func SelectGroup(userID int, groupUUID string) (*groupResponse, error) {
 func SelectGroupIDcreatedByfromUUID(groupUUID string) (int, int, error) {
 	var groupID, createdBy int
 	err := sqlDB.QueryRow(`SELECT id, created_by FROM groups WHERE uuid = ?`, groupUUID).
-		Scan(&groupID)
+		Scan(&groupID, &createdBy)
 	return groupID, createdBy, err
 }

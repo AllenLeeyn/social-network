@@ -14,6 +14,7 @@ type Following struct {
 	FollowerID   int
 	GroupUUID    string `json:"group_uuid"`
 	GroupID      int
+	Type         string
 	Status       string     `json:"status"`
 	CreatedBy    int        `json:"created_by"`
 	CreatedAt    *time.Time `json:"created_at"`
@@ -50,7 +51,7 @@ func IsFollower(userID int, tgtUUID string) bool {
 }
 
 func SelectIDsFromUUIDs(f *Following) error {
-	if f.LeaderID == 0 && f.GroupUUID == publicGroupUUID {
+	if f.LeaderID == 0 && f.GroupUUID == "" {
 		leaderID, err := userModel.SelectUserIDByUUID(f.LeaderUUID)
 		if err != nil {
 			return fmt.Errorf("leader not found")
@@ -124,14 +125,18 @@ func InsertFollowing(f *Following) error {
 	if err := SelectIDsFromUUIDs(f); err != nil {
 		return err
 	}
+	if f.GroupID == 0 {
+		f.GroupUUID = publicGroupUUID
+	}
 
 	qry := `INSERT INTO following (
-				leader_id, follower_id, group_id, status, created_by
-			) VALUES (?, ?, 
+				leader_id, follower_id, type, group_id, status, created_by
+			) VALUES (?, ?, ?,
 				(SELECT id FROM groups WHERE uuid = ?), ?, ?);`
 	_, err := sqlDB.Exec(qry,
 		&f.LeaderID,
 		&f.FollowerID,
+		&f.Type,
 		&f.GroupUUID,
 		&f.Status,
 		&f.CreatedBy)

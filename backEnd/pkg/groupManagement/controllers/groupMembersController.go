@@ -25,7 +25,7 @@ func processMembersIDs(r *http.Request) (*followingModel.Following, int, string,
 	} else if groupID == 0 {
 		return nil, -1, "", fmt.Errorf("public forum chosen as group")
 	}
-	m.GroupID, m.LeaderID = groupID, createdBy
+	m.GroupID, m.LeaderID, m.Type = groupID, createdBy, "group"
 
 	memberStatus, err := followingModel.SelectStatus(m)
 	if err != nil {

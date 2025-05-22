@@ -6,7 +6,12 @@ import (
 	chatContollers "social-network/pkg/chatManagement/controllers"
 	followingContollers "social-network/pkg/followingManagement/controllers"
 	groupContollers "social-network/pkg/groupManagement/controllers"
+
+	// socialMediaManagementControllers "social-network/pkg/socialMediaManagement/controllers"
+	fileControllers "social-network/pkg/fileManagement/controllers"
+	forumControllers "social-network/pkg/forumManagement/controllers"
 	middleware "social-network/pkg/middleware"
+	notificationControllers "social-network/pkg/notificationManagement/controllers"
 	userContollers "social-network/pkg/userManagement/controllers"
 )
 
@@ -29,12 +34,10 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodPost,
 			userContollers.UserUpdateHandler))
 
-	// implement uuid as part of path
 	http.HandleFunc("/api/users",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			userContollers.ViewUsersHandler))
 
-	// implement uuid as part of path
 	http.HandleFunc("/api/user/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			userContollers.ViewUserHandler))
@@ -53,12 +56,10 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodPost,
 			groupContollers.GroupUpdateHandler))
 
-	// implement uuid as part of path
 	http.HandleFunc("/api/groups/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			groupContollers.ViewGroupsHandler))
 
-	// implement uuid as part of path
 	http.HandleFunc("/api/group/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			groupContollers.ViewGroupHandler))
@@ -111,13 +112,101 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodPost,
 			followingContollers.FollowingRemoveHandler))
 
-	// implement uuid as part of path
 	http.HandleFunc("/api/followers/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			followingContollers.ViewFollowingsHandler))
 
-	// implement uuid as part of path
 	http.HandleFunc("/api/follower/requests/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			followingContollers.ViewFollowingRequestsHandler))
+
+	// ---------------------------- file management controller APIs ---------------------------- //
+	http.HandleFunc("/api/uploadFile",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			fileControllers.FileUploadHandler)) /*post method*/
+
+	// ---------------------------- forum management controller APIs ---------------------------- //
+	http.HandleFunc("/api/categories/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.ReadAllCategoriesHandler))
+
+	http.HandleFunc("/api/allPosts/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.ReadAllPostsHandler))
+
+	http.HandleFunc("/api/myCreatedPosts/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.ReadMyCreatedPostsHandler))
+
+	http.HandleFunc("/api/myLikedPosts/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.ReadMyLikedPostsHandler))
+
+	// router.HandleFunc("/post/{id}", forumControllers.ReadPost).Methods("GET")
+	http.HandleFunc("/api/post/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.ReadPostHandler))
+
+	// router.HandleFunc("/posts/{categoryName}", forumControllers.ReadPostsByCategory).Methods("GET")
+	http.HandleFunc("/api/posts/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.ReadPostsByCategoryHandler))
+
+	http.HandleFunc("/api/filterPosts/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.FilterPostsHandler))
+
+	http.HandleFunc("/api/submitPost",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			forumControllers.SubmitPostHandler)) /*post method*/
+
+	http.HandleFunc("/api/updatePost",
+		middleware.CheckHttpRequest("user", http.MethodPut,
+			forumControllers.UpdatePostHandler)) /*put method*/
+
+	http.HandleFunc("/api/deletePost",
+		middleware.CheckHttpRequest("user", http.MethodDelete,
+			forumControllers.DeletePostHandler)) /*delete method*/
+
+	http.HandleFunc("/api/postFeedback",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			forumControllers.PostFeedbackHandler)) /*post method*/
+
+	http.HandleFunc("/api/submitComment",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			forumControllers.SubmitCommentHandler)) /*post method*/
+
+	http.HandleFunc("/api/updateComment",
+		middleware.CheckHttpRequest("user", http.MethodPut,
+			forumControllers.UpdateCommentHandler)) /*put method*/
+
+	http.HandleFunc("/api/deleteComment",
+		middleware.CheckHttpRequest("user", http.MethodDelete,
+			forumControllers.DeleteCommentHandler)) /*delete method*/
+
+	http.HandleFunc("/api/commentFeedback",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			forumControllers.CommentFeedbackHandler)) /*post method*/
+
+	// ---------------------------- notification management controller APIs ---------------------------- //
+	http.HandleFunc("/api/submitNotification",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			notificationControllers.SubmitNotificationHandler)) /*post method*/
+
+	http.HandleFunc("/api/updateNotificationReadStatus",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			notificationControllers.UpdateNotificationReadStatusHandler)) /*post method*/
+
+	http.HandleFunc("/api/deleteNotification",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			notificationControllers.DeleteNotificationHandler)) /*post method*/
+
+	http.HandleFunc("/api/notifications/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			notificationControllers.ReadAllNotificationsHandler))
+
+	// router.HandleFunc("/notification/{id}", notificationControllers.ReadNotificationByIdHandler).Methods("GET")
+	http.HandleFunc("/api/notification/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			notificationControllers.ReadNotificationByIdHandler))
 }

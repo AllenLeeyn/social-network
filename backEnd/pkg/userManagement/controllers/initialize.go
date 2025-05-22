@@ -114,18 +114,18 @@ func generateNickName(u *user) string {
 func GetTgtUUID(r *http.Request, basePath string) (string, int) {
 	_, userID, userUUID, isOk := middleware.GetSessionCredentials(r.Context())
 	if !isOk {
-		return "", http.StatusInternalServerError
+		return "internal server error", http.StatusInternalServerError
 	}
 	tgtUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, basePath)
 	if err != nil {
-		return "", http.StatusInternalServerError
+		return "page not found", http.StatusNotFound
 	}
 	if tgtUUID == "" {
 		tgtUUID = userUUID
 
 	} else {
 		if !userModel.IsPublic(tgtUUID) && !followingModel.IsFollower(userID, tgtUUID) {
-			return "", http.StatusForbidden
+			return "access denied: private profile and user is not follower", http.StatusForbidden
 		}
 	}
 	return tgtUUID, http.StatusOK
