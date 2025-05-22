@@ -8,6 +8,7 @@ import (
 	fileControllers "social-network/pkg/fileManagement/controllers"
 	forumControllers "social-network/pkg/forumManagement/controllers"
 	middleware "social-network/pkg/middleware"
+	notificationControllers "social-network/pkg/notificationManagement/controllers"
 	userContollers "social-network/pkg/userManagement/controllers"
 )
 
@@ -74,4 +75,20 @@ func SetupRoutes(sqlDB *sql.DB) {
 
 	http.HandleFunc("/api/commentFeedback",
 		middleware.CheckHttpRequest("user", http.MethodPost, forumControllers.CommentFeedbackHandler)) /*post method*/
+
+	http.HandleFunc("/api/submitNotification",
+		middleware.CheckHttpRequest("user", http.MethodPost, notificationControllers.SubmitNotificationHandler)) /*post method*/
+
+	http.HandleFunc("/api/updateNotificationReadStatus",
+		middleware.CheckHttpRequest("user", http.MethodPost, notificationControllers.UpdateNotificationReadStatusHandler)) /*post method*/
+
+	http.HandleFunc("/api/deleteNotification",
+		middleware.CheckHttpRequest("user", http.MethodPost, notificationControllers.DeleteNotificationHandler)) /*post method*/
+
+	http.HandleFunc("/api/notifications/",
+		middleware.CheckHttpRequest("user", http.MethodGet, notificationControllers.ReadAllNotificationsHandler))
+
+	// router.HandleFunc("/notification/{id}", notificationControllers.ReadNotificationByIdHandler).Methods("GET")
+	http.HandleFunc("/api/notification/",
+		middleware.CheckHttpRequest("user", http.MethodGet, notificationControllers.ReadNotificationByIdHandler))
 }

@@ -9,6 +9,7 @@ import (
 	"social-network/pkg/routes"
 
 	categoryModel "social-network/pkg/forumManagement/models"
+	notificationModel "social-network/pkg/notificationManagement/models"
 	userModel "social-network/pkg/userManagement/models"
 )
 
@@ -27,6 +28,7 @@ func init() {
 func modaelsInitDb(db *sql.DB) {
 	userModel.Initialize(db)
 	categoryModel.Initialize(db)
+	notificationModel.Initialize(db)
 }
 
 func main() {

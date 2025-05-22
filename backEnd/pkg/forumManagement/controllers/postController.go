@@ -4,7 +4,6 @@ import (
 	// "forum/middlewares"
 
 	"errors"
-	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -216,7 +215,6 @@ func ReadMyLikedPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("we get here")
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
