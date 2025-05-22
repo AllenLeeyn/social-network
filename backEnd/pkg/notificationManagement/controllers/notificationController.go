@@ -3,6 +3,7 @@ package controller
 import (
 	// "forum/middlewares"
 
+	"database/sql"
 	"errors"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
@@ -54,6 +55,9 @@ func isValidNotificationInfo(notification *models.Notification) error {
 	}
 	if notification.Message, isValid = utils.IsValidContent(notification.Message, 3, 1000); !isValid {
 		return errors.New("message is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
+	}
+	if notification.TargetUUIDForm != "" {
+		notification.TargetUUID = sql.NullString{Valid: true, String: notification.TargetUUIDForm}
 	}
 
 	return nil
@@ -138,10 +142,6 @@ func SubmitNotificationHandler(w http.ResponseWriter, r *http.Request) {
 
 	instertedNotificationId, insertHttpStatusCode, insertErr := insertNotification(notification)
 	if insertErr != nil {
-		if insertErr.Error() == "same notification exists" {
-			errorControllers.CustomErrorHandler(w, r, "same notification exists", http.StatusBadRequest)
-			return
-		}
 		errorControllers.CustomErrorHandler(w, r, insertErr.Error(), insertHttpStatusCode)
 		return
 	}

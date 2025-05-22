@@ -4,18 +4,27 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	userManagementModels "social-network/pkg/userManagement/models"
 	"time"
 )
 
+type NotificationFromUser struct {
+	ID        int    `json:"id"`
+	UUID      string `json:"uuid"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	NickName  sql.NullString
+}
+
 // Post struct represents the user data model
 type Notification struct {
-	ID                 int              `json:"id"`
-	ToUserId           int              `json:"to_user_id"`
-	FromUserId         int              `json:"from_user_id"`
-	TargetType         string           `json:"target_type"`
-	TargetDetailedType string           `json:"target_detailed_type"`
-	TargetId           int              `json:"target_id"`
+	ID                 int    `json:"id"`
+	ToUserId           int    `json:"to_user_id"`
+	FromUserId         int    `json:"from_user_id"`
+	TargetType         string `json:"target_type"`
+	TargetDetailedType string `json:"target_detailed_type"`
+	TargetId           int    `json:"target_id"`
+	TargetUUID         sql.NullString
+	TargetUUIDForm     string           `json:"target_uuid"`
 	Message            string           `json:"message"`
 	IsRead             int              `json:"is_read"`
 	Data               *json.RawMessage `json:"data"`
@@ -24,8 +33,7 @@ type Notification struct {
 	UpdatedAt          *time.Time       `json:"updated_at"`
 	UpdatedBy          *int             `json:"updated_by"`
 
-	ToUser   userManagementModels.User `json:"to_user"`   // Embedded to user data
-	FromUser userManagementModels.User `json:"from_user"` // Embedded from user data
+	FromUser NotificationFromUser `json:"from_user"` // Embedded from user data
 }
 
 var sqlDB *sql.DB
@@ -35,23 +43,8 @@ func Initialize(dbMain *sql.DB) {
 }
 
 func InsertNotification(notification *Notification) (int, error) {
-	selectQuery := `SELECT id FROM notifications WHERE to_user_id = ? AND from_user_id = ? AND target_detailed_type = ? AND target_id = ?;`
-	rows, selectErr := sqlDB.Query(selectQuery, notification.ToUserId, notification.FromUserId, notification.TargetDetailedType, notification.TargetId)
-	if selectErr != nil {
-		return -1, selectErr
-	}
-	defer rows.Close()
-	var existingNotificationID int
-	if rows.Next() {
-		if err := rows.Scan(&existingNotificationID); err != nil {
-			return -1, fmt.Errorf("error scanning row: %v", err)
-		}
-		// If a notification already exists, return its ID
-		return -1, fmt.Errorf("same notification exists")
-	}
-
-	insertQuery := `INSERT INTO notifications (to_user_id, from_user_id, target_type, target_detailed_type, target_id, message, data) VALUES (?, ?, ?, ?, ?, ?, ?);`
-	result, insertErr := sqlDB.Exec(insertQuery, notification.ToUserId, notification.FromUserId, notification.TargetType, notification.TargetDetailedType, notification.TargetId, notification.Message, notification.Data)
+	insertQuery := `INSERT INTO notifications (to_user_id, from_user_id, target_type, target_detailed_type, target_id, target_uuid, message, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
+	result, insertErr := sqlDB.Exec(insertQuery, notification.ToUserId, notification.FromUserId, notification.TargetType, notification.TargetDetailedType, notification.TargetId, notification.TargetUUID, notification.Message, notification.Data)
 	if insertErr != nil {
 		return -1, insertErr
 	}
@@ -99,8 +92,7 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 			n.target_id as notification_target_id, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
 			n.message as notification_message, n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			to_user.id as to_user_id, to_user.first_name as to_user_first_name, to_user.last_name as to_user_last_name, to_user.nick_name as to_user_nick_name, to_user.email as to_user_email, IFNULL(to_user.profile_image, '') as to_user_profile_image,
-			from_user.id as from_user_id, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name, from_user.email as from_user_email, IFNULL(from_user.profile_image, '') as from_user_profile_image
+			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name
 		FROM notifications n
 			INNER JOIN users to_user
 				ON n.to_user_id = to_user.id
@@ -119,8 +111,7 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 
 	for rows.Next() {
 		var notification Notification
-		var toUser userManagementModels.User
-		var fromUser userManagementModels.User
+		var fromUser NotificationFromUser
 
 		// Scan the post and user data
 		err := rows.Scan(
@@ -128,14 +119,12 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 			&notification.TargetId, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
-			&toUser.ID, &toUser.FirstName, &toUser.LastName, &toUser.NickName, &toUser.Email, &toUser.ProfileImage,
-			&fromUser.ID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName, &fromUser.Email, &fromUser.ProfileImage,
+			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		notification.ToUser = toUser
 		notification.FromUser = fromUser
 		notifications = append(notifications, notification)
 	}
@@ -154,8 +143,7 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 			n.target_id as notification_target_id, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
 			n.message as notification_message, n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			to_user.id as to_user_id, to_user.first_name as to_user_first_name, to_user.last_name as to_user_last_name, to_user.nick_name as to_user_nick_name, to_user.email as to_user_email, IFNULL(to_user.profile_image, '') as to_user_profile_image,
-			from_user.id as from_user_id, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name, from_user.email as from_user_email, IFNULL(from_user.profile_image, '') as from_user_profile_image
+			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name
 		FROM notifications n
 			INNER JOIN users to_user
 				ON n.to_user_id = to_user.id
@@ -174,8 +162,7 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 	var notification Notification
 
 	if rows.Next() {
-		var toUser userManagementModels.User
-		var fromUser userManagementModels.User
+		var fromUser NotificationFromUser
 
 		// Scan the post and user data
 		err := rows.Scan(
@@ -183,14 +170,12 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 			&notification.TargetId, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
-			&toUser.ID, &toUser.FirstName, &toUser.LastName, &toUser.NickName, &toUser.Email, &toUser.ProfileImage,
-			&fromUser.ID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName, &fromUser.Email, &fromUser.ProfileImage,
+			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
 		)
 		if err != nil {
 			return Notification{}, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		notification.ToUser = toUser
 		notification.FromUser = fromUser
 	} else {
 		// If no Notification found with the given ID

@@ -1,10 +1,11 @@
 CREATE TABLE notifications (
     id                      INTEGER PRIMARY KEY,
     to_user_id              INTEGER NOT NULL,
-    from_user_id            INTEGER NULL,
+    from_user_id            INTEGER NOT NULL DEFAULT 0,
     target_id               INTEGER NOT NULL,
+    target_uuid             TEXT NULL,
     target_type             TEXT NOT NULL CHECK (target_type IN ('follow', 'group', 'group_event')),
-    target_detailed_type    TEXT NOT NULL CHECK (target_detailed_type IN ('follow_request', 'group_invite', 'group_request', 'group_event')),
+    target_detailed_type    TEXT NOT NULL CHECK (target_detailed_type IN ('follow_request', 'follow_request_accepted', 'group_invite', 'group_request', 'group_event')),
     message                 TEXT NOT NULL,
     is_read                 INTEGER NOT NULL CHECK (is_read IN (0, 1)) DEFAULT 0,    
     data                    TEXT CHECK (json_valid(data)), -- optional extra data, such as button text, URLs
@@ -18,6 +19,3 @@ CREATE TABLE notifications (
     FOREIGN KEY (from_user_id)   REFERENCES users(id),
     FOREIGN KEY (updated_by)      REFERENCES users(id)
 );
-
-CREATE UNIQUE INDEX idx_unique_notification_strict
-ON notifications(to_user_id, from_user_id, target_id, target_detailed_type);
