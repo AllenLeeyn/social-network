@@ -10,6 +10,7 @@ import {
   sampleGroups,
   sampleConnections,
 } from "../../data/mockData";
+import { usePosts } from "../../hooks/usePosts";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -18,6 +19,13 @@ export default function PostPage() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Fetch categories (and optionally users, etc.)
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = usePosts();
 
   useEffect(() => {
     async function fetchData() {
@@ -46,13 +54,19 @@ export default function PostPage() {
         {/* Left Sidebar */}
         <aside className="sidebar left-sidebar">
           <SidebarSection title="Categories">
-            <ul className="categories">
-              {sampleCategories.map((cat) => (
-                <li key={cat.id} className="category-item">
-                  <strong>{cat.name}</strong>
-                </li>
-              ))}
-            </ul>
+            {categoriesLoading ? (
+              <div>Loading...</div>
+            ) : categoriesError ? (
+              <div>Error: {categoriesError}</div>
+            ) : (
+              <ul className="categories">
+                {categories.map((cat) => (
+                  <li key={cat.id} className="category-item">
+                    <strong>{cat.name}</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
           </SidebarSection>
           <SidebarSection title="Groups">
             <ul className="groups">
@@ -84,7 +98,7 @@ export default function PostPage() {
             <div key={post.ID} className="post-item">
               <h3>{post.title}</h3>
               <p>
-                <em>by {post.user.NickName.String}</em>
+                <em>by {post.user.nick_name}</em>
               </p>
               <p>{post.content}</p>
               <div className="post-actions" style={{ marginTop: "1em" }}>
