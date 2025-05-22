@@ -264,14 +264,17 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-
+	
 	post := &models.Post{}
+	fmt.Println("1")
 	post.UserId = userID
 	if err := utils.ReadJSON(w, r, post); err != nil {
+		fmt.Println("2", err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-
+	
+	fmt.Println("3")
 	if err := isValidPostInfo(post); err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
@@ -280,6 +283,7 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Insert a record while checking duplicates
 	createdPostUUID, insertError := models.InsertPost(post, post.CategoryIds, post.FileAttachments)
 	if insertError != nil {
+		fmt.Println("here", insertError)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}

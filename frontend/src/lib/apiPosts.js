@@ -22,7 +22,7 @@ export async function fetchPostById(id) {
 }
 
 export async function createPost(postData) {
-  const response = await fetch(`${API_URL}/create-post`, {
+  const response = await fetch(`${API_URL}/submitPost`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postData),
