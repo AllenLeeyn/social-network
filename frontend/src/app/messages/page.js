@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import SidebarSection from '../../components/SidebarSection';
+import UsersList from '../../components/UsersList';
+import { useWebsocketContext } from '../../contexts/WebSocketContext';
 import './messages.css';
 
 
@@ -10,45 +12,34 @@ import {
     sampleConversations,
     sampleMessages,
 } from '../../data/mockData';
-import UsersList from '../../components/UsersList';
+
 
 
 export default function MessagePage() {
-    
+    const { messages: contextMessages, sendAction, userList } = useWebsocketContext();
     const [activeConversation, setActiveConversation] = useState(null);
-    const [messages, setMessages] = useState(sampleMessages);
     const [inputMessage, setInputMessage] = useState('');
 
-    useEffect(() => {
-        const ws = new WebSocket('ws://localhost:8080/ws');
-
-        ws.onopen = () => {
-            console.log('WebSocket connected');
-        };
-
-        ws.onmessage = (event) => {
-            // Handle incoming messages from the backend
-            const newMessage = JSON.parse(event.data);
-            setMessages(prev => [...prev, newMessage]);
-        };
-        return () => ws.close();
-    }, []);
+    // const messages = sampleMessages;
+    const messages = contextMessages;
     
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (!inputMessage.trim() || !activeConversation) return;
     
-        // Temporary mock send until backend is connected
+        
         const newMessage = {
-            id: Date.now().toString(),
+            action: 'message',
             content: inputMessage,
-            senderId: 'current-user',
-            timestamp: new Date().toISOString(),
-            conversationId: activeConversation,
+            receiverID: Number(activeConversation.id)
         };
         
-        setMessages(prev => [...prev, newMessage]);
+        sendAction(newMessage);
         setInputMessage('');
+    };
+
+    const handleUserSelect = (userId, userName) => {
+        setActiveConversation({ id: userId, name: userName });
     };
 
 
@@ -89,6 +80,9 @@ export default function MessagePage() {
                  {/* Main Chat Area */}
                 <section className='main-feed message-list-section'>
                     {/* Chat Header + Messages + Typing Indicator */}
+                    <h2>
+                        {activeConversation ? activeConversation.name : 'Latest Messages'}
+                    </h2>
                     <div className="message-view">
                         <h2>
                         {activeConversation?sampleConversations.find(c => c.id === activeConversation)?.name : 'Latest Messages'}
@@ -128,7 +122,10 @@ export default function MessagePage() {
                 {/* Right Sidebar */}
                 <aside className="sidebar right-sidebar">
                     <SidebarSection title="Active Users">
-                        <UsersList />
+                        <UsersList 
+                            onUserSelect={handleUserSelect}  
+                            activeConversation={activeConversation?.id}
+                        />
                     </SidebarSection>
                 </aside>
             </div>

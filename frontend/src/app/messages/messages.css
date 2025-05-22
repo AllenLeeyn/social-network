@@ -170,7 +170,7 @@
     text-decoration: none;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: left;
     width: 110px;
     padding: 5px 15px;
     border-radius: 8px;
@@ -204,8 +204,8 @@
 
 .user-item::before {
     content: '';
-    width: 7px;
-    height: 7px;
+    width: 10px;
+    height: 10px;
     margin-right: 5px;
     border-radius: 50%;
     background-color: grey;
@@ -213,7 +213,7 @@
 }
 
 .user-item.online::before {
-    background-color: green;
+    background-color: rgba(5, 183, 5, 0.966);
 }
 
 /* Unread indicator for user */
