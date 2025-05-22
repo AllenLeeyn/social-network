@@ -13,9 +13,25 @@ export function usePosts() {
     async function loadPosts() {
       try {
         const data = await fetchPosts();
-        setPosts(data.data); // <-- changed from data.posts to data.data
-        setCategories(data.categories);
-        setUsers(data.users);
+        setPosts(data.data);
+
+        // Extract unique categories from all posts
+        const allCategories = data.data
+          .flatMap(post => post.categories || [])
+          .filter(cat => cat && cat.id && cat.name);
+
+        // Remove duplicates by id
+        const uniqueCategories = [];
+        const seen = new Set();
+        for (const cat of allCategories) {
+          if (!seen.has(cat.id)) {
+            seen.add(cat.id);
+            uniqueCategories.push(cat);
+          }
+        }
+        setCategories(uniqueCategories);
+
+        setUsers(data.users); // This may also need adjustment if users are not top-level
       } catch (err) {
         setError(err.message);
       } finally {
