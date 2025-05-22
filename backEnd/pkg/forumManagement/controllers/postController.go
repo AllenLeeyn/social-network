@@ -216,7 +216,6 @@ func ReadMyLikedPostsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("we get here")
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
 	if !isOk {
@@ -268,15 +267,12 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	post := &models.Post{}
-	fmt.Println("1")
 	post.UserId = userID
 	if err := utils.ReadJSON(w, r, post); err != nil {
-		fmt.Println("2", err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 	
-	fmt.Println("3")
 	if err := isValidPostInfo(post); err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return

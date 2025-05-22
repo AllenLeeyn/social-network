@@ -36,7 +36,7 @@ export default function CreatePost({ categories, onClose }) {
     try {
       const data = await createPost(postData);
       if (data) {
-        window.location.href = `/post?id=${data.uuid}`;
+        window.location.href = `/post?id=${data.data}`;
       } else {
         alert(data.message || "Failed to create post");
       }

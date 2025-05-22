@@ -84,7 +84,7 @@ export default function PostPage() {
             <div key={post.ID} className="post-item">
               <h3>{post.title}</h3>
               <p>
-                <em>by {post.userName}</em>
+                <em>by {post.user.NickName.String}</em>
               </p>
               <p>{post.content}</p>
             </div>
