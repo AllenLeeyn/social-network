@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gofrs/uuid"
@@ -17,11 +18,16 @@ func GenerateUuid() (string, error) {
 	return u2.String(), nil
 }
 
-func ExtractUUIDFromUrl(path string, desiredUrl string) (string, string) {
-	if strings.HasPrefix(path, "/"+desiredUrl+"/") {
-		id := strings.TrimPrefix(path, "/"+desiredUrl+"/")
-		return id, ""
-	} else {
-		return "", "not found"
+func ExtractUUIDFromUrl(path string, desiredUrl string) (string, error) {
+	path = strings.Trim(path, "/")
+
+	if !strings.HasPrefix(path, desiredUrl) {
+		return "", fmt.Errorf("path does not start with expected prefix")
 	}
+
+	remaining := strings.TrimPrefix(path, desiredUrl)
+	remaining = strings.Trim(remaining, "/")
+	parts := strings.SplitN(remaining, "/", 2)
+
+	return parts[0], nil
 }

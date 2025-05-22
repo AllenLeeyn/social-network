@@ -222,8 +222,8 @@ func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uuid, errUrl := utils.ExtractUUIDFromUrl(r.URL.Path, "api/post")
-	if errUrl == "not found" {
+	uuid, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/post")
+	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
@@ -267,7 +267,7 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post := &models.Post{}
 	post.UserId = userID
-	if err := utils.ReadJSON(w, r, post); err != nil {
+	if err := utils.ReadJSON(r, post); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -297,7 +297,7 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post := &models.Post{}
 	post.UserId = userID
-	if err := utils.ReadJSON(w, r, post); err != nil {
+	if err := utils.ReadJSON(r, post); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -326,7 +326,7 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	post := &models.Post{}
-	if err := utils.ReadJSON(w, r, post); err != nil {
+	if err := utils.ReadJSON(r, post); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}

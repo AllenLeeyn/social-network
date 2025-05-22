@@ -35,7 +35,7 @@ func PostFeedbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	postFeedback := &models.PostFeedback{}
 	postFeedback.UserId = userID
-	if err := utils.ReadJSON(w, r, postFeedback); err != nil {
+	if err := utils.ReadJSON(r, postFeedback); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}

@@ -115,7 +115,7 @@ func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	comment := &models.Comment{}
 	comment.UserId = userID
-	if err := utils.ReadJSON(w, r, comment); err != nil {
+	if err := utils.ReadJSON(r, comment); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -145,7 +145,7 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	comment := &models.Comment{}
 	comment.UserId = userID
-	if err := utils.ReadJSON(w, r, comment); err != nil {
+	if err := utils.ReadJSON(r, comment); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -174,7 +174,7 @@ func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	comment := &models.Comment{}
-	if err := utils.ReadJSON(w, r, comment); err != nil {
+	if err := utils.ReadJSON(r, comment); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
