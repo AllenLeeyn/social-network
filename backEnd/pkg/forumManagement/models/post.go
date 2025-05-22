@@ -311,7 +311,7 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 				break
 			}
 		}
-		if !isCategoryAdded && category.ID != 0 {
+		if !isCategoryAdded {
 			existingPost.Categories = append(existingPost.Categories, category)
 		}
 
@@ -456,7 +456,7 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
 				break
 			}
 		}
-		if !isCategoryAdded && category.ID != 0 {
+		if !isCategoryAdded {
 			existingPost.Categories = append(existingPost.Categories, category)
 		}
 
@@ -600,7 +600,7 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 				break
 			}
 		}
-		if !isCategoryAdded && category.ID != 0 {
+		if !isCategoryAdded {
 			existingPost.Categories = append(existingPost.Categories, category)
 		}
 
@@ -746,7 +746,7 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
 				break
 			}
 		}
-		if !isCategoryAdded && category.ID != 0 {
+		if !isCategoryAdded {
 			existingPost.Categories = append(existingPost.Categories, category)
 		}
 
@@ -897,7 +897,7 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 				break
 			}
 		}
-		if !isCategoryAdded && category.ID != 0 {
+		if !isCategoryAdded {
 			existingPost.Categories = append(existingPost.Categories, category)
 		}
 
@@ -1040,7 +1040,7 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 				break
 			}
 		}
-		if !isCategoryAdded && category.ID != 0 {
+		if !isCategoryAdded {
 			post.Categories = append(post.Categories, category)
 		}
 
@@ -1178,7 +1178,7 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 				break
 			}
 		}
-		if !isCategoryAdded && category.ID != 0 {
+		if !isCategoryAdded {
 			post.Categories = append(post.Categories, category)
 		}
 
@@ -1313,7 +1313,7 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
 				break
 			}
 		}
-		if !isCategoryAdded && category.ID != 0 {
+		if !isCategoryAdded {
 			post.Categories = append(post.Categories, category)
 		}
 
