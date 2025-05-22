@@ -1,8 +1,8 @@
 export async function POST(req) {
-  const backendUrl = "http://localhost:8080/api/login"; // Backend login endpoint
+  const backendUrl = "http://localhost:8080/api/login";
 
   try {
-    const body = await req.json(); // Parse the request body
+    const body = await req.json();
     const response = await fetch(backendUrl, {
       method: "POST",
       headers: {
@@ -25,7 +25,7 @@ export async function POST(req) {
         status: response.status,
         headers: {
           "Set-Cookie": cookies,
-          "Access-Control-Allow-Credentials": "true", // Allow credentials
+          "Access-Control-Allow-Credentials": "true",
         },
       });
     }
