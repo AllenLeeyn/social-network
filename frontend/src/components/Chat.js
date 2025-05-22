@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useWebsocket } from "../hooks/useWebsocket";
+// import { useWebsocket } from "../hooks/useWebsocket";
+import { useWebsocketContext } from '../contexts/WebSocketContext';
 
 export default function ChatComponent({ sessionId }) {
-    const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState("");
-    const [userList, setUserList] = useState([]);
-    const [isTyping, setIsTyping] = useState(false);
-    const [currentChatId, setCurrentChatId] = useState(null);
+    const { messages, userList, isTyping, sendAction, isConnected } = useWebsocketContext();
+
 
     const handleAction = (data) => {
         // Handle different actions. message, typing, and other we implement
@@ -16,7 +15,7 @@ export default function ChatComponent({ sessionId }) {
         // Handle other actions
     };
 
-    const { sendMessage } = useWebsocket(
+    const { sendMessage } = useWebsocketContext(
         `ws://localhost:8080/ws?session=${sessionId}`, handleAction
     );
 
@@ -31,8 +30,7 @@ export default function ChatComponent({ sessionId }) {
             // can add more keys: value for data
         };
 
-        sendMessage(JSON.stringify(newMessage));
-        setMessages((prev) => [...prev, newMessage]);
+        sendAction(newMessage)
         setInputMessage("");
 
     };

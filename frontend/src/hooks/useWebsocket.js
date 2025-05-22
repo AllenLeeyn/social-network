@@ -22,13 +22,15 @@ export function useWebsocket(
 
     // Core conn / re-conn logic
     const connectWebSocket = useCallback(() => {
+        // clear pending reconn
+        clearTimeout(reconnectTimeout.current);
+
 
         // Close old connection if it exists and is not already closed
         if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
-            //ws.current.close();
+            ws.current.close();
+            ws.current = null;
         }
-        // setting new ws conn
-        ws.current = new WebSocket(url);
 
 
         // no url, return
@@ -42,6 +44,11 @@ export function useWebsocket(
             console.warn('Max reconect attempts reached');
             return;
         }
+        
+        attempts.current += 1; // track conn attempts
+        // setting new ws conn
+        ws.current = new WebSocket(url);
+
 
 
         // conn established handler
@@ -87,8 +94,6 @@ export function useWebsocket(
     // Manage conn lifecycle
     // useEffect / onRender
 
-
-
     useEffect(() => {
         isMounted.current = true;
         connectWebSocket();
@@ -98,8 +103,8 @@ export function useWebsocket(
             isMounted.current = false;
             clearTimeout(reconnectTimeout.current);
             // Only close if connection is open/connecting
-            if (ws.current?.readyState === WebSocket.OPEN  ) {
-                ws.current.close();
+            if (ws.current?.readyState !== WebSocket.CLOSED  ) {
+                ws.current?.close();
             }
         };
     }, [ connectWebSocket ]);

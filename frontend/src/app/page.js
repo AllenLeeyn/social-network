@@ -85,7 +85,6 @@ export default function HomePage() {
 
   return (
     <main>
-      <h1>WebSocket Status: {isConnected ? '✅ Connected' : '❌ Disconnected'}</h1>
       <div className="homepage-layout">
         {/* Left Sidebar */}
         <aside className="sidebar left-sidebar">
