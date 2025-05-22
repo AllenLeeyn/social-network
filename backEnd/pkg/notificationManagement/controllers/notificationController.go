@@ -135,7 +135,7 @@ func SubmitNotificationHandler(w http.ResponseWriter, r *http.Request) {
 
 	notification := &models.Notification{}
 	notification.FromUserId = userID
-	if err := utils.ReadJSON(w, r, notification); err != nil {
+	if err := utils.ReadJSON(r, notification); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -158,7 +158,7 @@ func UpdateNotificationReadStatusHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	notification := &models.Notification{}
-	if err := utils.ReadJSON(w, r, notification); err != nil {
+	if err := utils.ReadJSON(r, notification); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -191,7 +191,7 @@ func DeleteNotificationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	notification := &models.Notification{}
-	if err := utils.ReadJSON(w, r, notification); err != nil {
+	if err := utils.ReadJSON(r, notification); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}

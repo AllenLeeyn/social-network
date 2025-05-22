@@ -10,26 +10,98 @@ import (
 
 // User struct represents the user data model
 type User struct {
-	ID              int       `json:"id"`
-	UUID            string    `json:"uuid"`
-	TypeId          int       `json:"type_id"`
-	FirstName       string    `json:"first_name"`
-	LastName        string    `json:"last_name"`
-	Gender          string    `json:"gender"`
-	BirthDay        time.Time `json:"birthday"`
-	Email           string    `json:"email"`
-	Password        string    `json:"password"`
-	ConfirmPassword string    `json:"confirmPassword"`
-	PasswordHash    string    `json:"pw_hash"`
-	NickName        sql.NullString
-	NickNameForm    string         `json:"nick_name"`
-	ProfileImage    sql.NullString `json:"profile_image"`
-	AboutMe         string         `json:"about_me"`
-	Visibility      string         `json:"visibility"`
-	Status          string         `json:"status"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedBy       int            `json:"updated_by"`
-	UpdatedAt       *time.Time     `json:"updated_at"`
+	ID              int        `json:"id"`
+	UUID            string     `json:"uuid"`
+	TypeId          int        `json:"type_id"`
+	FirstName       string     `json:"first_name"`
+	LastName        string     `json:"last_name"`
+	Gender          string     `json:"gender"`
+	BirthDay        time.Time  `json:"birthday"`
+	Email           string     `json:"email"`
+	Password        string     `json:"password"`
+	ConfirmPassword string     `json:"confirmPassword"`
+	PasswordHash    string     `json:"pw_hash"`
+	NickName        string     `json:"nick_name"`
+	ProfileImage    string     `json:"profile_image"`
+	AboutMe         string     `json:"about_me"`
+	Visibility      string     `json:"visibility"`
+	Status          string     `json:"status"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedBy       int        `json:"updated_by"`
+	UpdatedAt       *time.Time `json:"updated_at"`
+}
+
+type UserResponse struct {
+	UUID         string `json:"uuid"`
+	NickName     string `json:"nick_name"`
+	ProfileImage string `json:"profile_image"`
+	Visibility   string `json:"visibility"`
+}
+
+type UserProfile struct {
+	UUID         string    `json:"uuid"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	Gender       string    `json:"gender"`
+	BirthDay     time.Time `json:"birthday"`
+	Email        string    `json:"email"`
+	NickName     string    `json:"nick_name"`
+	ProfileImage string    `json:"profile_image"`
+	AboutMe      string    `json:"about_me"`
+	Visibility   string    `json:"visibility"`
+}
+
+func SelectUsers() (*[]UserResponse, error) {
+	qry := `SELECT uuid, nick_name, profile_image, visibility
+			FROM users
+			WHERE id != 0`
+
+	rows, err := sqlDB.Query(qry)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var uRepsonses []UserResponse
+	for rows.Next() {
+		var ur UserResponse
+		err := rows.Scan(&ur.UUID, &ur.NickName, &ur.ProfileImage, &ur.Visibility)
+		if err != nil {
+			return nil, err
+		}
+		uRepsonses = append(uRepsonses, ur)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return &uRepsonses, nil
+}
+
+func SelectUser(tgtUUID string) (*UserProfile, error) {
+	qry := `SELECT
+				uuid, first_name, last_name,
+				gender, birthday,
+				email, nick_name,
+				profile_image, about_me, visibility
+			FROM users
+			WHERE uuid = ?
+			LIMIT 1;`
+	var uProfile UserProfile
+	err := sqlDB.QueryRow(qry, tgtUUID).Scan(
+		&uProfile.UUID, &uProfile.FirstName, &uProfile.LastName,
+		&uProfile.Gender, &uProfile.BirthDay,
+		&uProfile.Email, &uProfile.NickName,
+		&uProfile.ProfileImage, &uProfile.AboutMe, &uProfile.Visibility)
+	if err != nil {
+		return nil, err
+	}
+	return &uProfile, nil
+}
+
+func SelectUserIDByUUID(userUUID string) (int, error) {
+	var userID int
+	err := sqlDB.QueryRow(`SELECT id FROM users WHERE uuid = ?`, userUUID).Scan(&userID)
+	return userID, err
 }
 
 func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) {
@@ -55,12 +127,13 @@ func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) 
 
 func checkUniqueUser(user *User) error {
 	var existingEmail string
-	var existingUsername sql.NullString
+	var existingUsername string
 	qry := `SELECT email, nick_name 
 			FROM users 
 			WHERE email = ? OR nick_name = ? LIMIT 1;`
 
-	err := sqlDB.QueryRow(qry, user.Email, user.NickName).Scan(&existingEmail, &existingUsername)
+	err := sqlDB.QueryRow(qry, user.Email, user.NickName).
+		Scan(&existingEmail, &existingUsername)
 	if err != nil {
 		return checkErrNoRows(err)
 	}
@@ -68,7 +141,7 @@ func checkUniqueUser(user *User) error {
 	if existingEmail == user.Email {
 		return errors.New("email is already used")
 	}
-	if user.NickName.Valid && existingUsername.String == user.NickName.String {
+	if existingUsername == user.NickName {
 		return errors.New("nick name is already used")
 	}
 	return nil
@@ -118,6 +191,20 @@ func InsertUser(user *User) (int, error) {
 }
 
 func UpdateUser(user *User) error {
+	checkQuery := `SELECT id 
+					FROM users 
+					WHERE nick_name = ? AND id != ?`
+
+	var existingID int
+	err := sqlDB.QueryRow(checkQuery, user.NickName, user.ID).
+		Scan(&existingID)
+	if err == nil {
+		return fmt.Errorf("nickname '%s' is already taken", user.NickName)
+	}
+	if err != sql.ErrNoRows {
+		return err
+	}
+
 	updateQuery := `
 		UPDATE users
 		SET first_name = ?,	last_name = ?, nick_name =?,
@@ -126,7 +213,7 @@ func UpdateUser(user *User) error {
 			status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
 		WHERE id = ?;`
 
-	_, err := sqlDB.Exec(updateQuery,
+	_, err = sqlDB.Exec(updateQuery,
 		user.FirstName, user.LastName, user.NickName,
 		user.Gender, user.BirthDay, user.AboutMe,
 		user.Visibility, user.ProfileImage,
@@ -137,190 +224,12 @@ func UpdateUser(user *User) error {
 	return err
 }
 
-/*
-func AuthenticateUser(nick_name, password string) (bool, int, error) {
-	// Query to retrieve the hashed password stored in the database for the given nick_name
-	var userId int
-	var storedHashedPassword string
-	err := sqlDB.QueryRow("SELECT id, pw_hash FROM users WHERE nick_name = ? or email = ?", nick_name, nick_name).Scan(&userId, &storedHashedPassword)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// NickName not found
-			return false, -1, errors.New("nick_name not found")
-		}
-		// Handle other database errors
-		log.Fatal(err)
-	}
+func IsPublic(userUUID string) bool {
+	qry := `SELECT id 
+			FROM users 
+			WHERE uuid = ? AND visibility = 'public'`
 
-	// Compare the entered password with the stored hashed password using bcrypt
-	err = bcrypt.CompareHashAndPassword([]byte(storedHashedPassword), []byte(password))
-	if err != nil {
-		// PasswordHash is incorrect
-		return false, -1, errors.New("password is incorrect")
-	}
-
-	// Successful login if no errors occurred
-	return true, userId, nil
+	var existingID int
+	err := sqlDB.QueryRow(qry, userUUID).Scan(&existingID)
+	return err == nil
 }
-
-func ReadAllUsers(sqlDB *sql.DB) ([]User, error) {
-	// Query the records
-	rows, selectError := sqlDB.Query(`
-        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility,
-		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at,
-		u.updated_at as user_updated_at, u.updated_by as user_updated_by
-		FROM users u
-		WHERE u.status != 'delete'
-		AND u.type != 'admin'
-		ORDER BY u.id desc;
-    `)
-	if selectError != nil {
-		return nil, selectError
-	}
-	defer rows.Close()
-
-	var users []User
-
-	for rows.Next() {
-		var user User
-
-		// Scan the post and user data
-		err := rows.Scan(
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.AboutMe, &user.Visibility,
-			&user.ProfileImage, &user.Status, &user.CreatedAt,
-			&user.UpdatedAt, &user.UpdatedBy,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("error scanning row: %v", err)
-		}
-
-		users = append(users, user)
-	}
-
-	// Check for any errors during row iteration
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("row iteration error: %v", err)
-	}
-
-	return users, nil
-}
-
-func ReadAllChatUsers(sqlDB *sql.DB, user_id int) ([]User, error) {
-	rows, selectError := sqlDB.Query(`
-        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility,
-		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at,
-		u.updated_at as user_updated_at, u.updated_by as user_updated_by
-			FROM users u
-			LEFT JOIN chat_members cm
-				ON u.id = cm.user_id
-				AND cm.status != 'delete'
-			LEFT JOIN chats c
-				ON cm.chat_id = c.id
-				AND c.status != 'delete'
-				AND c.id in (
-					SELECT chat_id
-					FROM chat_members
-					WHERE user_id = ?
-					AND status != 'delete'
-				)
-			WHERE u.status != 'delete'
-			AND u.type != 'admin'
-			GROUP BY u.id
-			ORDER BY MAX(c.updated_at) desc, u.nick_name;
-    `, user_id)
-	if selectError != nil {
-		return nil, selectError
-	}
-	defer rows.Close()
-
-	var users []User
-
-	for rows.Next() {
-		var user User
-
-		err := rows.Scan(
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.AboutMe, &user.Visibility,
-			&user.ProfileImage, &user.Status, &user.CreatedAt,
-			&user.UpdatedAt, &user.UpdatedBy,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("error scanning row: %v", err)
-		}
-
-		users = append(users, user)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("row iteration error: %v", err)
-	}
-
-	return users, nil
-}
-
-func ReadUserByID(sqlDB *sql.DB, user_id int) (User, error) {
-	// Query the records
-	rows, selectError := sqlDB.Query(`
-        SELECT u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, u.about_me as user_about_me, u.visibility as user_visibility,
-		IFNULL(u.profile_image, '') as profile_image, u.status as user_status, u.created_at as user_created_at,
-		u.updated_at as user_updated_at, u.updated_by as user_updated_by
-		FROM users u
-		WHERE u.status != 'delete'
-		AND u.type != 'admin'
-		AND u.id = ?
-		ORDER BY u.id desc;
-    `, user_id)
-	if selectError != nil {
-		return User{}, selectError
-	}
-	defer rows.Close()
-
-	var user User
-
-	for rows.Next() {
-		// Scan the post and user data
-		err := rows.Scan(
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.AboutMe, &user.Visibility,
-			&user.ProfileImage, &user.Status, &user.CreatedAt,
-			&user.UpdatedAt, &user.UpdatedBy,
-		)
-		if err != nil {
-			return User{}, fmt.Errorf("error scanning row: %v", err)
-		}
-
-	}
-
-	// Check for any errors during row iteration
-	if err := rows.Err(); err != nil {
-		return User{}, fmt.Errorf("row iteration error: %v", err)
-	}
-
-	return user, nil
-}
-
-func UpdateStatusUser(sqlDB *sql.DB, user_id int, status string, login_user_id int) error {
-	updateQuery := `UPDATE users
-					SET status = ?,
-						updated_at = CURRENT_TIMESTAMP,
-						updated_by = ?
-					WHERE id = ?;`
-	_, updateErr := sqlDB.Exec(updateQuery, status, login_user_id, user_id)
-	if updateErr != nil {
-		return updateErr
-	}
-
-	return nil
-}
-
-func GetUserIDByUsername(sqlDB *sql.DB, nick_name string) (int, error) {
-	var userID int
-	err := sqlDB.QueryRow("SELECT id FROM users WHERE nick_name = ?", nick_name).Scan(&userID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return -1, errors.New("user not found")
-		}
-		return -1, err // Other DB errors
-	}
-
-	return userID, nil
-}
-*/

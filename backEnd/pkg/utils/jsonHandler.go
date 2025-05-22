@@ -39,7 +39,7 @@ func ReturnJsonSuccess(w http.ResponseWriter, message string, data interface{}) 
 	})
 }
 
-func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
+func ReadJSON(r *http.Request, data interface{}) error {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err

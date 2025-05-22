@@ -33,7 +33,7 @@ func CommentFeedbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	commentFeedback := &models.CommentFeedback{}
 	commentFeedback.UserId = userID
-	if err := utils.ReadJSON(w, r, commentFeedback); err != nil {
+	if err := utils.ReadJSON(r, commentFeedback); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
