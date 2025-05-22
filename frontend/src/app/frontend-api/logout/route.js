@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 export async function POST() {
   console.log("POST /api/logout triggered"); // Debug log
 
-  const backendUrl = "http://localhost:8080/logout";
+  const backendUrl = "http://localhost:8080/api/logout";
 
   try {
     const cookieStore = cookies();

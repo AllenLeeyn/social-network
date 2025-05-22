@@ -84,9 +84,29 @@ export default function PostPage() {
             <div key={post.ID} className="post-item">
               <h3>{post.title}</h3>
               <p>
-                <em>by {post.userName}</em>
+                <em>by {post.user.NickName.String}</em>
               </p>
               <p>{post.content}</p>
+              <div className="post-actions" style={{ marginTop: "1em" }}>
+                <label>
+                  <input
+                    type="radio"
+                    name={`like-dislike-post-${post.id}`}
+                    checked={post.liked}
+                    readOnly
+                  />
+                  👍 Like {post.like_count}
+                </label>
+                <label style={{ marginLeft: "1em" }}>
+                  <input
+                    type="radio"
+                    name={`like-dislike-post-${post.id}`}
+                    checked={post.disliked}
+                    readOnly
+                  />
+                  👎 Dislike {post.dilike_count}
+                </label>
+              </div>
             </div>
           ) : (
             <div className="post-item">
