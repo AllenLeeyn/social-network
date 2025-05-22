@@ -1,4 +1,5 @@
 CREATE TABLE following (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
     leader_id       INTEGER NOT NULL,
     follower_id     INTEGER NOT NULL,
     group_id        INTEGER NOT NULL DEFAULT 0,
@@ -9,7 +10,7 @@ CREATE TABLE following (
     updated_at  DATETIME,
     updated_by  INTEGER,
 
-    PRIMARY KEY (leader_id, follower_id, group_id),
+    UNIQUE (leader_id, follower_id, group_id),
     FOREIGN KEY (leader_id)     REFERENCES users(id),
     FOREIGN KEY (follower_id)   REFERENCES users(id),
     FOREIGN KEY (group_id)      REFERENCES groups(id),

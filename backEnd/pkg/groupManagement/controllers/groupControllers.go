@@ -29,17 +29,12 @@ func isValidGroupInfo(g *group) error {
 	return nil
 }
 
-func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
+func GroupCreateHandler(w http.ResponseWriter, r *http.Request) {
 	g := &group{}
 	if err := utils.ReadJSON(r, g); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-
-	if err := isValidGroupInfo(g); err != nil {
-		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-	}
-
 	userId, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -47,12 +42,15 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	g.CreatedBy = userId
 
+	if err := isValidGroupInfo(g); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+	}
+
 	_, groupUUID, err := groupModel.InsertGroup(g)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-
 	err = groupModel.InsertGroupMember(&following{
 		LeaderID: userId, FollowerID: userId, GroupUUID: groupUUID,
 		Status: "accepted", CreatedBy: userId,
@@ -61,7 +59,6 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "group created",
 		struct {
@@ -69,43 +66,41 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 		}{groupUUID})
 }
 
-func UpdateGroupHandler(w http.ResponseWriter, r *http.Request) {
+func GroupUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	g := &group{}
 	if err := utils.ReadJSON(r, g); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-
-	if err := isValidGroupInfo(g); err != nil {
-		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-	}
-
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	g.UpdatedBy = userID
 
+	if err := isValidGroupInfo(g); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+	}
 	if !groupModel.IsGroupMember(g.UUID, userID) {
 		errorControllers.ErrorHandler(w, r, errorControllers.ForbiddenError)
 		return
 	}
-	g.UpdatedBy = userID
 
 	if err := groupModel.UpdateGroup(g); err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "group info updated", nil)
 }
 
 func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
-	tgtUUID, statusCode := userControllers.GetTgtUUID(r)
+	tgtUUID, statusCode := userControllers.GetTgtUUID(r, "api/groups")
 	if statusCode == http.StatusInternalServerError {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
+
 	} else if statusCode == http.StatusForbidden {
 		errorControllers.CustomErrorHandler(w, r,
 			"access denied: private profile and user is not follower",
@@ -113,18 +108,14 @@ func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	joinedOnly := false
-	if val := r.URL.Query().Get("joined"); val == "true" {
-		joinedOnly = true
-	}
+	joined := r.URL.Query().Get("joined")
 
-	groups, err := groupModel.SelectGroups(tgtUUID, joinedOnly)
+	groups, err := groupModel.SelectGroups(tgtUUID, joined == "true")
 	if err != nil {
 		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "group list retrieved", groups)
 }
@@ -136,14 +127,18 @@ func ViewGroupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupUUID := r.URL.Query().Get("id")
+	groupUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group")
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
 	groups, err := groupModel.SelectGroup(userID, groupUUID)
 	if err != nil {
 		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "group info retrieved", groups)
 }

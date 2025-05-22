@@ -28,11 +28,11 @@ CREATE TABLE posts_new (
 );
 
 INSERT INTO posts_new (
-    id, uuid, user_id, title, content, created_at, visibility, group_id,
+    id, uuid, user_id, title, content, created_at, visibility,
     like_count, dislike_count, comment_count, updated_by, updated_at
 )
 SELECT
-    p.id, pu.uuid, p.user_id, p.title, p.content, p.created_at, 'public', NULL,
+    p.id, pu.uuid, p.user_id, p.title, p.content, p.created_at, 'public',
     p.like_count, p.dislike_count, p.comment_count, 0, CURRENT_TIMESTAMP
 FROM posts p
 JOIN post_uuids pu ON pu.post_id = p.id;;

@@ -47,7 +47,6 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	f.Status = "requested"
-
 	operation, message := followingModel.InsertFollowing, "request send"
 
 	switch followingStatus {
@@ -69,7 +68,32 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	if userModel.IsPublic(f.LeaderUUID) {
 		f.Status, message = "accepted", "request accepted"
 	}
+
 	if err := operation(f); err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+	userControllers.ExtendSession(w, r)
+	utils.ReturnJsonSuccess(w, message, nil)
+}
+
+func FollowingResponseHandler(w http.ResponseWriter, r *http.Request) {
+	f, userID, followingStatus, err := ProcessFollowingIDs(r)
+	if err != nil {
+		log.Println(err.Error())
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	if followingStatus != "requested" || (f.Status != "accepted" && f.Status != "declined") {
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+		return
+	}
+	f.UpdatedBy = userID
+	message := "request " + f.Status
+
+	if err := followingModel.UpdateFollowing(f); err != nil {
+		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
@@ -84,7 +108,6 @@ func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	f.UpdatedBy, f.Status = userID, "inactive"
-
 	message := "not following user"
 
 	switch followingStatus {
@@ -105,7 +128,7 @@ func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, message, nil)
 }
 
-func RemoveFollowerHandler(w http.ResponseWriter, r *http.Request) {
+func FollowingRemoveHandler(w http.ResponseWriter, r *http.Request) {
 	f, userID, followingStatus, err := ProcessFollowingIDs(r)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -127,51 +150,12 @@ func RemoveFollowerHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "follower removed", nil)
 }
 
-func FollowingResponseHandler(w http.ResponseWriter, r *http.Request) {
-	f, userID, followingStatus, err := ProcessFollowingIDs(r)
-	if err != nil {
-		log.Println(err.Error())
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
-	f.UpdatedBy = userID
-
-	message := "request " + f.Status
-
-	if followingStatus != "requested" || (f.Status != "accepted" && f.Status != "declined") {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
-		return
-	}
-
-	if err := followingModel.UpdateFollowing(f); err != nil {
-		log.Println(err.Error())
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
-	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, message, nil)
-}
-
-func ViewFollowingRequestsHandler(w http.ResponseWriter, r *http.Request) {
-	userUUID, isOk := middleware.GetUserUUID(r.Context())
-	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
-	pendingFollowing, err := followingModel.SelectFollowings(userUUID, "requested")
-	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
-	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, "Data OK", pendingFollowing)
-}
-
 func ViewFollowingsHandler(w http.ResponseWriter, r *http.Request) {
-	tgtUUID, statusCode := userControllers.GetTgtUUID(r)
+	tgtUUID, statusCode := userControllers.GetTgtUUID(r, "api/followers")
 	if statusCode == http.StatusInternalServerError {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
+
 	} else if statusCode == http.StatusForbidden {
 		errorControllers.CustomErrorHandler(w, r,
 			"access denied: private profile and user is not follower",
@@ -186,4 +170,20 @@ func ViewFollowingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "Data OK", followings)
+}
+
+func ViewFollowingRequestsHandler(w http.ResponseWriter, r *http.Request) {
+	userUUID, isOk := middleware.GetUserUUID(r.Context())
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	pendingFollowing, err := followingModel.SelectFollowings(userUUID, "requested")
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+	userControllers.ExtendSession(w, r)
+	utils.ReturnJsonSuccess(w, "Data OK", pendingFollowing)
 }

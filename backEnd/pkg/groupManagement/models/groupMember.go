@@ -6,6 +6,20 @@ import (
 
 var InsertGroupMember = followingModel.InsertFollowing
 
+func IsGroupMember(groupUUID string, userID int) bool {
+	qry := `SELECT 1
+			FROM groups g
+			LEFT JOIN following f ON g.id = f.group_id
+			WHERE g.uuid = ? 
+				AND f.follower_id = ?
+				AND f.status = 'accepted'
+			LIMIT 1;`
+
+	var exists int
+	err := sqlDB.QueryRow(qry, groupUUID, userID).Scan(&exists)
+	return err == nil
+}
+
 func SelectGroupMembers(tgtUUID, fStatus string) (
 	*[]followingModel.FollowingResponse, error) {
 	fStatus2 := ""
@@ -43,18 +57,4 @@ func SelectGroupMembers(tgtUUID, fStatus string) (
 		return nil, err
 	}
 	return &fResponses, nil
-}
-
-func IsGroupMember(groupUUID string, userID int) bool {
-	qry := `SELECT 1
-			FROM groups g
-			LEFT JOIN following f ON g.id = f.group_id
-			WHERE g.uuid = ? 
-				AND f.follower_id = ?
-				AND f.status = 'accepted'
-			LIMIT 1;`
-
-	var exists int
-	err := sqlDB.QueryRow(qry, groupUUID, userID).Scan(&exists)
-	return err == nil
 }

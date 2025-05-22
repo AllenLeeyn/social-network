@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"strings"
 
 	chatContollers "social-network/pkg/chatManagement/controllers"
+	followingModel "social-network/pkg/followingManagement/models"
+	middleware "social-network/pkg/middleware"
+	userModel "social-network/pkg/userManagement/models"
 	"social-network/pkg/utils"
 )
 
@@ -105,4 +109,24 @@ func generateNickName(u *user) string {
 
 	num := rand.Intn(10000)
 	return fmt.Sprintf("%s%s_%d", base, initial, num)
+}
+
+func GetTgtUUID(r *http.Request, basePath string) (string, int) {
+	_, userID, userUUID, isOk := middleware.GetSessionCredentials(r.Context())
+	if !isOk {
+		return "", http.StatusInternalServerError
+	}
+	tgtUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, basePath)
+	if err != nil {
+		return "", http.StatusInternalServerError
+	}
+	if tgtUUID == "" {
+		tgtUUID = userUUID
+
+	} else {
+		if !userModel.IsPublic(tgtUUID) && !followingModel.IsFollower(userID, tgtUUID) {
+			return "", http.StatusForbidden
+		}
+	}
+	return tgtUUID, http.StatusOK
 }

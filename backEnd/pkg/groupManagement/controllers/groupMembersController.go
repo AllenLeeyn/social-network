@@ -18,20 +18,14 @@ func processMembersIDs(r *http.Request) (*followingModel.Following, int, string,
 	if err != nil {
 		return nil, -1, "", err
 	}
-	groupID, err := groupModel.SelectGroupIDfromUUID(m.GroupUUID)
+	groupID, createdBy, err := groupModel.SelectGroupIDcreatedByfromUUID(m.GroupUUID)
 	if err != nil {
 		return nil, -1, "", err
+
 	} else if groupID == 0 {
 		return nil, -1, "", fmt.Errorf("public forum chosen as group")
 	}
-
-	m.GroupID = groupID
-
-	createdBy, err := groupModel.SelectCreatedByFromUUID(m.GroupUUID)
-	if err != nil {
-		return nil, -1, "", err
-	}
-	m.LeaderID = createdBy
+	m.GroupID, m.LeaderID = groupID, createdBy
 
 	memberStatus, err := followingModel.SelectStatus(m)
 	if err != nil {
@@ -47,6 +41,7 @@ func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	m.Status = "invited"
+	operation, message := groupModel.InsertGroupMember, "invitation send"
 
 	if !groupModel.IsGroupMember(m.GroupUUID, userID) {
 		errorControllers.CustomErrorHandler(w, r,
@@ -54,7 +49,6 @@ func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	operation, message := followingModel.InsertFollowing, "invitation send"
 	switch memberStatus {
 	case "accepted":
 		errorControllers.CustomErrorHandler(w, r,
@@ -87,8 +81,8 @@ func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	m.Status = "requested"
+	operation, message := groupModel.InsertGroupMember, "request send"
 
-	operation, message := followingModel.InsertFollowing, "request send"
 	switch memberStatus {
 	case "accepted":
 		errorControllers.CustomErrorHandler(w, r,
@@ -113,27 +107,24 @@ func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, message, nil)
 }
 
-func GroupMembershipResponseHandler(w http.ResponseWriter, r *http.Request) {
+func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
 	m, userID, memberStatus, err := processMembersIDs(r)
 	if err != nil {
-		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	m.UpdatedBy, m.Status = userID, "inactive"
+	message := "not a member/ no request or invitation"
 
-	if (memberStatus != "requested" && memberStatus != "invited") ||
-		(m.Status != "accepted" && m.Status != "declined") ||
-		(memberStatus == "invited" && userID != m.FollowerID) ||
-		(memberStatus == "requested" && userID != m.LeaderID) {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+	switch memberStatus {
+	case "accepted":
+		message = "you have left group"
+	case "requested", "invited":
+		message = "cancel/decline request"
+	default:
+		errorControllers.CustomErrorHandler(w, r, message, http.StatusBadRequest)
 		return
 	}
-
-	message := "requested "
-	if memberStatus == "invited" {
-		message = "invitation "
-	}
-	message += m.Status
 
 	if err := followingModel.UpdateFollowing(m); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -143,7 +134,7 @@ func GroupMembershipResponseHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, message, nil)
 }
 
-func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
+func GroupMemberRemoveHandler(w http.ResponseWriter, r *http.Request) {
 	m, userID, memberStatus, err := processMembersIDs(r)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -170,25 +161,26 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "member removed", nil)
 }
 
-func QuitGroupHandler(w http.ResponseWriter, r *http.Request) {
+func GroupMemberResponseHandler(w http.ResponseWriter, r *http.Request) {
 	m, userID, memberStatus, err := processMembersIDs(r)
 	if err != nil {
+		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	m.UpdatedBy, m.Status = userID, "inactive"
+	message := "requested "
+	if memberStatus == "invited" {
+		message = "invitation "
+	}
+	message += m.Status
 
-	message := "not a member/ no request or invitation"
-	switch memberStatus {
-	case "accepted":
-		message = "you have left group"
-	case "requested", "invited":
-		message = "cancel/decline request"
-	default:
-		errorControllers.CustomErrorHandler(w, r, message, http.StatusBadRequest)
+	if (memberStatus != "requested" && memberStatus != "invited") ||
+		(m.Status != "accepted" && m.Status != "declined") ||
+		(memberStatus == "invited" && userID != m.FollowerID) ||
+		(memberStatus == "requested" && userID != m.LeaderID) {
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
-
 	if err := followingModel.UpdateFollowing(m); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -198,11 +190,12 @@ func QuitGroupHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewGroupMembersHandle(w http.ResponseWriter, r *http.Request) {
-	tgtUUID := r.URL.Query().Get("id")
-	if tgtUUID == "" {
+	tgtUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group/members")
+	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
+
 	groupMembers, err := groupModel.SelectGroupMembers(tgtUUID, "accepted")
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -218,8 +211,8 @@ func ViewGroupMemberRequestsHandle(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	tgtUUID := r.URL.Query().Get("id")
-	if tgtUUID == "" {
+	tgtUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group/member/requests")
+	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}

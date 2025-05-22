@@ -25,88 +25,99 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			userContollers.LogoutHandler))
 
-	http.HandleFunc("/api/updateUser",
+	http.HandleFunc("/api/user/update",
 		middleware.CheckHttpRequest("user", http.MethodPost,
-			userContollers.UpdateUserHandler))
+			userContollers.UserUpdateHandler))
 
+	// implement uuid as part of path
 	http.HandleFunc("/api/users",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			userContollers.ViewUsersHandler))
 
-	http.HandleFunc("/api/user",
+	// implement uuid as part of path
+	http.HandleFunc("/api/user/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			userContollers.ViewUserHandler))
 
+	// ---------------------------- chat management controller APIs ---------------------------- //
 	http.HandleFunc("/api/ws",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			cc.WSHandler))
 
-	http.HandleFunc("/api/createGroup",
+	// ---------------------------- group management controller APIs ---------------------------- //
+	http.HandleFunc("/api/group/create",
 		middleware.CheckHttpRequest("user", http.MethodPost,
-			groupContollers.CreateGroupHandler))
+			groupContollers.GroupCreateHandler))
 
-	http.HandleFunc("/api/groups",
+	http.HandleFunc("/api/group/update",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			groupContollers.GroupUpdateHandler))
+
+	// implement uuid as part of path
+	http.HandleFunc("/api/groups/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			groupContollers.ViewGroupsHandler))
 
-	http.HandleFunc("/api/group",
+	// implement uuid as part of path
+	http.HandleFunc("/api/group/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			groupContollers.ViewGroupHandler))
 
-	http.HandleFunc("/api/updateGroup",
-		middleware.CheckHttpRequest("user", http.MethodPost,
-			groupContollers.UpdateGroupHandler))
-
-	http.HandleFunc("/api/followRequest",
-		middleware.CheckHttpRequest("user", http.MethodPost,
-			followingContollers.FollowingRequestHandler))
-
-	http.HandleFunc("/api/followResponse",
-		middleware.CheckHttpRequest("user", http.MethodPost,
-			followingContollers.FollowingResponseHandler))
-
-	http.HandleFunc("/api/unfollowRequest",
-		middleware.CheckHttpRequest("user", http.MethodPost,
-			followingContollers.UnfollowHandler))
-
-	http.HandleFunc("/api/removeFollower",
-		middleware.CheckHttpRequest("user", http.MethodPost,
-			followingContollers.RemoveFollowerHandler))
-
-	http.HandleFunc("/api/followingRequests",
-		middleware.CheckHttpRequest("user", http.MethodGet,
-			followingContollers.ViewFollowingRequestsHandler))
-
-	http.HandleFunc("/api/followings",
-		middleware.CheckHttpRequest("user", http.MethodGet,
-			followingContollers.ViewFollowingsHandler))
-
-	http.HandleFunc("/api/groupInviteRequest",
+	// ---------------------------- group member management controller APIs ---------------------------- //
+	http.HandleFunc("/api/group/invite",
 		middleware.CheckHttpRequest("user", http.MethodPost,
 			groupContollers.GroupInviteRequestHandler))
 
-	//not done
-	http.HandleFunc("/api/groupJoinRequest",
+	http.HandleFunc("/api/group/join",
 		middleware.CheckHttpRequest("user", http.MethodPost,
 			groupContollers.GroupJoinRequestHandler))
 
-	http.HandleFunc("/api/groupQuitRequest",
+	http.HandleFunc("/api/group/quit",
 		middleware.CheckHttpRequest("user", http.MethodPost,
-			groupContollers.QuitGroupHandler))
+			groupContollers.GroupQuitHandler))
 
-	http.HandleFunc("/api/group/members",
+	http.HandleFunc("/api/group/member/remove",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			groupContollers.GroupMemberRemoveHandler))
+
+	http.HandleFunc("/api/group/member/response",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			groupContollers.GroupMemberResponseHandler))
+
+	// implement uuid as part of path
+	http.HandleFunc("/api/group/members/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			groupContollers.ViewGroupMembersHandle))
 
-	http.HandleFunc("/api/group/memberRequets",
+	// implement uuid as part of path
+	http.HandleFunc("/api/group/member/requests/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			groupContollers.ViewGroupMemberRequestsHandle))
 
-	http.HandleFunc("/api/group/membershipResponse",
+	// ---------------------------- following management controller APIs ---------------------------- //
+	http.HandleFunc("/api/follower/request",
 		middleware.CheckHttpRequest("user", http.MethodPost,
-			groupContollers.GroupMembershipResponseHandler))
+			followingContollers.FollowingRequestHandler))
 
-	http.HandleFunc("/api/group/removeMember",
+	http.HandleFunc("/api/follower/response",
 		middleware.CheckHttpRequest("user", http.MethodPost,
-			groupContollers.RemoveGroupMemberHandler))
+			followingContollers.FollowingResponseHandler))
+
+	http.HandleFunc("/api/follower/unfollow",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			followingContollers.UnfollowHandler))
+
+	http.HandleFunc("/api/follower/remove",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			followingContollers.FollowingRemoveHandler))
+
+	// implement uuid as part of path
+	http.HandleFunc("/api/followers/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			followingContollers.ViewFollowingsHandler))
+
+	// implement uuid as part of path
+	http.HandleFunc("/api/follower/requests/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			followingContollers.ViewFollowingRequestsHandler))
 }

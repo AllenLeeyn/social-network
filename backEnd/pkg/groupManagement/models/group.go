@@ -81,7 +81,7 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]groupResponse, error) {
 				g.uuid AS group_uuid, g.title,
 				g.description, g.banner_image, g.members_count,
 				u.nick_name AS creator_name, u.uuid AS creator_uuid,
-				f.status as status
+				COALESCE(f.status, '') as status
 			FROM groups g
 			JOIN users u ON g.created_by = u.id
 			LEFT JOIN users u2 ON u2.uuid = ?
@@ -120,7 +120,7 @@ func SelectGroup(userID int, groupUUID string) (*groupResponse, error) {
 				g.uuid AS group_uuid, g.title,
 				g.description, g.banner_image, g.members_count,
 				u.nick_name AS creator_name, u.uuid AS creator_uuid,
-				f.status as status
+				COALESCE(f.status, '') as status
 			FROM groups g
 			JOIN users u ON g.created_by = u.id
 			LEFT JOIN following f 
@@ -139,16 +139,9 @@ func SelectGroup(userID int, groupUUID string) (*groupResponse, error) {
 	return &g, nil
 }
 
-func SelectGroupIDfromUUID(groupUUID string) (int, error) {
-	var groupID int
-	err := sqlDB.QueryRow(`SELECT id FROM groups WHERE uuid = ?`, groupUUID).
+func SelectGroupIDcreatedByfromUUID(groupUUID string) (int, int, error) {
+	var groupID, createdBy int
+	err := sqlDB.QueryRow(`SELECT id, created_by FROM groups WHERE uuid = ?`, groupUUID).
 		Scan(&groupID)
-	return groupID, err
-}
-
-func SelectCreatedByFromUUID(groupUUID string) (int, error) {
-	var createdBy int
-	err := sqlDB.QueryRow(`SELECT created_by FROM groups WHERE uuid = ?`, groupUUID).
-		Scan(&createdBy)
-	return createdBy, err
+	return groupID, createdBy, err
 }

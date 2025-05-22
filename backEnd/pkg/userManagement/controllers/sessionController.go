@@ -12,8 +12,28 @@ import (
 
 type session = userModel.Session
 
-func ExtendSession(w http.ResponseWriter, r *http.Request) error {
+func generateSession(w http.ResponseWriter, r *http.Request, userId int) {
+	session, err := userModel.InsertSession(&session{
+		UserId:   userId,
+		IsActive: true,
+	})
+	if err != nil {
+		errorController.ErrorHandler(w, r, errorController.InternalServerError)
+		return
+	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session-id",
+		Value:    session.ID,
+		Expires:  session.ExpireTime,
+		MaxAge:   int(time.Until(session.ExpireTime).Seconds()),
+		HttpOnly: true,
+		Secure:   false,
+		Path:     "/",
+	})
+}
+
+func ExtendSession(w http.ResponseWriter, r *http.Request) error {
 	sessionID, _ := middleware.GetSessionID(r.Context())
 	// generate a uuid for the session and set it into a cookie
 	http.SetCookie(w, &http.Cookie{
@@ -32,7 +52,7 @@ func ExtendSession(w http.ResponseWriter, r *http.Request) error {
 	})
 }
 
-func ExpireSession(w http.ResponseWriter, r *http.Request, s *session) {
+func expireSession(w http.ResponseWriter, r *http.Request, s *session) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session-id",
 		Value:    "",         // Empty the cookie's value
@@ -53,25 +73,4 @@ func ExpireSession(w http.ResponseWriter, r *http.Request, s *session) {
 		fmt.Println(err.Error())
 	}
 	fmt.Println(chatController.CloseConn(s.UserUUID))
-}
-
-func generateSession(w http.ResponseWriter, r *http.Request, userId int) {
-	session, err := userModel.InsertSession(&session{
-		UserId:   userId,
-		IsActive: true,
-	})
-	if err != nil {
-		errorController.ErrorHandler(w, r, errorController.InternalServerError)
-		return
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session-id",
-		Value:    session.ID,
-		Expires:  session.ExpireTime,
-		MaxAge:   int(time.Until(session.ExpireTime).Seconds()),
-		HttpOnly: true,
-		Secure:   false,
-		Path:     "/",
-	})
 }

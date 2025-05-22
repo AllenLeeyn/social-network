@@ -34,6 +34,21 @@ type FollowingResponse struct {
 
 var publicGroupUUID = "00000000-0000-0000-0000-000000000000"
 
+func IsFollower(userID int, tgtUUID string) bool {
+	qry := `SELECT 1
+			FROM following f
+			JOIN users u ON u.id = f.leader_id
+			WHERE u.uuid = ? 
+				AND f.follower_id = ? 
+				AND f.group_id = 0 
+				AND f.status = 'accepted'
+			LIMIT 1;`
+
+	var exists int
+	err := sqlDB.QueryRow(qry, tgtUUID, userID).Scan(&exists)
+	return err == nil
+}
+
 func SelectIDsFromUUIDs(f *Following) error {
 	if f.LeaderID == 0 && f.GroupUUID == publicGroupUUID {
 		leaderID, err := userModel.SelectUserIDByUUID(f.LeaderUUID)
@@ -54,27 +69,6 @@ func SelectIDsFromUUIDs(f *Following) error {
 	return nil
 }
 
-func InsertFollowing(f *Following) error {
-	if err := SelectIDsFromUUIDs(f); err != nil {
-		return err
-	}
-
-	qry := `INSERT INTO following (
-				leader_id, follower_id, group_id, status, created_by
-			) VALUES (?, ?, 
-				(SELECT id FROM groups WHERE uuid = ?), ?, ?);`
-	_, err := sqlDB.Exec(qry,
-		&f.LeaderID,
-		&f.FollowerID,
-		&f.GroupUUID,
-		&f.Status,
-		&f.CreatedBy)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func SelectStatus(f *Following) (string, error) {
 	qry := `SELECT status
 			FROM following
@@ -85,41 +79,11 @@ func SelectStatus(f *Following) (string, error) {
 	return status, checkErrNoRows(err)
 }
 
-func UpdateFollowing(f *Following) error {
-	qry := `UPDATE following 
-			SET status = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
-			WHERE leader_id = ? AND follower_id = ? AND group_id = ?;`
-	_, err := sqlDB.Exec(qry,
-		&f.Status,
-		&f.UpdatedBy,
-		&f.LeaderID,
-		&f.FollowerID,
-		&f.GroupID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func IsFollower(userID int, tgtUUID string) bool {
-	qry := `SELECT 1
-			FROM following f
-			JOIN users u ON u.id = f.leader_id
-			WHERE u.uuid = ? 
-				AND f.follower_id = ? 
-				AND f.group_id = 0 
-				AND f.status = 'accepted'
-			LIMIT 1;`
-
-	var exists int
-	err := sqlDB.QueryRow(qry, tgtUUID, userID).Scan(&exists)
-	return err == nil
-}
-
 func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingResponse, error) {
-	if fStatus != "accepted" {
-		fStatus = "requested"
+	if fStatus != "accepted" && fStatus != "requested" {
+		return nil, fmt.Errorf("invalid status")
 	}
+
 	qry := `SELECT 
 				follower.uuid AS follower_uuid, follower.nick_name AS follower_name,
 				leader.uuid AS leader_uuid, leader.nick_name AS leader_name,
@@ -154,4 +118,41 @@ func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingResponse, error) {
 		return nil, err
 	}
 	return &fResponses, nil
+}
+
+func InsertFollowing(f *Following) error {
+	if err := SelectIDsFromUUIDs(f); err != nil {
+		return err
+	}
+
+	qry := `INSERT INTO following (
+				leader_id, follower_id, group_id, status, created_by
+			) VALUES (?, ?, 
+				(SELECT id FROM groups WHERE uuid = ?), ?, ?);`
+	_, err := sqlDB.Exec(qry,
+		&f.LeaderID,
+		&f.FollowerID,
+		&f.GroupUUID,
+		&f.Status,
+		&f.CreatedBy)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateFollowing(f *Following) error {
+	qry := `UPDATE following 
+			SET status = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+			WHERE leader_id = ? AND follower_id = ? AND group_id = ?;`
+	_, err := sqlDB.Exec(qry,
+		&f.Status,
+		&f.UpdatedBy,
+		&f.LeaderID,
+		&f.FollowerID,
+		&f.GroupID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
