@@ -10,6 +10,7 @@ import {
     sampleConversations,
     sampleMessages,
 } from '../../data/mockData';
+import UsersList from '../../components/UsersList';
 
 
 export default function MessagePage() {
@@ -127,17 +128,11 @@ export default function MessagePage() {
                 {/* Right Sidebar */}
                 <aside className="sidebar right-sidebar">
                     <SidebarSection title="Active Users">
-                        <ul className="users">
-                            {sampleUsers.map(user => (
-                                <li key={user.id} className={`user-item${user.online ? " online" : ""}${user.unread ? " unread" : ""}`}>
-                                    <img src={user.avatar} alt={user.username} />
-                                    <span>{user.fullName} ({user.username})</span>
-                                </li>
-                            ))}
-                        </ul>
+                        <UsersList />
                     </SidebarSection>
                 </aside>
             </div>
         </main>
     );
 }
+

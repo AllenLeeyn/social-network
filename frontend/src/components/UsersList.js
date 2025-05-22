@@ -2,27 +2,25 @@
 import { useWebsocketContext } from '../contexts/WebSocketContext';
 import "../styles/globals.css";
 
-export default function UsersList({ users }) {
+export default function UsersList() {
 
-    const { isConnected } = useWebsocketContext();
-    // const { userList, isConnected} = useWebsocketContext();
-
-    // For testing, you can override userList with mock data
-    const userList = [
-      { id: 1, name: 'Alice', online: true },
-      { id: 2, name: 'Bob', online: false },
-    ];
+    const { userList, isConnected } = useWebsocketContext();
 
     return (
-        <div>
+        <div className='sidebar-section'>
             <h3>({isConnected ? '✅ Connected' : '❌ Disconnected'})</h3>
-            <ul>
+            <ul className='users'>
                 {userList.map(user => (
-                <li key={user.id}>{user.name}</li>
+                    <li 
+                        key={user.id}
+                        className={`user-item ${user.online ? 'online' : ''} ${user.unread ? 'unread' : ''}`}
+                    >
+                        {user.name}
+                    </li>
                 ))}
             </ul>
         </div>
     );
 }
 
-//                 <span>{user.fullName} ({user.username})</span>
+
