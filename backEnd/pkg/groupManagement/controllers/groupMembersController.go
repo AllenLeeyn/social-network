@@ -2,25 +2,27 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	errorControllers "social-network/pkg/errorManagement/controllers"
-	followingControllers "social-network/pkg/followingManagement/controllers"
+
+	middleware "social-network/pkg/middleware"
+	"social-network/pkg/utils"
+
 	followingModel "social-network/pkg/followingManagement/models"
 	groupModel "social-network/pkg/groupManagement/models"
-	middleware "social-network/pkg/middleware"
+
+	errorControllers "social-network/pkg/errorManagement/controllers"
+	followingControllers "social-network/pkg/followingManagement/controllers"
 	userControllers "social-network/pkg/userManagement/controllers"
-	"social-network/pkg/utils"
 )
 
-func processMembersIDs(r *http.Request) (*followingModel.Following, int, string, error) {
-	m, userID, _, err := followingControllers.ProcessFollowingIDs(r)
+func parseMemberRequest(r *http.Request) (*followingModel.Following, int, string, error) {
+	m, userID, _, err := followingControllers.ParseFollowingRequest(r)
 	if err != nil {
 		return nil, -1, "", err
 	}
 	groupID, createdBy, err := groupModel.SelectGroupIDcreatedByfromUUID(m.GroupUUID)
 	if err != nil {
-		return nil, -1, "", err
+		return nil, -1, "", fmt.Errorf("InternalServerError")
 
 	} else if groupID == 0 {
 		return nil, -1, "", fmt.Errorf("public forum chosen as group")
@@ -29,15 +31,19 @@ func processMembersIDs(r *http.Request) (*followingModel.Following, int, string,
 
 	memberStatus, err := followingModel.SelectStatus(m)
 	if err != nil {
-		return nil, -1, "", err
+		return nil, -1, "", fmt.Errorf("InternalServerError")
 	}
 	return m, userID, memberStatus, nil
 }
 
 func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	m.Status = "invited"
@@ -74,10 +80,13 @@ func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		log.Println(err.Error())
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	m.Status = "requested"
@@ -108,9 +117,13 @@ func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	m.UpdatedBy, m.Status = userID, "inactive"
@@ -135,9 +148,13 @@ func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupMemberRemoveHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	m.UpdatedBy, m.Status = userID, "declined"
@@ -162,10 +179,13 @@ func GroupMemberRemoveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupMemberResponseHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		log.Println(err.Error())
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	message := "requested "

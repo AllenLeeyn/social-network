@@ -18,6 +18,7 @@ CREATE TABLE groups (
 
 CREATE TABLE group_events (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid                TEXT NOT NULL UNIQUE,
     group_id            INTEGER NOT NULL,
     location            TEXT NOT NULL,
     start_time          DATETIME NOT NULL,

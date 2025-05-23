@@ -3,10 +3,11 @@ package controller
 import (
 	"net/http"
 
-	errorControllers "social-network/pkg/errorManagement/controllers"
 	middleware "social-network/pkg/middleware"
-	userModel "social-network/pkg/userManagement/models"
 	"social-network/pkg/utils"
+
+	errorControllers "social-network/pkg/errorManagement/controllers"
+	userModel "social-network/pkg/userManagement/models"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"

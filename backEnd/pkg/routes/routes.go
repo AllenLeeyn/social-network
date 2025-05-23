@@ -3,16 +3,17 @@ package routes
 import (
 	"net/http"
 
-	chatContollers "social-network/pkg/chatManagement/controllers"
-	followingContollers "social-network/pkg/followingManagement/controllers"
-	groupContollers "social-network/pkg/groupManagement/controllers"
-
-	// socialMediaManagementControllers "social-network/pkg/socialMediaManagement/controllers"
-	fileControllers "social-network/pkg/fileManagement/controllers"
-	forumControllers "social-network/pkg/forumManagement/controllers"
 	middleware "social-network/pkg/middleware"
+
+	chatContollers "social-network/pkg/chatManagement/controllers"
+	eventContollers "social-network/pkg/eventManagement/controllers"
+	fileControllers "social-network/pkg/fileManagement/controllers"
+	followingContollers "social-network/pkg/followingManagement/controllers"
+	forumControllers "social-network/pkg/forumManagement/controllers"
+	groupContollers "social-network/pkg/groupManagement/controllers"
 	notificationControllers "social-network/pkg/notificationManagement/controllers"
 	userContollers "social-network/pkg/userManagement/controllers"
+	// socialMediaManagementControllers "social-network/pkg/socialMediaManagement/controllers"
 )
 
 func SetupRoutes(cc *chatContollers.ChatController) {
@@ -85,15 +86,38 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodPost,
 			groupContollers.GroupMemberResponseHandler))
 
-	// implement uuid as part of path
 	http.HandleFunc("/api/group/members/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			groupContollers.ViewGroupMembersHandle))
 
-	// implement uuid as part of path
 	http.HandleFunc("/api/group/member/requests/",
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			groupContollers.ViewGroupMemberRequestsHandle))
+
+	// ---------------------------- group event management controller APIs ---------------------------- //
+	http.HandleFunc("/api/group/event/create",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			eventContollers.EventCreateHandler))
+
+	http.HandleFunc("/api/group/event/update",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			eventContollers.EventUpdateHandler))
+
+	http.HandleFunc("/api/group/events/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			eventContollers.ViewEventsHandler))
+
+	http.HandleFunc("/api/group/event/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			eventContollers.ViewEventHandler))
+
+	http.HandleFunc("/api/group/event/response",
+		middleware.CheckHttpRequest("user", http.MethodPost,
+			eventContollers.EventResponseHandler))
+
+	http.HandleFunc("/api/group/event/responses/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			eventContollers.ViewEventResponsesHandler))
 
 	// ---------------------------- following management controller APIs ---------------------------- //
 	http.HandleFunc("/api/follower/request",

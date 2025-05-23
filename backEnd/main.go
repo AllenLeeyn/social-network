@@ -6,17 +6,19 @@ import (
 	"log"
 	"net/http"
 
-	chatContollers "social-network/pkg/chatManagement/controllers"
-	chatModel "social-network/pkg/chatManagement/models"
 	db "social-network/pkg/databaseManagement"
-	followingModel "social-network/pkg/followingManagement/models"
-	groupModel "social-network/pkg/groupManagement/models"
 	"social-network/pkg/routes"
-	userControllers "social-network/pkg/userManagement/controllers"
 
-	categoryModel "social-network/pkg/forumManagement/models"
+	chatModel "social-network/pkg/chatManagement/models"
+	eventModel "social-network/pkg/eventManagement/models"
+	followingModel "social-network/pkg/followingManagement/models"
+	forumModel "social-network/pkg/forumManagement/models"
+	groupModel "social-network/pkg/groupManagement/models"
 	notificationModel "social-network/pkg/notificationManagement/models"
 	userModel "social-network/pkg/userManagement/models"
+
+	chatContollers "social-network/pkg/chatManagement/controllers"
+	userControllers "social-network/pkg/userManagement/controllers"
 )
 
 var sqlDB *sql.DB
@@ -35,17 +37,18 @@ func init() {
 	log.Println("\033[31mInitialise models\033[0m")
 	modelsInitDb(sqlDB)
 
-	log.Println("\033[31mInitialise controllers\033[0m")
+	// need chat instance to closeConn when logOut
 	userControllers.Initialize(cc)
 }
 
 func modelsInitDb(db *sql.DB) {
-	userModel.Initialize(db)
 	chatModel.Initialize(sqlDB)
-	groupModel.Initialize(sqlDB)
+	eventModel.Initialize(db)
 	followingModel.Initialize(sqlDB)
-	categoryModel.Initialize(db)
+	forumModel.Initialize(db)
+	groupModel.Initialize(sqlDB)
 	notificationModel.Initialize(db)
+	userModel.Initialize(db)
 }
 
 func main() {
