@@ -83,3 +83,15 @@ export async function submitPostFeedback(feedbackData) {
   }
   return data;
 }
+
+export async function fetchPostsByCategory(categoryName) {
+  const response = await fetch(
+    `/frontend-api/posts/${encodeURIComponent(categoryName)}`,
+    {
+      method: "GET",
+      credentials: "include",
+    }
+  );
+  if (!response.ok) throw new Error("Failed to fetch posts by category");
+  return response.json();
+}
