@@ -64,12 +64,12 @@ export function useWebsocket(
         ws.current.onclose = () => {
             if (!isMounted.current) return;
             setIsConnected(false);
-/*          const jitter = Math.random() * 1000;
+            const jitter = Math.random() * 1000;
             const nextDelay = Math.min(reconnectDelay.current * backoffFactor, maxDelay) + jitter;
             reconnectDelay.current = nextDelay;
 
             console.log(`Reconnecting in ${Math.round(nextDelay)}ms...`);
-            reconnectTimeout.current = setTimeout(connectWebSocket, nextDelay); */
+            reconnectTimeout.current = setTimeout(connectWebSocket, nextDelay);
         };
 
         // err handler

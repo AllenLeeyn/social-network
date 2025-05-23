@@ -43,11 +43,24 @@ func CheckHttpRequest(checkFor, method string, next http.HandlerFunc) http.Handl
 }
 
 func checkSessionValidity(r *http.Request) (string, int, string) {
+	// sessionCookie, err := r.Cookie("session-id")
+	// if err != nil || sessionCookie == nil {
+	// 	return "", -1, ""
+	// }
+	// sessionID := sessionCookie.Value
+
 	sessionCookie, err := r.Cookie("session-id")
-	if err != nil || sessionCookie == nil {
+	var sessionID string
+	if err == nil && sessionCookie != nil {
+		sessionID = sessionCookie.Value
+	}
+	// 2. If not found in cookie, try query parameter
+	if sessionID == "" {
+		sessionID = r.URL.Query().Get("session")
+	}
+	if sessionID == "" {
 		return "", -1, ""
 	}
-	sessionID := sessionCookie.Value
 
 	s, err := userModel.SelectActiveSessionBy("id", sessionID)
 	if err != nil {
