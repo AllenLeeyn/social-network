@@ -64,7 +64,7 @@ export function WebSocketProvider( { children } ) {
     }, [currentChatId]);
 
     const { isConnected, sendAction } = useWebsocket(
-        sessionId ? `ws://localhost:8080/ws?session=${sessionId}` : null,
+        sessionId ? `ws://localhost:8080/api/ws?session=${sessionId}` : null,
         onMessage,
         {
             initialDelay: 1000,
