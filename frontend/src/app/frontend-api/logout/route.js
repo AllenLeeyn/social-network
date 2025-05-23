@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 
 export async function POST() {
-  console.log("POST /api/logout triggered"); // Debug log
 
   const backendUrl = "http://localhost:8080/api/logout";
 
@@ -10,14 +9,12 @@ export async function POST() {
     const sessionId = cookieStore.get("session-id")?.value;
 
     if (!sessionId) {
-      console.log("No session cookie found"); // Debug log
       return new Response(
         JSON.stringify({ message: "No session cookie found" }),
         { status: 400 }
       );
     }
 
-    console.log("Session ID:", sessionId); // Debug log
 
     // Forward the request to the backend
     const response = await fetch(backendUrl, {

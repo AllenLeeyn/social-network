@@ -35,10 +35,8 @@ export async function logout() {
     credentials: "include", // Ensure cookies are included
   });
 
-  console.log("Logout response status:", response.status); // Debug log
 
   if (response.status === 200) {
-    console.log("Logout successful. Redirecting to /login...");
     window.location.href = "/login"; // Redirect to login
     return;
   }

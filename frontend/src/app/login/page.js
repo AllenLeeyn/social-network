@@ -60,7 +60,6 @@ export default function AuthPage() {
     setFormError("");
 
 
-    console.log("data: ", userData);
     try {
       await handleSignup(userData);
       setMode("login"); // Switch to login mode after successful signup

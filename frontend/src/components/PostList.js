@@ -13,7 +13,7 @@ export default function PostsPage({ posts = [] }) {
                         <Link href={`/post?id=${post.uuid}`}>{post.title}</Link>
                         </h2>
                         <p>{post.content}</p>
-                        <small>By {post.user.NickName.String}</small>
+                        <small>By {post.user.nick_name}</small>
                     </li>
                 ))}
             </ul>

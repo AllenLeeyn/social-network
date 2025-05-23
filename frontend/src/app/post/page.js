@@ -10,6 +10,8 @@ import {
   sampleGroups,
   sampleConnections,
 } from "../../data/mockData";
+import { usePosts } from "../../hooks/usePosts";
+import { fetchPostById, submitPostFeedback } from "../../lib/apiPosts";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -19,13 +21,17 @@ export default function PostPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch categories (and optionally users, etc.)
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = usePosts();
+
   useEffect(() => {
     async function fetchData() {
       try {
-        const postRes = await fetch(`/frontend-api/post?id=${id}`);
-        if (!postRes.ok) throw new Error("Post not found");
-        const postData = await postRes.json();
-        // Update this after backend response structure change
+        const postData = await fetchPostById(id);
         setPost(postData.data.Post);
         setComments(postData.data.Comments);
       } catch (err) {
@@ -37,6 +43,26 @@ export default function PostPage() {
     if (id) fetchData();
   }, [id]);
 
+  const refreshComments = async () => {
+    try {
+      const postData = await fetchPostById(id);
+      setComments(postData.data.Comments);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handlePostFeedback = async (rating) => {
+    try {
+      await submitPostFeedback({ parent_id: post.id, rating });
+      // Refresh post data to update like/dislike counts
+      const postData = await fetchPostById(id);
+      setPost(postData.data.Post);
+    } catch (err) {
+      alert(err.message || "Failed to submit feedback");
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -46,13 +72,19 @@ export default function PostPage() {
         {/* Left Sidebar */}
         <aside className="sidebar left-sidebar">
           <SidebarSection title="Categories">
-            <ul className="categories">
-              {sampleCategories.map((cat) => (
-                <li key={cat.id} className="category-item">
-                  <strong>{cat.name}</strong>
-                </li>
-              ))}
-            </ul>
+            {categoriesLoading ? (
+              <div>Loading...</div>
+            ) : categoriesError ? (
+              <div>Error: {categoriesError}</div>
+            ) : (
+              <ul className="categories">
+                {categories.map((cat) => (
+                  <li key={cat.id} className="category-item">
+                    <strong>{cat.name}</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
           </SidebarSection>
           <SidebarSection title="Groups">
             <ul className="groups">
@@ -84,9 +116,26 @@ export default function PostPage() {
             <div key={post.ID} className="post-item">
               <h3>{post.title}</h3>
               <p>
-                <em>by {post.user.NickName.String}</em>
+                <em>by {post.user.nick_name}</em>
               </p>
               <p>{post.content}</p>
+              <div className="post-actions" style={{ marginTop: "1em" }}>
+                <button
+                  onClick={() => handlePostFeedback(1)}
+                  disabled={post.liked}
+                  aria-label="Like"
+                >
+                  👍 Like {post.like_count}
+                </button>
+                <button
+                  onClick={() => handlePostFeedback(-1)}
+                  disabled={post.disliked}
+                  aria-label="Dislike"
+                  style={{ marginLeft: "1em" }}
+                >
+                  👎 Dislike {post.dilike_count}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="post-item">
@@ -94,7 +143,12 @@ export default function PostPage() {
             </div>
           )}
 
-          <CommentsSection title="Comments" comments={comments || []} />
+          <CommentsSection
+            title="Comments"
+            comments={comments || []}
+            postId={post.id}
+            onCommentSubmitted={refreshComments}
+          />
         </section>
 
         {/* Right Sidebar */}
