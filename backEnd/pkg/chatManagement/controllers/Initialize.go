@@ -2,6 +2,7 @@ package controller
 
 import (
 	"log"
+	"net/http"
 
 	chatModel "social-network/pkg/chatManagement/models"
 	userModel "social-network/pkg/userManagement/models"
@@ -9,7 +10,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all origins during development
+		// // return r.Header.Get("Origin") == "https://your-frontend.com"
+	},
+}
 
 type message = chatModel.Message
 type user = userModel.User
