@@ -1,78 +1,58 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
-	"social-network/pkg/dbTools"
-	"social-network/pkg/handlers"
-	"social-network/pkg/messenger"
-	"time"
+
+	chatContollers "social-network/pkg/chatManagement/controllers"
+	chatModel "social-network/pkg/chatManagement/models"
+	db "social-network/pkg/databaseManagement"
+	followingModel "social-network/pkg/followingManagement/models"
+	groupModel "social-network/pkg/groupManagement/models"
+	"social-network/pkg/routes"
+	userControllers "social-network/pkg/userManagement/controllers"
+
+	categoryModel "social-network/pkg/forumManagement/models"
+	notificationModel "social-network/pkg/notificationManagement/models"
+	userModel "social-network/pkg/userManagement/models"
 )
 
-var db *dbTools.DBContainer
-var m messenger.Messenger
+var sqlDB *sql.DB
+var cc = chatContollers.Initialize()
 
 func init() {
+	log.Println("\033[31mInitialise database\033[0m")
 	var err error
-	db, err = dbTools.OpenDB("sqlite3", "./pkg/database/forum.db")
+	sqlDB, err = db.OpenDB("sqlite3",
+		"./pkg/databaseManagement/social_network.db",
+		"file://pkg/databaseManagement/migrate")
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
 
-	db.Categories, _ = db.SelectFieldFromTable("name", "categories")
-	m = messenger.Start(db)
-	handlers.Init(db, m)
+	log.Println("\033[31mInitialise models\033[0m")
+	modelsInitDb(sqlDB)
 
-	go expireSessionsTask()
+	log.Println("\033[31mInitialise controllers\033[0m")
+	userControllers.Initialize(cc)
+}
+
+func modelsInitDb(db *sql.DB) {
+	userModel.Initialize(db)
+	chatModel.Initialize(sqlDB)
+	groupModel.Initialize(sqlDB)
+	followingModel.Initialize(sqlDB)
+	categoryModel.Initialize(db)
+	notificationModel.Initialize(db)
 }
 
 func main() {
-	http.HandleFunc("/ws", handlers.WS)
+	log.Println("\033[31mSetup routes\033[0m")
+	routes.SetupRoutes(cc)
 
-	http.HandleFunc("/posts", handlers.Posts)
-	http.HandleFunc("/post", handlers.Post)
-	http.HandleFunc("/profile", handlers.Profile)
-
-	http.HandleFunc("/signup", handlers.Signup)
-	http.HandleFunc("/login", handlers.Login)
-	http.HandleFunc("/logout", handlers.LogOut)
-
-	http.HandleFunc("/create-post", handlers.CreatePost)
-	http.HandleFunc("/create-comment", handlers.CreateComment)
-	http.HandleFunc("/feedback", handlers.CreateFeedback)
-
-	fmt.Println("Starting Forum on http://localhost:8080/...")
+	fmt.Println("\033[32mStarting Forum on http://localhost:8080/...\033[0m")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-	db.Close()
-}
-
-func expireSessionsTask() {
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		sessions, err := db.SelectActiveSessions()
-		if err != nil {
-			fmt.Printf("Error selecting sessions: %v\n", err.Error())
-		}
-		for _, s := range *sessions {
-			if time.Now().After(s.ExpireTime) {
-				fmt.Printf("Expire session: %v\n", s.ID)
-
-				s.IsActive = false
-				err = db.UpdateSession(&s)
-				if err != nil {
-					break
-				}
-				err = m.CloseConn(&s)
-				if err != nil {
-					break
-				}
-			}
-		}
-		if err != nil {
-			log.Printf("Error expiring sessions: %v", err)
-		}
-	}
+	sqlDB.Close()
 }

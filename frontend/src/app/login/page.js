@@ -21,6 +21,8 @@ export default function AuthPage() {
   const [registerDateOfBirth, setDateOfBirth] = useState("");
   const [registerAvatar, setAvatar] = useState(null);
   const [registerAboutMe, setAboutMe] = useState("");
+  const [registerGender, setGender] = useState("");
+  const [registerVisibility, setVisibility] = useState("");
   const [formError, setFormError] = useState("");
 
   // Handle login submission
@@ -41,14 +43,16 @@ export default function AuthPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     const userData = {
-      firstName: registerFirstName,
-      lastName: registerLastName,
-      nickName: registerNickname,
+      first_name: registerFirstName,
+      last_name: registerLastName,
+      nick_name: registerNickname,
       email: registerEmail,
       password: registerPassword,
       confirmPassword: registerConfirmPassword,
-      dateOfBirth: registerDateOfBirth,
-      aboutMe: registerAboutMe,
+      birthday: new Date(registerDateOfBirth).toISOString(),
+      about_me: registerAboutMe,
+      gender: registerGender,
+      visibility: registerVisibility, 
     };
 
     if (registerPassword !== registerConfirmPassword) {
@@ -58,7 +62,6 @@ export default function AuthPage() {
     setFormError("");
 
 
-    console.log("data: ", userData);
     try {
       await handleSignup(userData);
       setMode("login"); // Switch to login mode after successful signup
@@ -177,6 +180,24 @@ export default function AuthPage() {
                   onChange={(e) => setDateOfBirth(e.target.value)}
                   required
                 />
+                <select
+                  value={registerGender}
+                  onChange={(e) => setGender(e.target.value)}
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+                <select
+                  value={registerVisibility}
+                  onChange={(e) => setVisibility(e.target.value)}
+                  required
+                >
+                  <option value="">Select Visibility</option>
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                </select>
               </fieldset>
 
               <fieldset className="auth-form">

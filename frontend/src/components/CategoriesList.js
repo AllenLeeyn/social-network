@@ -11,12 +11,12 @@ export default function CategoriesList( {categories, loading, error, onCategoryC
         <ul className="categories">
         {categories.map((cat, index) => (
             <li 
-                key={index} 
+                key={cat.id || index} 
                 className="category-item"
-                onClick={() => onCategoryClick && onCategoryClick(cat)}
+                onClick={() => onCategoryClick && onCategoryClick(cat.name)}
                 style={{cursor: onCategoryClick ? 'pointer' : 'default' }}
             >
-            <strong>{cat}</strong>
+                <strong>{cat.name}</strong>
             </li>
         ))}
         </ul>

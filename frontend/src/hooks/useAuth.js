@@ -6,12 +6,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const handleLogin = async (nickName, email, password) => {
+  const handleLogin = async (email, password) => {
     setLoading(true)
     setError(null)
 
     try {
-      const userData = await login(nickName, email, password)
+      const userData = await login(email, password)
       setUser(userData) // Save user data after successful login
       console.log(userData)
       localStorage.setItem('session-id', userData.sessionId);

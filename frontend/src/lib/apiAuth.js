@@ -1,10 +1,10 @@
-const API_URL = "/api";
+const API_URL = "/frontend-api";
 
 export async function login(email, password, nickName = '') {
   const response = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nickName, email, password }),
+    body: JSON.stringify({email, password }),
   });
   const data = await response.json();
   if (!response.ok) {
@@ -17,7 +17,7 @@ export async function login(email, password, nickName = '') {
 }
 
 export async function signup(userData) {
-  const response = await fetch(`${API_URL}/signup`, {
+  const response = await fetch(`${API_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData),
@@ -37,10 +37,8 @@ export async function logout() {
     credentials: "include", // Ensure cookies are included
   });
 
-  console.log("Logout response status:", response.status); // Debug log
 
   if (response.status === 200) {
-    console.log("Logout successful. Redirecting to /login...");
     window.location.href = "/login"; // Redirect to login
     return;
   }
