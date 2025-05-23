@@ -31,22 +31,33 @@ func isValidGroupInfo(g *group) error {
 	return nil
 }
 
-func GroupCreateHandler(w http.ResponseWriter, r *http.Request) {
+func processGroupRequest(r *http.Request) (*group, int, error) {
 	g := &group{}
 	if err := utils.ReadJSON(r, g); err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
+		return nil, -1, fmt.Errorf("invalid input")
 	}
-	userId, isOk := middleware.GetUserID(r.Context())
+	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
+		return nil, -1, fmt.Errorf("InternalServerError")
 	}
-	g.CreatedBy = userId
 
 	if err := isValidGroupInfo(g); err != nil {
-		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		return nil, -1, err
 	}
+	return g, userID, nil
+}
+
+func GroupCreateHandler(w http.ResponseWriter, r *http.Request) {
+	g, userID, err := processGroupRequest(r)
+	if err != nil {
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
+		return
+	}
+	g.CreatedBy = userID
 
 	groupId, groupUUID, err := groupModel.InsertGroup(g)
 	if err != nil {
@@ -54,8 +65,8 @@ func GroupCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = groupModel.InsertGroupMember(&following{
-		LeaderID: userId, FollowerID: userId, GroupID: groupId, GroupUUID: groupUUID,
-		Type: "group", Status: "accepted", CreatedBy: userId,
+		LeaderID: userID, FollowerID: userID, GroupID: groupId, GroupUUID: groupUUID,
+		Type: "group", Status: "accepted", CreatedBy: userID,
 	})
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
@@ -69,21 +80,17 @@ func GroupCreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	g := &group{}
-	if err := utils.ReadJSON(r, g); err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-	}
-	userID, isOk := middleware.GetUserID(r.Context())
-	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+	g, userID, err := processGroupRequest(r)
+	if err != nil {
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	g.UpdatedBy = userID
 
-	if err := isValidGroupInfo(g); err != nil {
-		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-	}
 	if !groupModel.IsGroupMember(g.UUID, userID) {
 		errorControllers.ErrorHandler(w, r, errorControllers.ForbiddenError)
 		return

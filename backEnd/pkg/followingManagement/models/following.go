@@ -86,8 +86,8 @@ func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingView, error) {
 	}
 
 	qry := `SELECT 
-				follower.uuid AS follower_uuid, follower.nick_name AS follower_name,
-				leader.uuid AS leader_uuid, leader.nick_name AS leader_name,
+				follower.uuid, follower.nick_name,
+				leader.uuid, leader.nick_name,
 				f.status, f.created_at
 			FROM following f
 				JOIN users follower ON f.follower_id = follower.id
@@ -131,12 +131,7 @@ func InsertFollowing(f *Following) error {
 			) VALUES (?, ?, ?,
 				(SELECT id FROM groups WHERE uuid = ?), ?, ?);`
 	_, err := sqlDB.Exec(qry,
-		&f.LeaderID,
-		&f.FollowerID,
-		&f.Type,
-		&f.GroupUUID,
-		&f.Status,
-		&f.CreatedBy)
+		f.LeaderID, f.FollowerID, f.Type, f.GroupUUID, f.Status, f.CreatedBy)
 	if err != nil {
 		return err
 	}
@@ -148,11 +143,7 @@ func UpdateFollowing(f *Following) error {
 			SET status = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
 			WHERE leader_id = ? AND follower_id = ? AND group_id = ?;`
 	_, err := sqlDB.Exec(qry,
-		&f.Status,
-		&f.UpdatedBy,
-		&f.LeaderID,
-		&f.FollowerID,
-		&f.GroupID)
+		f.Status, f.UpdatedBy, f.LeaderID, f.FollowerID, f.GroupID)
 	if err != nil {
 		return err
 	}

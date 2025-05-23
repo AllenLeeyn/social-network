@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	middleware "social-network/pkg/middleware"
@@ -16,14 +15,14 @@ import (
 	userControllers "social-network/pkg/userManagement/controllers"
 )
 
-func processMembersIDs(r *http.Request) (*followingModel.Following, int, string, error) {
-	m, userID, _, err := followingControllers.ProcessFollowingIDs(r)
+func parseMemberRequest(r *http.Request) (*followingModel.Following, int, string, error) {
+	m, userID, _, err := followingControllers.ParseFollowingRequest(r)
 	if err != nil {
 		return nil, -1, "", err
 	}
 	groupID, createdBy, err := groupModel.SelectGroupIDcreatedByfromUUID(m.GroupUUID)
 	if err != nil {
-		return nil, -1, "", err
+		return nil, -1, "", fmt.Errorf("InternalServerError")
 
 	} else if groupID == 0 {
 		return nil, -1, "", fmt.Errorf("public forum chosen as group")
@@ -32,15 +31,19 @@ func processMembersIDs(r *http.Request) (*followingModel.Following, int, string,
 
 	memberStatus, err := followingModel.SelectStatus(m)
 	if err != nil {
-		return nil, -1, "", err
+		return nil, -1, "", fmt.Errorf("InternalServerError")
 	}
 	return m, userID, memberStatus, nil
 }
 
 func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	m.Status = "invited"
@@ -77,10 +80,13 @@ func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		log.Println(err.Error())
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	m.Status = "requested"
@@ -111,9 +117,13 @@ func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	m.UpdatedBy, m.Status = userID, "inactive"
@@ -138,9 +148,13 @@ func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupMemberRemoveHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	m.UpdatedBy, m.Status = userID, "declined"
@@ -165,10 +179,13 @@ func GroupMemberRemoveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupMemberResponseHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := processMembersIDs(r)
+	m, userID, memberStatus, err := parseMemberRequest(r)
 	if err != nil {
-		log.Println(err.Error())
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	message := "requested "

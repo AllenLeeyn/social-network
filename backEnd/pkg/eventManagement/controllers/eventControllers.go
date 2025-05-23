@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -18,7 +17,7 @@ import (
 )
 
 type event = eventModel.Event
-type eventRepsonse = eventModel.EventResponse
+type eventResponse = eventModel.EventResponse
 
 func isValidEventInfo(e *event) error {
 	isOk := false
@@ -43,44 +42,51 @@ func isValidEventInfo(e *event) error {
 	return nil
 }
 
-func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
+func parseEventRequest(r *http.Request) (*event, int, error) {
 	e := &event{}
 	if err := utils.ReadJSON(r, e); err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
+		return nil, -1, fmt.Errorf("invalid input")
 	}
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return nil, -1, fmt.Errorf("InternalServerError")
+	}
+
+	if err := isValidEventInfo(e); err != nil {
+		return nil, -1, err
+	}
+
+	groupID, _, err := groupModel.SelectGroupIDcreatedByfromUUID(e.GroupUUID)
+	if err != nil {
+		return nil, -1, fmt.Errorf("group not found")
+	}
+	if !groupModel.IsGroupMember(e.GroupUUID, userID) {
+		return nil, -1, fmt.Errorf("only group members allowed")
+	}
+	e.GroupID = groupID
+
+	return e, userID, nil
+}
+
+func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
+	e, userID, err := parseEventRequest(r)
+	if err != nil {
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	e.CreatedBy = userID
 
-	if err := isValidEventInfo(e); err != nil {
-		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		return
-	}
-	groupID, _, err := groupModel.SelectGroupIDcreatedByfromUUID(e.GroupUUID)
+	_, eventUUID, err := eventModel.InsertEvent(e)
 	if err != nil {
-		errorControllers.CustomErrorHandler(w, r,
-			"group not found", http.StatusBadRequest)
-		return
-	}
-	if !groupModel.IsGroupMember(e.GroupUUID, userID) {
-		errorControllers.CustomErrorHandler(w, r,
-			"only group members can create event", http.StatusBadRequest)
-		return
-	}
-	e.GroupID = groupID
-
-	eventID, eventUUID, err := eventModel.InsertEvent(e)
-	if err != nil {
-		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
-	err = eventModel.InsertEventResponse(&eventRepsonse{
-		EventID: eventID, Response: "accepted", CreatedBy: userID})
+	err = eventModel.InsertEventResponse(&eventResponse{
+		EventUUID: eventUUID, Response: "accepted", CreatedBy: userID})
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -92,12 +98,79 @@ func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
 		}{eventUUID})
 }
 
-func EventUpdateHandler(w http.ResponseWriter, r *http.Request) {}
+func EventUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	e, userID, err := parseEventRequest(r)
+	if err != nil {
+		if err.Error() == "InternalServerError" {
+			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		} else {
+			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
+		}
+		return
+	}
+	e.UpdatedBy = userID
 
-func ViewEventsHandler(w http.ResponseWriter, r *http.Request) {}
+	if !eventModel.IsEventCreator(e.UUID, userID) {
+		errorControllers.ErrorHandler(w, r, errorControllers.ForbiddenError)
+		return
+	}
 
-func ViewEventHandler(w http.ResponseWriter, r *http.Request) {}
+	if err := eventModel.UpdateEvent(e); err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userControllers.ExtendSession(w, r)
+	utils.ReturnJsonSuccess(w, "group event updated", nil)
+}
 
-func EventResponseHandler(w http.ResponseWriter, r *http.Request) {}
+func ViewEventsHandler(w http.ResponseWriter, r *http.Request) {
+	userID, isOk := middleware.GetUserID(r.Context())
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+	groupUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group/events")
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+		return
+	}
+	if !groupModel.IsGroupMember(groupUUID, userID) {
+		errorControllers.CustomErrorHandler(w, r,
+			"only members can view", http.StatusBadRequest)
+		return
+	}
 
-func EventResponsesHandler(w http.ResponseWriter, r *http.Request) {}
+	events, err := eventModel.SelectEvents(groupUUID, userID)
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+	userControllers.ExtendSession(w, r)
+	utils.ReturnJsonSuccess(w, "event list retrieved", events)
+}
+
+func ViewEventHandler(w http.ResponseWriter, r *http.Request) {
+	userID, isOk := middleware.GetUserID(r.Context())
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+	eventUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group/event")
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+		return
+	}
+	if !eventModel.IsGroupMemberFromEventUUID(eventUUID, userID) {
+		errorControllers.CustomErrorHandler(w, r,
+			"only members can view", http.StatusBadRequest)
+		return
+	}
+
+	events, err := eventModel.SelectEvent(eventUUID, userID)
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+	userControllers.ExtendSession(w, r)
+	utils.ReturnJsonSuccess(w, "event detail retrieved", events)
+}

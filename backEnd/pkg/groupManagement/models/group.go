@@ -37,15 +37,10 @@ func InsertGroup(group *Group) (int, string, error) {
 	}
 	group.UUID = uuid
 
-	qry := `INSERT INTO groups (
-				uuid, 
-				title, description, banner_image, 
-				created_by
-			) VALUES (?, ?, ?, ?, ?);`
+	qry := `INSERT INTO groups (uuid, title, description, banner_image, created_by) 
+			VALUES (?, ?, ?, ?, ?);`
 	result, err := sqlDB.Exec(qry,
-		group.UUID,
-		group.Title, group.Description, group.BannerImage,
-		group.CreatedBy)
+		group.UUID, group.Title, group.Description, group.BannerImage, group.CreatedBy)
 	if err != nil {
 		return -1, "", err
 	}
@@ -78,9 +73,9 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]groupView, error) {
 		joinedOnlyQry = ` AND f.status = 'accepted'`
 	}
 	qry := `SELECT
-				g.uuid AS group_uuid, g.title,
+				g.uuid, g.title,
 				g.description, g.banner_image, g.members_count,
-				u.nick_name AS creator_name, u.uuid AS creator_uuid,
+				u.nick_name, u.uuid,
 				COALESCE(f.status, '') as status
 			FROM groups g
 			JOIN users u ON g.created_by = u.id
