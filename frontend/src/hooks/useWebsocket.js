@@ -83,6 +83,13 @@ export function useWebsocket(
         ws.current.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                if (data.content && typeof data.content === 'string') {
+                    try {
+                        data.content = JSON.parse(data.content);
+                    } catch (e) {
+                        // content is not JSON, leave as string
+                    }
+                }
                 onMessage?.(data);
             } catch (e) {
                 console.error('Invalid JSON', e);

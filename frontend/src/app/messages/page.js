@@ -84,9 +84,9 @@ export default function MessagePage() {
                         {activeConversation ? activeConversation.name : 'Latest Messages'}
                     </h2>
                     <div className="message-view">
-                        <h2>
+{/*                         <h2>
                         {activeConversation?sampleConversations.find(c => c.id === activeConversation)?.name : 'Latest Messages'}
-                        </h2>
+                        </h2> */}
                         <div className='message-list'>
                             {messages
                                 .filter(m => activeConversation && m.conversationId === activeConversation)
