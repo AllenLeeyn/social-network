@@ -1,8 +1,11 @@
 package models
 
 import (
+	"fmt"
 	followingModel "social-network/pkg/followingManagement/models"
 )
+
+type memberView followingModel.FollowingView
 
 var InsertGroupMember = followingModel.InsertFollowing
 
@@ -20,11 +23,14 @@ func IsGroupMember(groupUUID string, userID int) bool {
 	return err == nil
 }
 
-func SelectGroupMembers(tgtUUID, fStatus string) (
-	*[]followingModel.FollowingResponse, error) {
-	fStatus2 := ""
-	if fStatus != "accepted" {
-		fStatus, fStatus2 = "requested", "invited"
+func SelectGroupMembers(tgtUUID, mStatus string) (*[]memberView, error) {
+	if mStatus != "accepted" && mStatus != "requested" {
+		return nil, fmt.Errorf("invalid status")
+	}
+
+	mStatus2 := ""
+	if mStatus == "requested" {
+		mStatus2 = "invited"
 	}
 	qry := `SELECT 
 				follower.uuid AS follower_uuid, follower.nick_name AS follower_name,
@@ -36,25 +42,25 @@ func SelectGroupMembers(tgtUUID, fStatus string) (
 				AND g.uuid = ?
 			ORDER BY f.created_at DESC;`
 
-	rows, err := sqlDB.Query(qry, fStatus, fStatus2, tgtUUID)
+	rows, err := sqlDB.Query(qry, mStatus, mStatus2, tgtUUID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var fResponses []followingModel.FollowingResponse
+	var mViews []memberView
 	for rows.Next() {
-		var fr followingModel.FollowingResponse
+		var mv memberView
 		err := rows.Scan(
-			&fr.FollowerUUID, &fr.FollowerName,
-			&fr.Status, &fr.CreatedAt)
+			&mv.FollowerUUID, &mv.FollowerName,
+			&mv.Status, &mv.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
-		fResponses = append(fResponses, fr)
+		mViews = append(mViews, mv)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return &fResponses, nil
+	return &mViews, nil
 }

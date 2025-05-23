@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"strings"
 
+	middleware "social-network/pkg/middleware"
+	"social-network/pkg/utils"
+
 	chatContollers "social-network/pkg/chatManagement/controllers"
 	followingModel "social-network/pkg/followingManagement/models"
-	middleware "social-network/pkg/middleware"
 	userModel "social-network/pkg/userManagement/models"
-	"social-network/pkg/utils"
 )
 
 var chatController *chatContollers.ChatController

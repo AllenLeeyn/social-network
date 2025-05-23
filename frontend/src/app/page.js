@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 
 import SidebarSection from "../components/SidebarSection";
 import CategoriesList from "../components/CategoriesList";
@@ -12,7 +12,7 @@ import CreatePost from "../components/CreatePost";
 import Modal from "../components/Modal";
 import UsersList from "../components/UsersList";
 
-import { fetchPosts } from "../lib/apiPosts";
+import { fetchPosts, fetchPostsByCategory } from "../lib/apiPosts";
 import { usePosts } from "../hooks/usePosts";
 
 import { useWebsocketContext } from '../contexts/WebSocketContext';
@@ -26,17 +26,11 @@ export default function HomePage() {
   const [showModal, setShowModal] = useState(false);
   const { posts, categories, loading, error } = usePosts([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const router = useRouter(); 
-
-  const { isConnected, connect } = useWebsocketContext();
-  const [sessionId, setSessionId] = useState(null);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setSessionId(localStorage.getItem('session-id'));
-    }
-  }, []);
-  //const sessionId = localStorage.getItem('session-id'); // Or from cookies/auth context
 
   useEffect(() => {
     async function checkAccess() {
@@ -52,6 +46,31 @@ export default function HomePage() {
     checkAccess();
   }, [router]);
 
+  useEffect(() => {
+    if (!selectedCategory) setFilteredPosts(posts);
+  }, [posts, selectedCategory]);
+
+  const handleCategoryClick = async (cat) => {
+    if (selectedCategory === cat) {
+      setSelectedCategory(null);
+      setFilteredPosts(posts);
+      setCategoryError(null);
+      return;
+    }
+    setSelectedCategory(cat);
+    setCategoryLoading(true);
+    setCategoryError(null);
+    try {
+      const data = await fetchPostsByCategory(cat);
+      setFilteredPosts(data.data.Posts || []);
+    } catch (err) {
+      setCategoryError(err.message);
+      setFilteredPosts([]);
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
 
   // Filter logic
   const filteredPosts = selectedCategory
@@ -66,18 +85,6 @@ export default function HomePage() {
     setSelectedCategory((prev) => (prev === cat ? null : cat));
   };
 
-    useEffect(() => {
-    if (sessionId && !isConnected) {
-      connect(sessionId); // Trigger connection
-    }
-  }, [sessionId, connect, isConnected]);
-
-  if (!isAuthorized) {
-    // Prevent rendering the homepage until access is verified
-    return null;
-  }
-
-
   return (
     <main>
       <div className="homepage-layout">
@@ -88,7 +95,6 @@ export default function HomePage() {
               categories={categories}
               loading={loading}
               error={error}
-              selectedCategory={selectedCategory}
               onCategoryClick={handleCategoryClick}
             />
           </SidebarSection>
@@ -136,7 +142,7 @@ export default function HomePage() {
           </div>
           {loading && <div>Loading...</div>}
           {error && <div>Error: {error}</div>}
-          {!loading && !error && <PostList posts={filteredPosts} />}
+          {!loading && !error && <PostList posts={displayedPosts} />}
 
           {showModal && (
             <Modal onClose={() => setShowModal(false)} title="Create Post">

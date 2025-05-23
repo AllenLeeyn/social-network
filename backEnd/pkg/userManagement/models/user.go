@@ -31,14 +31,14 @@ type User struct {
 	UpdatedAt       *time.Time `json:"updated_at"`
 }
 
-type UserResponse struct {
+type userView struct {
 	UUID         string `json:"uuid"`
 	NickName     string `json:"nick_name"`
 	ProfileImage string `json:"profile_image"`
 	Visibility   string `json:"visibility"`
 }
 
-type UserProfile struct {
+type userProfile struct {
 	UUID         string    `json:"uuid"`
 	FirstName    string    `json:"first_name"`
 	LastName     string    `json:"last_name"`
@@ -51,7 +51,7 @@ type UserProfile struct {
 	Visibility   string    `json:"visibility"`
 }
 
-func SelectUsers() (*[]UserResponse, error) {
+func SelectUsers() (*[]userView, error) {
 	qry := `SELECT uuid, nick_name, profile_image, visibility
 			FROM users
 			WHERE id != 0`
@@ -62,22 +62,22 @@ func SelectUsers() (*[]UserResponse, error) {
 	}
 	defer rows.Close()
 
-	var uRepsonses []UserResponse
+	var uViews []userView
 	for rows.Next() {
-		var ur UserResponse
-		err := rows.Scan(&ur.UUID, &ur.NickName, &ur.ProfileImage, &ur.Visibility)
+		var uv userView
+		err := rows.Scan(&uv.UUID, &uv.NickName, &uv.ProfileImage, &uv.Visibility)
 		if err != nil {
 			return nil, err
 		}
-		uRepsonses = append(uRepsonses, ur)
+		uViews = append(uViews, uv)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return &uRepsonses, nil
+	return &uViews, nil
 }
 
-func SelectUser(tgtUUID string) (*UserProfile, error) {
+func SelectUser(tgtUUID string) (*userProfile, error) {
 	qry := `SELECT
 				uuid, first_name, last_name,
 				gender, birthday,
@@ -86,7 +86,7 @@ func SelectUser(tgtUUID string) (*UserProfile, error) {
 			FROM users
 			WHERE uuid = ?
 			LIMIT 1;`
-	var uProfile UserProfile
+	var uProfile userProfile
 	err := sqlDB.QueryRow(qry, tgtUUID).Scan(
 		&uProfile.UUID, &uProfile.FirstName, &uProfile.LastName,
 		&uProfile.Gender, &uProfile.BirthDay,

@@ -19,7 +19,7 @@ type Group struct {
 	UpdatedAt    *time.Time `json:"updated_at"`
 }
 
-type groupResponse struct {
+type groupView struct {
 	UUID         string `json:"uuid"`
 	Title        string `json:"title"`
 	Description  string `json:"description"`
@@ -37,15 +37,10 @@ func InsertGroup(group *Group) (int, string, error) {
 	}
 	group.UUID = uuid
 
-	qry := `INSERT INTO groups (
-				uuid, 
-				title, description, banner_image, 
-				created_by
-			) VALUES (?, ?, ?, ?, ?);`
+	qry := `INSERT INTO groups (uuid, title, description, banner_image, created_by) 
+			VALUES (?, ?, ?, ?, ?);`
 	result, err := sqlDB.Exec(qry,
-		group.UUID,
-		group.Title, group.Description, group.BannerImage,
-		group.CreatedBy)
+		group.UUID, group.Title, group.Description, group.BannerImage, group.CreatedBy)
 	if err != nil {
 		return -1, "", err
 	}
@@ -72,15 +67,15 @@ func UpdateGroup(group *Group) error {
 	return err
 }
 
-func SelectGroups(userUUID string, joinedOnly bool) (*[]groupResponse, error) {
+func SelectGroups(userUUID string, joinedOnly bool) (*[]groupView, error) {
 	joinedOnlyQry := ``
 	if joinedOnly {
 		joinedOnlyQry = ` AND f.status = 'accepted'`
 	}
 	qry := `SELECT
-				g.uuid AS group_uuid, g.title,
+				g.uuid, g.title,
 				g.description, g.banner_image, g.members_count,
-				u.nick_name AS creator_name, u.uuid AS creator_uuid,
+				u.nick_name, u.uuid,
 				COALESCE(f.status, '') as status
 			FROM groups g
 			JOIN users u ON g.created_by = u.id
@@ -96,9 +91,9 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]groupResponse, error) {
 	}
 	defer rows.Close()
 
-	var groups []groupResponse
+	var groups []groupView
 	for rows.Next() {
-		var g groupResponse
+		var g groupView
 		err := rows.Scan(
 			&g.UUID, &g.Title,
 			&g.Description, &g.BannerImage, &g.MembersCount,
@@ -115,7 +110,7 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]groupResponse, error) {
 	return &groups, nil
 }
 
-func SelectGroup(userID int, groupUUID string) (*groupResponse, error) {
+func SelectGroup(userID int, groupUUID string) (*groupView, error) {
 	qry := `SELECT
 				g.uuid AS group_uuid, g.title,
 				g.description, g.banner_image, g.members_count,
@@ -127,7 +122,7 @@ func SelectGroup(userID int, groupUUID string) (*groupResponse, error) {
 				ON f.group_id = g.id 
 				AND f.follower_id = ? 
 			WHERE g.status = 'enable' AND g.id != 0 AND g.uuid = ?;`
-	var g groupResponse
+	var g groupView
 	err := sqlDB.QueryRow(qry, userID, groupUUID).Scan(
 		&g.UUID, &g.Title,
 		&g.Description, &g.BannerImage, &g.MembersCount,
