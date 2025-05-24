@@ -24,10 +24,11 @@ export function WebSocketProvider( { children } ) {
             try {
                 const res = await fetch('/frontend-api/session');
                 const { sessionId } = await res.json();
-                console.log(sessionId)
                 if (sessionId) {
                     localStorage.setItem('session-id', sessionId);
+                    console.log(sessionId)
                     setSessionId(sessionId);
+
                 }
             } catch (error) {
                 console.error('Session sync failed:', error);

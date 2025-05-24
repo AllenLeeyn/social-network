@@ -1,10 +1,21 @@
 "use client";
+
 import { useWebsocketContext } from '../contexts/WebSocketContext';
+import { useActiveChat } from '../contexts/ActiveChatContext';
+import { useRouter } from 'next/navigation'
+
 import "../styles/globals.css";
 
-export default function UsersList( { onUserSelect, activeConversation } ) {
+export default function UsersList( { activeConversation } ) {
 
     const { userList, isConnected } = useWebsocketContext();
+    const { setActiveChat } = useActiveChat();
+    const router = useRouter();
+
+    const handleUserClick = (user) => {
+        setActiveChat(user);
+        router.push('/messages');
+    }
 
     return (
         <div className='sidebar-section'>
@@ -14,7 +25,7 @@ export default function UsersList( { onUserSelect, activeConversation } ) {
                     <li 
                         key={user.id}
                         className={`user-item ${user.online ? 'online' : ''} ${user.unread ? 'unread' : ''} ${activeConversation?.id === user.id ? 'active' : ''}`}
-                        onClick={() => onUserSelect && onUserSelect(user.id, user.name)}
+                        onClick={() => handleUserClick(user)}
                     >
                         {user.name}
                     </li>

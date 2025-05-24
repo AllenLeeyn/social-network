@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { WebSocketProvider } from '../contexts/WebSocketContext'
+import { ActiveChatProvider } from "../contexts/ActiveChatContext";
 
 
 
@@ -13,11 +14,13 @@ return (
     <html lang="en">
         <body>
             <WebSocketProvider>
-                <Navbar />
-                <main>
-                    {children}
-                </main>
-                <Footer />
+                <ActiveChatProvider>
+                    <Navbar />
+                    <main>
+                        {children}
+                    </main>
+                    <Footer />
+                </ActiveChatProvider>
             </WebSocketProvider>
         </body>
     </html>
