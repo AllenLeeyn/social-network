@@ -6,7 +6,8 @@ import UsersList from '../../components/UsersList';
 import MessagesChatbox from '../../components/messages-Chatbox';
 import DirectMessagesList from '../../components/messages-DirectMessageList';
 import GroupChatsList from '../../components/messages-GroupChatsList';
-import '../../styles/globals.css';
+import '../../styles/globals.css'
+import './messages.css';
 
 export default function MessagePage() {
     return (

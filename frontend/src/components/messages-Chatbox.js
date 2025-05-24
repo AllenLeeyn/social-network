@@ -42,15 +42,23 @@ export default function MessagesChatbox() {
                 {activeChat ? activeChat.name : 'Select a user to chat'}
             </h2>
             <div className='messages-list'>
-                {filteredMessages.map((msg, index) => {
+                {filteredMessages.length === 0 ? (
+                    <div className="no-messages">
+                    {activeChat
+                        ? "No messages yet.  Start the conversation!"
+                        : "Select a user to view messages."}
+                    </div>
+                ) : (
+                    filteredMessages.map((msg, index) => {
                     const sender = userList.find(u => u.id === msg.senderId) || { name: 'You' };
-                    return (
-                        <div key={index} className='message-item'>
+                        return (
+                            <div key={index} className='message-item'>
                             <span><strong>{sender.name}</strong>: {msg.content}</span>
                             <span className='timestamp'>{new Date(msg.timestamp).toLocaleTimeString()}</span>
-                        </div>
-                    );
-                })}
+                            </div>
+                        );
+                    })
+                )}
             </div>
             {isTyping && activeChat && (
                 <div className="typing-indicator">{activeChat.name} is typing...</div>
@@ -68,3 +76,17 @@ export default function MessagesChatbox() {
         </div>
     );
 }
+
+
+
+{/*             <div className='messages-list'>
+                {filteredMessages.map((msg, index) => {
+                    const sender = userList.find(u => u.id === msg.senderId) || { name: 'You' };
+                    return (
+                        <div key={index} className='message-item'>
+                            <span><strong>{sender.name}</strong>: {msg.content}</span>
+                            <span className='timestamp'>{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                    );
+                })}
+            </div> */}
