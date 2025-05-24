@@ -2,12 +2,21 @@
 
 import { useWebsocketContext } from '../contexts/WebSocketContext';
 import { useActiveChat } from '../contexts/ActiveChatContext';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 export default function MessagesChatbox() {
-    const { messages, sendAction, userList, isTyping } = useWebsocketContext();
+    // const { messages, sendAction, userList, isTyping } = useWebsocketContext();
+    const { userList, messages, sendAction, isConnected, isTyping, currentChatId, setCurrentChatId } = useWebsocketContext();
     const { activeChat } = useActiveChat();
     const [inputMessage, setInputMessage] = useState('');
+
+
+    // Keep currentChatId in sync with activeChat
+    useEffect(() => {
+        if (activeChat && activeChat.id !== currentChatId) {
+            setCurrentChatId(activeChat.id);
+        }
+    }, [activeChat, currentChatId, setCurrentChatId]);
 
     // Filter messages for the active chat
     const filteredMessages = useMemo(() => {
@@ -40,6 +49,7 @@ export default function MessagesChatbox() {
         <div className='chat-component'>
             <h2>
                 {activeChat ? activeChat.name : 'Select a user to chat'}
+                {!isConnected && <span style={{color: 'red', marginLeft: '1em'}}>Disconnected</span>}
             </h2>
             <div className='messages-list'>
                 {filteredMessages.length === 0 ? (

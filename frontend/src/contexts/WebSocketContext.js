@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useCallback, useState, useEffect } from "react";
+import { createContext, useContext, useCallback, useState, useEffect, useRef } from "react";
 import { useWebsocket } from "../hooks/useWebsocket";
 
 
@@ -16,7 +16,16 @@ export function WebSocketProvider( { children } ) {
             const id = localStorage.getItem('session-id');
             return id || null;
         }
+        return null;
     });
+
+    
+
+    // use a ref for currentChatId to avoid unnecessary re-renders ---
+    const currentChatIdRef = useRef(currentChatId);
+    useEffect(() => {
+        currentChatIdRef.current = currentChatId;
+    }, [currentChatId]);
 
     // Fetch session ID from server on mount and store in localStorage
     useEffect(() => {
@@ -28,7 +37,6 @@ export function WebSocketProvider( { children } ) {
                     localStorage.setItem('session-id', sessionId);
                     console.log(sessionId)
                     setSessionId(sessionId);
-
                 }
             } catch (error) {
                 console.error('Session sync failed:', error);
@@ -44,10 +52,10 @@ export function WebSocketProvider( { children } ) {
     // Sync session ID with localStorage
     useEffect(() => {
         const handleStorage = () => {
-        const newSession = localStorage.getItem('session-id');
-        if (newSession !== sessionId) {
-            setSessionId(newSession);
-        }
+            const newSession = localStorage.getItem('session-id');
+            if (newSession !== sessionId) {
+                setSessionId(newSession);
+            }
         };
         window.addEventListener('storage', handleStorage);
         return () => window.removeEventListener('storage', handleStorage);
@@ -59,51 +67,71 @@ export function WebSocketProvider( { children } ) {
         setSessionId(newSessionId);
     }, []);
 
+    // Reset typing state when changing chat
+    useEffect(() => {
+        setIsTyping(false);
+    }, [currentChatId]);
+
 
     // memoize the onMessage handler with useCallback
     // if this doesnt change, it will pass and wont re-render; WS connection will always render when new data gets passed
     const onMessage = useCallback((data) => {
-        if (data.action === 'start') {
-            setUserList(
-                data.allClients.map((name,index) => ({
-                    name,
-                    id: data.clientIDs[index],
-                    online: data.onlineClients.includes(data.clientIDs[index]),
-                    unread: data.unreadMsgClients?.includes(data.clientIDs[index]) || false,
-                }))
-            );
-        } else if (data.action === 'online') {
-            setUserList(prev =>
-                prev.map(user =>
-                    user.id === data.id ? { ...user, online: true} : user
-                )
-            );
-        } else if (data.action === 'offline') {
-            setUserList(prev => 
-                prev.map(user =>
-                    user.id === data.id ? { ...user, online:false } : user
-                )
-            );
-        } else if (data.action === 'messageSendOK') {
-            // 
-        } else if (data.action === 'messageHistory') {
-            setMessages(data.content);
-        } else if (data.action === 'message') {
-            setMessages(prev => [...prev, data]);
-            if (data.senderId !== currentChatId) {
-                setUserList(prev => 
+        switch (data.action) {
+            case 'start':
+                setUserList(
+                    data.allClients.map((name, index) => ({
+                        name,
+                        id: data.clientIDs[index],
+                        online: data.onlineClients.includes(data.clientIDs[index]),
+                        unread: data.unreadMsgClients?.includes(data.clientIDs[index]) || false,
+                    }))
+                );
+                break;
+            case 'online':
+                setUserList(prev =>
                     prev.map(user =>
-                        user.id === data.senderId ? { ...user, unread: true } : user
+                        user.id === data.id ? { ...user, online: true } : user
                     )
                 );
-            }
-        } else if (data.action === 'typing') {
-            if (data.senderId === currentChatId) {
-                setIsTyping(true);
-                setTimeout(() => setIsTyping(false), 800);
-            }
+                break;
+            case 'offline':
+                setUserList(prev =>
+                    prev.map(user =>
+                        user.id === data.id ? { ...user, online: false } : user
+                    )
+                );
+                break;
+            case 'messageSendOK':
+                // Optionally handle message send confirmation
+                break;
+            case 'messageHistory':
+                setMessages(
+                    Array.isArray(data.content)
+                        ? data.content.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                        : []
+                );
+                break;
+            case 'message':
+                setMessages(prev => [...prev, data]);
+                if (data.senderId !== currentChatIdRef.current) {
+                    setUserList(prev =>
+                        prev.map(user =>
+                            user.id === data.senderId ? { ...user, unread: true } : user
+                        )
+                    );
+                }
+                break;
+            case 'typing':
+                if (data.senderId === currentChatIdRef.current) {
+                    setIsTyping(true);
+                    setTimeout(() => setIsTyping(false), 3000);
+                }
+                break;
+            default:
+                // Optionally handle unknown actions
+                break;
         }
-    }, [currentChatId]);
+    }, []);
 
     const { isConnected, sendAction } = useWebsocket(
         sessionId ? `ws://localhost:8080/api/ws?session=${sessionId}` : null,
@@ -118,7 +146,16 @@ export function WebSocketProvider( { children } ) {
 
 
     return (
-        <WebSocketContext.Provider value={{ isConnected, userList, messages, sendAction, connect }}>
+        <WebSocketContext.Provider value={{ 
+            isConnected, 
+            userList, 
+            messages, 
+            sendAction, 
+            connect,
+            isTyping,
+            currentChatId,
+            setCurrentChatId 
+        }}>
             {children}
         </WebSocketContext.Provider>
     );
