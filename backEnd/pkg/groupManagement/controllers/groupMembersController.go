@@ -15,35 +15,31 @@ import (
 	userControllers "social-network/pkg/userManagement/controllers"
 )
 
-func parseMemberRequest(r *http.Request) (*followingModel.Following, int, string, error) {
-	m, userID, _, err := followingControllers.ParseFollowingRequest(r)
+func parseMemberRequest(r *http.Request) (*followingModel.Following, int, string, int, error) {
+	m, userID, _, statusCode, err := followingControllers.ParseFollowingRequest(r)
 	if err != nil {
-		return nil, -1, "", err
+		return nil, -1, "", statusCode, err
 	}
 	groupID, createdBy, err := groupModel.SelectGroupIDcreatedByfromUUID(m.GroupUUID)
 	if err != nil {
-		return nil, -1, "", fmt.Errorf("InternalServerError")
+		return nil, -1, "", http.StatusBadRequest, fmt.Errorf("bad request")
 
 	} else if groupID == 0 {
-		return nil, -1, "", fmt.Errorf("public forum chosen as group")
+		return nil, -1, "", http.StatusBadRequest, fmt.Errorf("public forum chosen as group")
 	}
 	m.GroupID, m.LeaderID, m.Type = groupID, createdBy, "group"
 
 	memberStatus, err := followingModel.SelectStatus(m)
 	if err != nil {
-		return nil, -1, "", fmt.Errorf("InternalServerError")
+		return nil, -1, "", http.StatusBadRequest, fmt.Errorf("bad request")
 	}
-	return m, userID, memberStatus, nil
+	return m, userID, memberStatus, http.StatusOK, nil
 }
 
 func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := parseMemberRequest(r)
+	m, userID, memberStatus, statusCode, err := parseMemberRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	m.Status = "invited"
@@ -51,7 +47,7 @@ func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !groupModel.IsGroupMember(m.GroupUUID, userID) {
 		errorControllers.CustomErrorHandler(w, r,
-			"only members can invite", http.StatusBadRequest)
+			"only members can invite", http.StatusForbidden)
 		return
 	}
 
@@ -80,13 +76,9 @@ func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := parseMemberRequest(r)
+	m, userID, memberStatus, statusCode, err := parseMemberRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	m.Status = "requested"
@@ -117,13 +109,9 @@ func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := parseMemberRequest(r)
+	m, userID, memberStatus, statusCode, err := parseMemberRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	m.UpdatedBy, m.Status = userID, "inactive"
@@ -148,20 +136,16 @@ func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupMemberRemoveHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := parseMemberRequest(r)
+	m, userID, memberStatus, statusCode, err := parseMemberRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	m.UpdatedBy, m.Status = userID, "declined"
 
 	if userID != m.LeaderID {
 		errorControllers.CustomErrorHandler(w, r,
-			"only leader can remove member", http.StatusBadRequest)
+			"only leader can remove member", http.StatusForbidden)
 		return
 	}
 	if memberStatus != "accepted" {
@@ -179,13 +163,9 @@ func GroupMemberRemoveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GroupMemberResponseHandler(w http.ResponseWriter, r *http.Request) {
-	m, userID, memberStatus, err := parseMemberRequest(r)
+	m, userID, memberStatus, statusCode, err := parseMemberRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	message := "requested "
@@ -212,13 +192,13 @@ func GroupMemberResponseHandler(w http.ResponseWriter, r *http.Request) {
 func ViewGroupMembersHandle(w http.ResponseWriter, r *http.Request) {
 	tgtUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group/members")
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 
 	groupMembers, err := groupModel.SelectGroupMembers(tgtUUID, "accepted")
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 	userControllers.ExtendSession(w, r)
@@ -228,24 +208,24 @@ func ViewGroupMembersHandle(w http.ResponseWriter, r *http.Request) {
 func ViewGroupMemberRequestsHandle(w http.ResponseWriter, r *http.Request) {
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.UnauthorizedError)
 		return
 	}
 	tgtUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group/member/requests")
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 
 	if !groupModel.IsGroupMember(tgtUUID, userID) {
 		errorControllers.CustomErrorHandler(w, r,
-			"only members can view", http.StatusBadRequest)
+			"only members can view", http.StatusNotFound)
 		return
 	}
 
 	groupMembers, err := groupModel.SelectGroupMembers(tgtUUID, "requested")
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 	userControllers.ExtendSession(w, r)
