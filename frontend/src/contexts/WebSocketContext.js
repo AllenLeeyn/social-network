@@ -13,40 +13,16 @@ export function WebSocketProvider( { children } ) {
     const [isTyping, setIsTyping] = useState(false);
     const [sessionId, setSessionId] = useState(() => {
         if (typeof window !== 'undefined') {
-            const id = localStorage.getItem('session-id');
-            return id || null;
+            return localStorage.getItem('session-id') || null;
         }
         return null;
     });
-
-    
 
     // use a ref for currentChatId to avoid unnecessary re-renders ---
     const currentChatIdRef = useRef(currentChatId);
     useEffect(() => {
         currentChatIdRef.current = currentChatId;
     }, [currentChatId]);
-
-    // Fetch session ID from server on mount and store in localStorage
-    useEffect(() => {
-        async function syncSession() {
-            try {
-                const res = await fetch('/frontend-api/session');
-                const { sessionId } = await res.json();
-                if (sessionId) {
-                    localStorage.setItem('session-id', sessionId);
-                    console.log(sessionId)
-                    setSessionId(sessionId);
-                }
-            } catch (error) {
-                console.error('Session sync failed:', error);
-                // Fallback to localStorage if endpoint fails
-                const storedSession = localStorage.getItem('session-id');
-                if (storedSession) setSessionId(storedSession);
-            }
-        }
-        syncSession();
-    }, []);
 
     
     // Sync session ID with localStorage

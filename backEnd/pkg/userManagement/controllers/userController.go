@@ -74,12 +74,29 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := userModel.SelectActiveSessionBy("user_id", user.ID)
-	if err == nil && session != nil {
+	if session, err := userModel.SelectActiveSessionBy("user_id", user.ID);
+		err == nil && session != nil {
 		expireSession(w, r, session)
 	}
 	generateSession(w, r, user.ID)
-	utils.ReturnJsonSuccess(w, "Logged in successfully", nil)
+
+	// Fetch the newly created session
+    newSession, err := userModel.SelectActiveSessionBy("user_id", user.ID)
+    if err != nil || newSession == nil {
+        errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+        return
+    }
+
+	// UUID
+	userWithUUID, err := userModel.SelectUserByField("id", user.ID)
+    if err != nil || userWithUUID == nil {
+        errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+        return
+    }
+	utils.ReturnJsonSuccess(w, "Logged in successfully", map[string]interface{}{
+		"uuid": userWithUUID.UUID,
+		"sessionId": newSession.ID,
+	})
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {

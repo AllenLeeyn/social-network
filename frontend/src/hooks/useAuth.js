@@ -12,10 +12,21 @@ export function useAuth() {
 
     try {
       const userData = await login(email, password)
+      console.log('Login response', userData)
       setUser(userData) // Save user data after successful login
-      console.log(userData)
-      localStorage.setItem('session-id', userData.sessionId);
+
+      // localStorage.setItem('session-id', userData.sessionId);
+
+      // Store UUID and sessionId in localStorage
+      const uuid = userData?.data?.uuid;
+      const sessionId = userData?.data?.sessionId;
+      console.log('uuid', uuid)
+      console.log(sessionId)
+      if (uuid)      localStorage.setItem('user-uuid', uuid);
+      if (sessionId) localStorage.setItem('session-id', sessionId);
+
       return userData.sessionId;
+      
     } catch (err) {
       setError(err.message)
     } finally {
