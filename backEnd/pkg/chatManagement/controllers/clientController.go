@@ -16,12 +16,12 @@ func (cc *ChatController) listener() {
 
 		case "online":
 			cc.sendClientList(action.client, action.client.UserUUID)
-			content := fmt.Sprintf(`{"action": "online", "id": "%d"}`, action.client.UserID)
+			content := fmt.Sprintf(`{"action": "online", "id": "%s", "name": "%s"}`, action.client.UserUUID, action.client.UserName)
 			cc.queuePublicMessage(content, "-1")
 
 		case "offline":
 			delete(cc.clients, action.client.UserUUID)
-			content := fmt.Sprintf(`{"action": "offline", "id": "%d"}`, action.client.UserID)
+			content := fmt.Sprintf(`{"action": "offline", "id": "%s"}`, action.client.UserUUID)
 			cc.queuePublicMessage(content, "-1")
 		}
 	}

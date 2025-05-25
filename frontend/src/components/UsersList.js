@@ -13,7 +13,8 @@ export default function UsersList( { activeConversation } ) {
     const router = useRouter();
 
     const handleUserClick = (user) => {
-        setActiveChat(user);
+        setActiveChat({ id: user.id, name: user.name });
+        console.log("User clicked:", user);
         router.push('/messages');
     }
 

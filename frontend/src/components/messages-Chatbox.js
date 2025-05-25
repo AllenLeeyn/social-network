@@ -5,7 +5,7 @@ import { useActiveChat } from '../contexts/ActiveChatContext';
 import { useState, useMemo, useEffect } from 'react';
 
 export default function MessagesChatbox() {
-    // const { messages, sendAction, userList, isTyping } = useWebsocketContext();
+
     const { userList, messages, sendAction, isConnected, isTyping, currentChatId, setCurrentChatId } = useWebsocketContext();
     const { activeChat } = useActiveChat();
     const [inputMessage, setInputMessage] = useState('');
@@ -59,6 +59,10 @@ export default function MessagesChatbox() {
         setInputMessage('');
     };
 
+    // console.log("messages:", messages);
+    // console.log("activeChat.id:", activeChat?.id, "userUuid:", userUuid);
+    // console.log("filteredMessages:", filteredMessages);
+
     return (
         <div className='chat-component'>
             <h2>
@@ -74,10 +78,13 @@ export default function MessagesChatbox() {
                     </div>
                 ) : (
                     filteredMessages.map((msg, index) => {
-                    const sender = userList.find(u => u.id === msg.senderUUID) || { name: 'You' };
+                    const sender = userList.find(u => u.id === msg.senderUUID) ;
                         return (
                             <div key={index} className='message-item'>
-                            <span><strong>{sender.name}</strong>: {msg.content}</span>
+                            <span>
+                                <strong>{sender ? sender.name : msg.senderUUID}</strong>: 
+                                {msg.content}
+                            </span>
                             <span className='timestamp'>{new Date(msg.createdAt).toLocaleTimeString()}</span>
                             </div>
                         );

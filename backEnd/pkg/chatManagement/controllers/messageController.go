@@ -26,6 +26,7 @@ func (cc *ChatController) broadcaster() {
 				}
 			}
 		} else {
+			log.Printf("broadcaster: Attempting to send to ReceiverUUID: %s", msg.ReceiverUUID)
 			err := cc.sendMessage(msg, msg.ReceiverUUID)
 			if err != nil {
 				log.Printf("Error sending message to %v: %v", msg.ReceiverID, err)
@@ -93,10 +94,15 @@ func (cc *ChatController) processMessage(msgData *message, cl *client) error {
 
 func (cc *ChatController) processMessageRequest(msgData *message, cl *client) error {
 	msgIdStr := msgData.Content
-	messages, err := chatModel.SelectMessages(cl.UserID, msgData.ReceiverID, msgIdStr)
+	receiver, err := userModel.SelectUserByField("uuid", msgData.ReceiverUUID)
+	if err != nil || receiver == nil {
+		return fmt.Errorf("receiver not found: %v", err)
+	}
+	messages, err := chatModel.SelectMessages(cl.UserID, receiver.ID, msgIdStr)
 	if err != nil {
 		return fmt.Errorf("error getting messages: %v", err)
 	}
+	// log.Printf("processMessageRequest: Fetched messages: %+v", messages)
 
 	content := struct {
 		Action  string    `json:"action"`
@@ -107,12 +113,18 @@ func (cc *ChatController) processMessageRequest(msgData *message, cl *client) er
 	if err != nil {
 		log.Printf("Error generating JSON: %v", err)
 	}
+	// log.Printf("processMessageRequest: Sending messageHistory JSON: %s", string(contentJSON))
+
 	cc.queuePublicMessage(string(contentJSON), cl.UserUUID)
 	return nil
 }
 
 func (cc *ChatController) processMessageAcknowledgement(msgData *message, cl *client) error {
-	messages, err := chatModel.SelectUnreadMessages(msgData.ReceiverID, cl.UserID)
+	receiver, err := userModel.SelectUserByField("uuid", msgData.ReceiverUUID)
+	if err != nil || receiver == nil {
+		return fmt.Errorf("receiver not found: %v", err)
+	}
+	messages, err := chatModel.SelectUnreadMessages(receiver.ID, cl.UserID)
 	if err != nil {
 		return fmt.Errorf("error getting messages: %v", err)
 	}
@@ -127,6 +139,11 @@ func (cc *ChatController) processMessageAcknowledgement(msgData *message, cl *cl
 			return fmt.Errorf("error acknowledging messages: %v", err)
 		}
 	}
+
+	cc.queuePublicMessage(
+		fmt.Sprintf(`{"action":"messageAck", "senderUUID":"%s"}`, cl.UserUUID),
+		msgData.ReceiverUUID,
+	)
 	return nil
 }
 
@@ -135,6 +152,10 @@ func checkMessage(message string) (string, bool) {
 }
 
 func (cc *ChatController) processTypingEvent(msgData *message, cl *client) {
-	content := fmt.Sprintf(`{"action": "typing", "receiverID": %d, "senderID": %d}`, msgData.ReceiverID, cl.UserID)
+	content := fmt.Sprintf(
+		`{"action": "typing", "receiverUUID": "%s", "senderUUID": "%s"}`,
+		msgData.ReceiverUUID,
+		cl.UserUUID,
+	)
 	cc.queuePublicMessage(content, msgData.ReceiverUUID)
 }

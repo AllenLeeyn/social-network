@@ -104,6 +104,13 @@ func SelectUserIDByUUID(userUUID string) (int, error) {
 	return userID, err
 }
 
+func SelectUUIDByID(userID int) (string, error) {
+	var uuid string
+	err := sqlDB.QueryRow(`SELECT uuid FROM users WHERE id = ?`, userID).Scan(&uuid)
+	return uuid, err
+}
+
+
 func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) {
 	if fieldName != "id" && fieldName != "nick_name" && fieldName != "email" && fieldName != "uuid"{
 		return nil, fmt.Errorf("invalid field")

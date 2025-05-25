@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"strconv"
 	"time"
+
+	userModel "social-network/pkg/userManagement/models"
 )
 
 type Message struct {
@@ -13,9 +15,13 @@ type Message struct {
 	SenderID     int
 	ReceiverUUID string `json:"receiverUUID"`
 	ReceiverID   int
-	Content      string       `json:"content"`
-	CreatedAt    time.Time    `json:"createdAt"`
-	ReadAt       sql.NullTime `json:"readAt"`
+	Group        sql.NullString `json:"group"` // new
+	Content      string         `json:"content"`
+	Status       sql.NullString `json:"status"` // new
+	CreatedAt    time.Time      `json:"createdAt"`
+	ReadAt       sql.NullTime   `json:"readAt"`
+	UpdatedBy    sql.NullInt64  `json:"updated_by"` // new
+	UpdatedAt    sql.NullTime   `json:"updated_at"` // new
 }
 
 func InsertMessage(m *Message) error {
@@ -68,13 +74,23 @@ func SelectMessages(id_1, id_2 int, msgIdStr string) (*[]Message, error) {
 			&m.ID,
 			&m.SenderID,
 			&m.ReceiverID,
+			&m.Group, // new
 			&m.Content,
+			&m.Status, // new
 			&m.CreatedAt,
 			&m.ReadAt,
+			&m.UpdatedBy, // new
+			&m.UpdatedAt, // new
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		senderUUID, _ := userModel.SelectUUIDByID(m.SenderID)
+		receiverUUID, _ := userModel.SelectUUIDByID(m.ReceiverID)
+		m.SenderUUID = senderUUID
+		m.ReceiverUUID = receiverUUID
+
 		messages = append(messages, m)
 	}
 	if err := rows.Err(); err != nil {
@@ -100,13 +116,23 @@ func SelectUnreadMessages(senderID, receiverID int) (*[]Message, error) {
 			&m.ID,
 			&m.SenderID,
 			&m.ReceiverID,
+			&m.Group, // new
 			&m.Content,
+			&m.Status, // new
 			&m.CreatedAt,
 			&m.ReadAt,
+			&m.UpdatedBy, // new
+			&m.UpdatedAt, // new
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		senderUUID, _ := userModel.SelectUUIDByID(m.SenderID)
+		receiverUUID, _ := userModel.SelectUUIDByID(m.ReceiverID)
+		m.SenderUUID = senderUUID
+		m.ReceiverUUID = receiverUUID
+
 		messages = append(messages, m)
 	}
 	if err := rows.Err(); err != nil {

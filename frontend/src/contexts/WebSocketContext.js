@@ -3,7 +3,6 @@
 import { createContext, useContext, useCallback, useState, useEffect, useRef } from "react";
 import { useWebsocket } from "../hooks/useWebsocket";
 
-
 const WebSocketContext = createContext();
 
 export function WebSocketProvider( { children } ) {
@@ -17,6 +16,7 @@ export function WebSocketProvider( { children } ) {
         }
         return null;
     });
+
     const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
 
     // use a ref for currentChatId to avoid unnecessary re-renders ---
@@ -25,7 +25,6 @@ export function WebSocketProvider( { children } ) {
         currentChatIdRef.current = currentChatId;
     }, [currentChatId]);
 
-    
     // Sync session ID with localStorage
     useEffect(() => {
         const handleStorage = () => {
@@ -44,15 +43,11 @@ export function WebSocketProvider( { children } ) {
         setSessionId(newSessionId);
     }, []);
 
-    // Reset typing state when changing chat
-    useEffect(() => {
-        setIsTyping(false);
-    }, [currentChatId]);
-
 
     // memoize the onMessage handler with useCallback
     // if this doesnt change, it will pass and wont re-render; WS connection will always render when new data gets passed
     const onMessage = useCallback((data) => {
+        console.log("WebSocket received:", data);
         switch (data.action) {
             case 'start':
                 setUserList(
@@ -65,11 +60,16 @@ export function WebSocketProvider( { children } ) {
                 );
                 break;
             case 'online':
-                setUserList(prev =>
-                    prev.map(user =>
-                        user.id === data.id ? { ...user, online: true } : user
-                    )
-                );
+                setUserList(prev => {
+                        if (prev.some(user => user.id === data.id)) {
+                            // Update online status for existing user
+                            return prev.map(user =>
+                                user.id === data.id ? { ...user, online: true } : user
+                            );
+                        }
+                        // Add new user to the list
+                        return [...prev, { id: data.id, name: data.name || 'New User', online: true, unread: false }];
+                    });
                 break;
             case 'offline':
                 setUserList(prev =>
@@ -82,11 +82,12 @@ export function WebSocketProvider( { children } ) {
                 // Optionally handle message send confirmation
                 break;
             case 'messageHistory':
-                setMessages(
+/*                 setMessages(
                     Array.isArray(data.content)
                         ? data.content.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
                         : []
-                );
+                ); */
+                setMessages(Array.isArray(data.content) ? data.content : []);
                 break;
             case 'message':
                 setMessages(prev => [...prev, data]);
@@ -98,6 +99,13 @@ export function WebSocketProvider( { children } ) {
                     );
                 }
                 break;
+            case 'messageAck':
+                setUserList(prev =>
+                    prev.map(user =>
+                        user.id === data.senderUUID ? { ...user, unread: false } : user
+                    )
+                );
+                break;
             case 'typing':
                 if (data.senderUUID === currentChatIdRef.current) {
                     setIsTyping(true);
@@ -105,12 +113,13 @@ export function WebSocketProvider( { children } ) {
                 }
                 break;
             default:
-                // Optionally handle unknown actions
+                console.log('Unknown WebSocket action received:', data.action, data);
                 break;
         }
     }, []);
 
-    const { isConnected, sendAction } = useWebsocket(
+    // Declare useWebsocket AFTER onMessage is defined, BEFORE any useEffect that uses sendAction
+        const { isConnected, sendAction } = useWebsocket(
         sessionId ? `ws://localhost:8080/api/ws?session=${sessionId}` : null,
         onMessage,
         {
@@ -120,6 +129,29 @@ export function WebSocketProvider( { children } ) {
             maxAttempts: null,
         }
     );
+
+    // Reset typing state when changing chat
+    useEffect(() => {
+        setIsTyping(false);
+    }, [currentChatId]);
+
+    useEffect(() => {
+        if (currentChatId && userUuid) {
+            console.log("Sending messageReq for chat history:", currentChatId, userUuid);
+            sendAction({
+                action: "messageReq",
+                receiverUUID: currentChatId,
+                content: "-1"
+            });
+            sendAction({
+                action: 'messageAck',
+                receiverUUID: currentChatId,
+                senderUUID: userUuid
+            });
+        }
+    }, [currentChatId, userUuid, sendAction]);
+
+
 
 
     return (
