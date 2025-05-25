@@ -8,7 +8,7 @@ const WebSocketContext = createContext();
 
 export function WebSocketProvider( { children } ) {
     const [userList, setUserList] = useState([]);
-    const [currentChatId, setCurrentChatId] = useState(null);
+    const [currentChatId, setCurrentChatId] = useState(null); // consider UUID for chatID
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
     const [sessionId, setSessionId] = useState(() => {
@@ -17,6 +17,7 @@ export function WebSocketProvider( { children } ) {
         }
         return null;
     });
+    const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
 
     // use a ref for currentChatId to avoid unnecessary re-renders ---
     const currentChatIdRef = useRef(currentChatId);
@@ -89,16 +90,16 @@ export function WebSocketProvider( { children } ) {
                 break;
             case 'message':
                 setMessages(prev => [...prev, data]);
-                if (data.senderId !== currentChatIdRef.current) {
+                if (data.senderUUID !== currentChatIdRef.current) {
                     setUserList(prev =>
                         prev.map(user =>
-                            user.id === data.senderId ? { ...user, unread: true } : user
+                            user.id === data.senderUUID ? { ...user, unread: true } : user
                         )
                     );
                 }
                 break;
             case 'typing':
-                if (data.senderId === currentChatIdRef.current) {
+                if (data.senderUUID === currentChatIdRef.current) {
                     setIsTyping(true);
                     setTimeout(() => setIsTyping(false), 3000);
                 }

@@ -65,12 +65,13 @@ func (cc *ChatController) processMessage(msgData *message, cl *client) error {
 		return fmt.Errorf("invalid message")
 	}
 
-	receiver, err := userModel.SelectUserByField("id", msgData.ReceiverID)
+	receiver, err := userModel.SelectUserByField("uuid", msgData.ReceiverUUID)
 	if err != nil || receiver == nil || receiver.ID == 0 {
 		return fmt.Errorf("receiver not found: %v", err)
 	}
 
 	msgData.SenderID = cl.UserID
+	msgData.ReceiverID = receiver.ID
 	msgData.Content = sanitizeMsg
 	msgData.CreatedAt = time.Now()
 

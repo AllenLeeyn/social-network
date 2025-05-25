@@ -10,6 +10,8 @@ export default function MessagesChatbox() {
     const { activeChat } = useActiveChat();
     const [inputMessage, setInputMessage] = useState('');
 
+     // Get your own UUID from context or localStorage
+    const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
 
     // Keep currentChatId in sync with activeChat
     useEffect(() => {
@@ -22,25 +24,37 @@ export default function MessagesChatbox() {
     const filteredMessages = useMemo(() => {
         if (!activeChat) return [];
         return messages.filter(
-            m => m.senderId === activeChat.id || m.receiverId === activeChat.id
+            m => (m.senderUUID === activeChat.id && m.receiverUUID === userUuid) || 
+            (m.senderUUID === userUuid && m.receiverUUID === activeChat.id)
         );
-    }, [messages, activeChat]);
+    }, [messages, activeChat, userUuid]);
 
     // Handle typing and sending
     const handleInputChange = (e) => {
         setInputMessage(e.target.value);
-        if (activeChat) {
-            sendAction({ action: 'typing', receiverID: activeChat.id });
+        if (activeChat && userUuid) {
+            sendAction({ 
+                action: 'typing', 
+                senderUUID: userUuid,
+                receiverUUID: activeChat.id 
+            });
         }
     };
 
     const handleSendMessage = (e) => {
         e.preventDefault();
-        if (!inputMessage.trim() || !activeChat) return;
+        if (!inputMessage.trim() || !activeChat || !userUuid || !activeChat.id) return;
+        console.log("Sending message", {
+        senderUUID: userUuid,
+        receiverUUID: activeChat?.id,
+        content: inputMessage,
+        });
         sendAction({
             action: 'message',
+            senderUUID: userUuid,
+            receiverUUID: activeChat.id,
             content: inputMessage,
-            receiverID: Number(activeChat.id)
+            createdAt: new Date().toISOString() 
         });
         setInputMessage('');
     };
@@ -60,11 +74,11 @@ export default function MessagesChatbox() {
                     </div>
                 ) : (
                     filteredMessages.map((msg, index) => {
-                    const sender = userList.find(u => u.id === msg.senderId) || { name: 'You' };
+                    const sender = userList.find(u => u.id === msg.senderUUID) || { name: 'You' };
                         return (
                             <div key={index} className='message-item'>
                             <span><strong>{sender.name}</strong>: {msg.content}</span>
-                            <span className='timestamp'>{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                            <span className='timestamp'>{new Date(msg.createdAt).toLocaleTimeString()}</span>
                             </div>
                         );
                     })
@@ -86,17 +100,3 @@ export default function MessagesChatbox() {
         </div>
     );
 }
-
-
-
-{/*             <div className='messages-list'>
-                {filteredMessages.map((msg, index) => {
-                    const sender = userList.find(u => u.id === msg.senderId) || { name: 'You' };
-                    return (
-                        <div key={index} className='message-item'>
-                            <span><strong>{sender.name}</strong>: {msg.content}</span>
-                            <span className='timestamp'>{new Date(msg.timestamp).toLocaleTimeString()}</span>
-                        </div>
-                    );
-                })}
-            </div> */}

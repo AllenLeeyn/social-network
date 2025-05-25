@@ -105,7 +105,7 @@ func SelectUserIDByUUID(userUUID string) (int, error) {
 }
 
 func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) {
-	if fieldName != "id" && fieldName != "nick_name" && fieldName != "email" {
+	if fieldName != "id" && fieldName != "nick_name" && fieldName != "email" && fieldName != "uuid"{
 		return nil, fmt.Errorf("invalid field")
 	}
 	qry := `SELECT * FROM users WHERE ` + fieldName + ` = ?`
