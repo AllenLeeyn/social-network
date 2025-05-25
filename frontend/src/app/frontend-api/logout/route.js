@@ -5,7 +5,7 @@ export async function POST() {
   const backendUrl = "http://localhost:8080/api/logout";
 
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const sessionId = cookieStore.get("session-id")?.value;
 
     if (!sessionId) {
