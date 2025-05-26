@@ -39,7 +39,57 @@
     flex-direction: column;
     max-width: 700px;
 }
+.chat-area {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 400px; /* Adjust for 10 messages */
+    max-height: 400px;
+    background: #fff;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+.message-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+}
+.message-item.sent {
+    align-items: flex-end;
+}
+.message-item.received {
+    align-items: flex-start;
+}
+.message-bubble {
+    background: #f1f0f0;
+    border-radius: 16px;
+    padding: 8px 12px;
+    max-width: 70%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.message-item.sent .message-bubble {
+    background: #d1e7dd;
+}
+.timestamp {
+    font-size: 0.75em;
+    color: #888;
+    margin-top: 2px;
+    align-self: flex-end;
+}
 
+.typing-indicator-area {
+    height: 32px; /* or whatever fits your design */
+    transition: opacity 0.2s;
+    color: #888;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+}
+.typing-indicator {
+    font-style: italic;
+}
 @media (max-width: 1100px) {
     .message-page-layout {
         max-width: 1000px;

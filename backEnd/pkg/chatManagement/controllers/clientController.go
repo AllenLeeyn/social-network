@@ -36,7 +36,7 @@ func (cc *ChatController) sendClientList(cl *client, receiverUUID string) {
 		UnreadMsgClients []string `json:"unreadMsgClients"`
 	}
 
-	d := data{Action: "start"}
+	d := data{Action: "userList"}
 	clientList, clientUUIDs, err := chatModel.SelectUserList(cl.UserID)
 	if err != nil {
 		log.Println("Error fetching UserList:", err)

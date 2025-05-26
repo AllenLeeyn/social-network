@@ -8,12 +8,13 @@ import "../styles/globals.css";
 
 export default function UsersList( { activeConversation } ) {
 
-    const { userList, isConnected } = useWebsocketContext();
+    const { userList, isConnected, setUserList } = useWebsocketContext();
     const { setActiveChat } = useActiveChat();
     const router = useRouter();
 
     const handleUserClick = (user) => {
         setActiveChat({ id: user.id, name: user.name });
+        setUserList(prev => prev.map(u => u.id === user.id ? { ...u, unread: false } : u));
         console.log("User clicked:", user);
         router.push('/messages');
     }

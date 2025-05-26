@@ -2,13 +2,27 @@
 
 import { useWebsocketContext } from '../contexts/WebSocketContext';
 import { useActiveChat } from '../contexts/ActiveChatContext';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
 export default function MessagesChatbox() {
 
-    const { userList, messages, sendAction, isConnected, isTyping, currentChatId, setCurrentChatId } = useWebsocketContext();
+    const { 
+        userList, 
+        messages, 
+        sendAction, 
+        isConnected, 
+        isTyping, 
+        currentChatId, 
+        setCurrentChatId,
+        isLoadingMore, 
+        hasMore,
+    } = useWebsocketContext();
     const { activeChat } = useActiveChat();
     const [inputMessage, setInputMessage] = useState('');
+    const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
+    const prevScrollHeight = useRef(0);
+
 
      // Get your own UUID from context or localStorage
     const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
@@ -18,16 +32,64 @@ export default function MessagesChatbox() {
         if (activeChat && activeChat.id !== currentChatId) {
             setCurrentChatId(activeChat.id);
         }
-    }, [activeChat, currentChatId, setCurrentChatId]);
+    }, [activeChat, currentChatId]);
 
     // Filter messages for the active chat
     const filteredMessages = useMemo(() => {
         if (!activeChat) return [];
-        return messages.filter(
-            m => (m.senderUUID === activeChat.id && m.receiverUUID === userUuid) || 
+        return messages.filter(m => 
+            (m.senderUUID === activeChat.id && m.receiverUUID === userUuid) || 
             (m.senderUUID === userUuid && m.receiverUUID === activeChat.id)
         );
     }, [messages, activeChat, userUuid]);
+
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [filteredMessages]);
+
+    // Auto-scroll to bottom on new messages
+    useEffect(() => {
+        if (!isLoadingMore && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [filteredMessages, isLoadingMore]);
+
+    // Scroll handler with position maintenance
+    const handleScroll = useCallback(() => {
+        if (!messagesContainerRef.current || isLoadingMore || !hasMore) return;
+
+        const { scrollTop } = messagesContainerRef.current;
+        if (scrollTop < 100 && filteredMessages.length > 0) {
+            prevScrollHeight.current = messagesContainerRef.current.scrollHeight;
+            sendAction({
+                action: "messageReq",
+                receiverUUID: activeChat.id,
+                content: filteredMessages[0].createdAt
+            });
+        }
+    }, [isLoadingMore, hasMore, filteredMessages, activeChat?.id]);
+
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        const throttledScroll = () => {
+            if (isLoadingMore) return;
+            handleScroll();
+        };
+
+        container.addEventListener('scroll', throttledScroll);
+        return () => container.removeEventListener('scroll', throttledScroll);
+    }, [handleScroll, isLoadingMore]);
+
+    // Maintain scroll position after prepending
+    useEffect(() => {
+        if (isLoadingMore || !messagesContainerRef.current) return;
+        const newScrollHeight = messagesContainerRef.current.scrollHeight;
+        messagesContainerRef.current.scrollTop = newScrollHeight - prevScrollHeight.current;
+    }, [messages, isLoadingMore]);
 
     // Handle typing and sending
     const handleInputChange = (e) => {
@@ -59,6 +121,22 @@ export default function MessagesChatbox() {
         setInputMessage('');
     };
 
+/* 
+    const loadPreviousMessages = () => {
+    if (!filteredMessages.length) {
+        setIsLoadingMore(false);
+        return;
+    }
+    const oldestMsg = filteredMessages[0]; // assuming messages are oldest-to-newest
+        sendAction({
+            action: "messageReq",
+            receiverUUID: activeChat.id,
+            content: oldestMsg.createdAt, // send timestamp as cursor
+        });
+    }; */
+
+
+
     // console.log("messages:", messages);
     // console.log("activeChat.id:", activeChat?.id, "userUuid:", userUuid);
     // console.log("filteredMessages:", filteredMessages);
@@ -69,7 +147,7 @@ export default function MessagesChatbox() {
                 {activeChat ? activeChat.name : 'Select a user to chat'}
                 {!isConnected && <span style={{color: 'red', marginLeft: '1em'}}>Disconnected</span>}
             </h2>
-            <div className='messages-list'>
+            <div className='messages-list' ref={messagesContainerRef}>
                 {filteredMessages.length === 0 ? (
                     <div className="no-messages">
                     {activeChat
@@ -78,22 +156,26 @@ export default function MessagesChatbox() {
                     </div>
                 ) : (
                     filteredMessages.map((msg, index) => {
-                    const sender = userList.find(u => u.id === msg.senderUUID) ;
+                        const isSent = msg.senderUUID === userUuid;
+                        const sender = userList.find(u => u.id === msg.senderUUID) ;
                         return (
-                            <div key={index} className='message-item'>
-                            <span>
-                                <strong>{sender ? sender.name : msg.senderUUID}</strong>: 
-                                {msg.content}
-                            </span>
-                            <span className='timestamp'>{new Date(msg.createdAt).toLocaleTimeString()}</span>
+                            <div key={index} className={`message-item ${isSent ? 'sent' : 'received'}`}>
+                                <div className="message-bubble">
+                                    <strong>{isSent ? "You" : (sender ? sender.name : msg.senderUUID)}</strong>
+                                    <div className="message-content">{msg.content}</div>
+                                    <span className='timestamp'>{new Date(msg.createdAt).toLocaleTimeString()}</span>
+                                </div>
                             </div>
                         );
                     })
                 )}
+                <div ref={messagesEndRef} />
             </div>
-            {isTyping && activeChat && (
-                <div className="typing-indicator">{activeChat.name} is typing...</div>
-            )}
+            <div className="typing-indicator-area">
+                {isTyping && activeChat && (
+                    <div className="typing-indicator">{activeChat.name} is typing...</div>
+                )}
+            </div>
             <form onSubmit={handleSendMessage} className='message-input-form'>
                 <input
                     type='text'

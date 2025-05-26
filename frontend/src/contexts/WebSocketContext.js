@@ -16,6 +16,9 @@ export function WebSocketProvider( { children } ) {
         }
         return null;
     });
+        
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
 
     const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
 
@@ -49,7 +52,7 @@ export function WebSocketProvider( { children } ) {
     const onMessage = useCallback((data) => {
         console.log("WebSocket received:", data);
         switch (data.action) {
-            case 'start':
+            case 'userList':
                 setUserList(
                     data.allClients.map((name, index) => ({
                         name,
@@ -87,10 +90,18 @@ export function WebSocketProvider( { children } ) {
                         ? data.content.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
                         : []
                 ); */
-                setMessages(Array.isArray(data.content) ? data.content : []);
-                break;
+                if (isLoadingMore) {
+                        setMessages(prev => [...data.content, ...prev]);
+                        setHasMore(data.content.length === 10); // If less than 10, no more to load
+                    } else {
+                        setMessages(Array.isArray(data.content) ? data.content : []);
+                        setHasMore(data.content.length === 10);
+                    }
+                    setIsLoadingMore(false);
+                    break;
             case 'message':
                 setMessages(prev => [...prev, data]);
+                sendAction({ action: 'userListReq' });
                 if (data.senderUUID !== currentChatIdRef.current) {
                     setUserList(prev =>
                         prev.map(user =>
@@ -116,7 +127,7 @@ export function WebSocketProvider( { children } ) {
                 console.log('Unknown WebSocket action received:', data.action, data);
                 break;
         }
-    }, []);
+    }, [isLoadingMore]);
 
     // Declare useWebsocket AFTER onMessage is defined, BEFORE any useEffect that uses sendAction
         const { isConnected, sendAction } = useWebsocket(
@@ -130,6 +141,7 @@ export function WebSocketProvider( { children } ) {
         }
     );
 
+    
     // Reset typing state when changing chat
     useEffect(() => {
         setIsTyping(false);
@@ -137,7 +149,7 @@ export function WebSocketProvider( { children } ) {
 
     useEffect(() => {
         if (currentChatId && userUuid) {
-            console.log("Sending messageReq for chat history:", currentChatId, userUuid);
+            // console.log("Sending messageReq for chat history:", currentChatId, userUuid);
             sendAction({
                 action: "messageReq",
                 receiverUUID: currentChatId,
@@ -157,13 +169,15 @@ export function WebSocketProvider( { children } ) {
     return (
         <WebSocketContext.Provider value={{ 
             isConnected, 
-            userList, 
+            userList,
             messages, 
             sendAction, 
             connect,
             isTyping,
             currentChatId,
-            setCurrentChatId 
+            setCurrentChatId,
+            isLoadingMore,
+            hasMore,
         }}>
             {children}
         </WebSocketContext.Provider>

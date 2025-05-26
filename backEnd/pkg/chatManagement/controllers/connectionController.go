@@ -73,6 +73,8 @@ func (cc *ChatController) handleConnection(cl *client) {
 			err = cc.processMessageAcknowledgement(&msgData, cl)
 		case "typing":
 			cc.processTypingEvent(&msgData, cl)
+		case "userListReq":
+        	cc.sendClientList(cl, cl.UserUUID)
 		}
 
 		if err != nil {
