@@ -58,7 +58,7 @@ func SelectMessages(id_1, id_2 int, msgIdStr string) (*[]Message, error) {
 	qry := `SELECT * FROM messages
 			WHERE (sender_id = ? AND receiver_id = ? OR sender_id = ? AND receiver_id = ?)
 			` + fromStart + `
-			ORDER BY created_at ASC
+			ORDER BY created_at DESC
 			LIMIT 10`
 
 	rows, err := sqlDB.Query(qry, id_1, id_2, id_2, id_1, msgId)

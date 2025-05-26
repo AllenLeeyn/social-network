@@ -127,7 +127,7 @@ export function WebSocketProvider( { children } ) {
                 console.log('Unknown WebSocket action received:', data.action, data);
                 break;
         }
-    }, [isLoadingMore]);
+    }, []);
 
     // Declare useWebsocket AFTER onMessage is defined, BEFORE any useEffect that uses sendAction
         const { isConnected, sendAction } = useWebsocket(
@@ -170,6 +170,7 @@ export function WebSocketProvider( { children } ) {
         <WebSocketContext.Provider value={{ 
             isConnected, 
             userList,
+            setUserList,
             messages, 
             sendAction, 
             connect,
@@ -177,6 +178,7 @@ export function WebSocketProvider( { children } ) {
             currentChatId,
             setCurrentChatId,
             isLoadingMore,
+            setIsLoadingMore,
             hasMore,
         }}>
             {children}

@@ -15,6 +15,7 @@ export default function MessagesChatbox() {
         currentChatId, 
         setCurrentChatId,
         isLoadingMore, 
+        setIsLoadingMore,
         hasMore,
     } = useWebsocketContext();
     const { activeChat } = useActiveChat();
@@ -56,18 +57,14 @@ export default function MessagesChatbox() {
         }
     }, [filteredMessages, isLoadingMore]);
 
-    // Scroll handler with position maintenance
     const handleScroll = useCallback(() => {
         if (!messagesContainerRef.current || isLoadingMore || !hasMore) return;
 
         const { scrollTop } = messagesContainerRef.current;
         if (scrollTop < 100 && filteredMessages.length > 0) {
+            setIsLoadingMore(true); // Set loading state!
             prevScrollHeight.current = messagesContainerRef.current.scrollHeight;
-            sendAction({
-                action: "messageReq",
-                receiverUUID: activeChat.id,
-                content: filteredMessages[0].createdAt
-            });
+            loadPreviousMessages();  // <-- Call the function here!
         }
     }, [isLoadingMore, hasMore, filteredMessages, activeChat?.id]);
 
@@ -121,7 +118,7 @@ export default function MessagesChatbox() {
         setInputMessage('');
     };
 
-/* 
+
     const loadPreviousMessages = () => {
     if (!filteredMessages.length) {
         setIsLoadingMore(false);
@@ -133,7 +130,7 @@ export default function MessagesChatbox() {
             receiverUUID: activeChat.id,
             content: oldestMsg.createdAt, // send timestamp as cursor
         });
-    }; */
+    }; 
 
 
 
