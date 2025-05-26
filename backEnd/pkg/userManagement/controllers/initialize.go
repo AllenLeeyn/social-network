@@ -112,22 +112,23 @@ func generateNickName(u *user) string {
 	return fmt.Sprintf("%s%s_%d", base, initial, num)
 }
 
-func GetTgtUUID(r *http.Request, basePath string) (string, int) {
+func GetTgtUUID(r *http.Request, basePath string) (string, int, error) {
 	_, userID, userUUID, isOk := middleware.GetSessionCredentials(r.Context())
 	if !isOk {
-		return "internal server error", http.StatusInternalServerError
+		return "", http.StatusInternalServerError, fmt.Errorf("internal server error")
 	}
 	tgtUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, basePath)
 	if err != nil {
-		return "page not found", http.StatusNotFound
+		return "", http.StatusNotFound, fmt.Errorf("page not found")
 	}
 	if tgtUUID == "" {
 		tgtUUID = userUUID
 
 	} else {
 		if !userModel.IsPublic(tgtUUID) && !followingModel.IsFollower(userID, tgtUUID) {
-			return "access denied: private profile and user is not follower", http.StatusForbidden
+			return "", http.StatusForbidden,
+				fmt.Errorf("access denied: private profile and user is not follower")
 		}
 	}
-	return tgtUUID, http.StatusOK
+	return tgtUUID, http.StatusOK, nil
 }

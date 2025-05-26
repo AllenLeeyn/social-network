@@ -23,7 +23,7 @@ type Notification struct {
 	TargetType         string `json:"target_type"`
 	TargetDetailedType string `json:"target_detailed_type"`
 	TargetId           int    `json:"target_id"`
-	TargetUUID         sql.NullString
+	TargetUUID         string
 	TargetUUIDForm     string           `json:"target_uuid"`
 	Message            string           `json:"message"`
 	IsRead             int              `json:"is_read"`
@@ -43,8 +43,17 @@ func Initialize(dbMain *sql.DB) {
 }
 
 func InsertNotification(notification *Notification) (int, error) {
-	insertQuery := `INSERT INTO notifications (to_user_id, from_user_id, target_type, target_detailed_type, target_id, target_uuid, message, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
-	result, insertErr := sqlDB.Exec(insertQuery, notification.ToUserId, notification.FromUserId, notification.TargetType, notification.TargetDetailedType, notification.TargetId, notification.TargetUUID, notification.Message, notification.Data)
+	insertQuery := `INSERT INTO notifications (
+					to_user_id, from_user_id,
+					target_type, target_detailed_type, 
+					target_id, target_uuid,
+					message, data) 
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
+	result, insertErr := sqlDB.Exec(insertQuery,
+		notification.ToUserId, notification.FromUserId,
+		notification.TargetType, notification.TargetDetailedType,
+		notification.TargetId, notification.TargetUUID,
+		notification.Message, notification.Data)
 	if insertErr != nil {
 		return -1, insertErr
 	}
@@ -56,6 +65,46 @@ func InsertNotification(notification *Notification) (int, error) {
 	}
 
 	return int(lastInsertID), nil
+}
+
+func InsertNotificationForEvent(n *Notification, groupID, userID int) error {
+	qry := `INSERT INTO notifications (
+				to_user_id, from_user_id,
+				target_type, target_detailed_type,
+				target_id, target_uuid,
+				message
+			)
+			SELECT 
+				members.follower_id, ?,
+				'group', 'group_event',
+				?, ?, 
+				'new_event'
+			FROM following members
+			WHERE members.group_id = ? AND members.follower_id != ?
+				AND members.status = 'accepted';`
+
+	_, err := sqlDB.Exec(qry,
+		n.FromUserId,
+		n.TargetId, n.TargetUUID, groupID, userID)
+	return err
+}
+
+func UpdateNotificationOnCancel(n *Notification, tgtType, reqType string) error {
+	qry := `WITH target AS (
+				SELECT id
+				FROM notifications
+				WHERE to_user_id = ? AND from_user_id = ?
+					AND target_type = '` + tgtType + `' AND message = '` + reqType + `'
+				ORDER BY created_at DESC
+				LIMIT 1
+			)
+			UPDATE notifications
+			SET message = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP,
+				status = 'delete'
+			WHERE id IN (SELECT id FROM target);`
+
+	_, err := sqlDB.Exec(qry, n.ToUserId, n.FromUserId, n.Message, n.UpdatedBy)
+	return err
 }
 
 func UpdateNotificationReadStatus(notification_id int, is_read int, user_id int) error {
