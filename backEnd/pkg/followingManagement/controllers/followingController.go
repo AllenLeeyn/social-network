@@ -2,13 +2,13 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	middleware "social-network/pkg/middleware"
 	"social-network/pkg/utils"
 
 	followingModel "social-network/pkg/followingManagement/models"
+	notificationModel "social-network/pkg/notificationManagement/models"
 	userModel "social-network/pkg/userManagement/models"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
@@ -16,7 +16,7 @@ import (
 )
 
 func ParseFollowingRequest(r *http.Request) (*followingModel.Following, int, string, int, error) {
-	userID, isOk := middleware.GetUserID(r.Context())
+	_, userID, userUUID, isOk := middleware.GetSessionCredentials(r.Context())
 	if !isOk {
 		return nil, -1, "", http.StatusUnauthorized, fmt.Errorf("unauthorized")
 	}
@@ -26,9 +26,9 @@ func ParseFollowingRequest(r *http.Request) (*followingModel.Following, int, str
 		return nil, -1, "", http.StatusBadRequest, fmt.Errorf("invalid input")
 	}
 	if f.FollowerUUID == "" {
-		f.FollowerID = userID
+		f.FollowerID, f.FollowerUUID = userID, userUUID
 	} else {
-		f.LeaderID = userID
+		f.LeaderID, f.LeaderUUID = userID, userUUID
 	}
 	f.Type = "user"
 
@@ -73,10 +73,15 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := operation(f); err != nil {
-		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotification(&notificationModel.Notification{
+		ToUserId: f.LeaderID, FromUserId: f.FollowerID,
+		TargetType: "follow", TargetDetailedType: "follow_request",
+		TargetId: f.LeaderID, TargetUUID: f.LeaderUUID,
+		Message: f.Status,
+	})
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
 }
@@ -99,6 +104,12 @@ func FollowingResponseHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotification(&notificationModel.Notification{
+		ToUserId: f.FollowerID, FromUserId: f.LeaderID,
+		TargetType: "follow", TargetDetailedType: "follow_request",
+		TargetId: f.LeaderID, TargetUUID: f.LeaderUUID,
+		Message: f.Status,
+	})
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
 }
@@ -125,6 +136,13 @@ func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
 	if err := followingModel.UpdateFollowing(f); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
+	}
+	if followingStatus == "requested" {
+		notificationModel.UpdateNotificationOnCancel(
+			&notificationModel.Notification{
+				ToUserId: f.LeaderID, FromUserId: f.FollowerID,
+				Message: "inactive", UpdatedBy: &userID,
+			}, "follow", followingStatus)
 	}
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)

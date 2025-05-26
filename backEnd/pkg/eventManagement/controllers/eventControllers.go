@@ -8,9 +8,11 @@ import (
 	"social-network/pkg/middleware"
 	"social-network/pkg/utils"
 
-	errorControllers "social-network/pkg/errorManagement/controllers"
 	eventModel "social-network/pkg/eventManagement/models"
 	groupModel "social-network/pkg/groupManagement/models"
+	notificationModel "social-network/pkg/notificationManagement/models"
+
+	errorControllers "social-network/pkg/errorManagement/controllers"
 	userControllers "social-network/pkg/userManagement/controllers"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -76,7 +78,7 @@ func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	e.CreatedBy = userID
 
-	_, eventUUID, err := eventModel.InsertEvent(e)
+	eventID, eventUUID, err := eventModel.InsertEvent(e)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -87,6 +89,9 @@ func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotificationForEvent(&notificationModel.Notification{
+		FromUserId: userID, TargetId: eventID, TargetUUID: eventUUID,
+	}, e.GroupID, userID)
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "event created",
 		struct {

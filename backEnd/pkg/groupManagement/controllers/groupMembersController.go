@@ -9,6 +9,7 @@ import (
 
 	followingModel "social-network/pkg/followingManagement/models"
 	groupModel "social-network/pkg/groupManagement/models"
+	notificationModel "social-network/pkg/notificationManagement/models"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	followingControllers "social-network/pkg/followingManagement/controllers"
@@ -71,6 +72,12 @@ func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotification(&notificationModel.Notification{
+		ToUserId: m.FollowerID, FromUserId: m.LeaderID,
+		TargetType: "group", TargetDetailedType: "group_invite",
+		TargetId: m.GroupID, TargetUUID: m.GroupUUID,
+		Message: m.Status,
+	})
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
 }
@@ -104,6 +111,12 @@ func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotification(&notificationModel.Notification{
+		ToUserId: m.LeaderID, FromUserId: userID,
+		TargetType: "group", TargetDetailedType: "group_request",
+		TargetId: m.GroupID, TargetUUID: m.GroupUUID,
+		Message: m.Status,
+	})
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
 }
@@ -117,11 +130,16 @@ func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
 	m.UpdatedBy, m.Status = userID, "inactive"
 	message := "not a member/ no request or invitation"
 
+	toUserID, fromUserID := m.LeaderID, userID
 	switch memberStatus {
 	case "accepted":
 		message = "you have left group"
-	case "requested", "invited":
-		message = "cancel/decline request"
+	case "requested":
+		message = "cancel request"
+	case "invited":
+		message, m.Status = "decline invite", "declined"
+		toUserID, fromUserID = userID, m.LeaderID
+
 	default:
 		errorControllers.CustomErrorHandler(w, r, message, http.StatusBadRequest)
 		return
@@ -130,6 +148,13 @@ func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
 	if err := followingModel.UpdateFollowing(m); err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
+	}
+	if memberStatus != "accepted" {
+		notificationModel.UpdateNotificationOnCancel(
+			&notificationModel.Notification{
+				ToUserId: toUserID, FromUserId: fromUserID,
+				Message: m.Status, UpdatedBy: &userID,
+			}, "group", memberStatus)
 	}
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
@@ -168,9 +193,11 @@ func GroupMemberResponseHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
-	message := "requested "
+	message := "request "
+	toUserID, fromUserID, detailedType := m.FollowerID, userID, "group_request"
 	if memberStatus == "invited" {
 		message = "invitation "
+		toUserID, fromUserID, detailedType = m.LeaderID, userID, "group_invite"
 	}
 	message += m.Status
 
@@ -185,6 +212,13 @@ func GroupMemberResponseHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotification(
+		&notificationModel.Notification{
+			ToUserId: toUserID, FromUserId: fromUserID,
+			TargetType: "group", TargetDetailedType: detailedType,
+			TargetId: m.GroupID, TargetUUID: m.GroupUUID,
+			Message: m.Status, UpdatedBy: &userID,
+		})
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
 }
