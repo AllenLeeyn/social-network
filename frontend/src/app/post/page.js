@@ -1,5 +1,5 @@
 "use client";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import SidebarSection from "../../components/SidebarSection";
 import CommentsSection from "../../components/CommentSection";
@@ -12,9 +12,11 @@ import {
 } from "../../data/mockData";
 import { usePosts } from "../../hooks/usePosts";
 import { fetchPostById, submitPostFeedback } from "../../lib/apiPosts";
+import CategoriesList from "../../components/CategoriesList";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams.get("id");
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -72,19 +74,14 @@ export default function PostPage() {
         {/* Left Sidebar */}
         <aside className="sidebar left-sidebar">
           <SidebarSection title="Categories">
-            {categoriesLoading ? (
-              <div>Loading...</div>
-            ) : categoriesError ? (
-              <div>Error: {categoriesError}</div>
-            ) : (
-              <ul className="categories">
-                {categories.map((cat) => (
-                  <li key={cat.id} className="category-item">
-                    <strong>{cat.name}</strong>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <CategoriesList
+              categories={categories}
+              loading={categoriesLoading}
+              error={categoriesError}
+              onCategoryClick={(cat) =>
+                router.push(`/?category=${encodeURIComponent(cat)}`)
+              }
+            />
           </SidebarSection>
           <SidebarSection title="Groups">
             <ul className="groups">

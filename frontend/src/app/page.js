@@ -3,14 +3,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 
 import SidebarSection from "../components/SidebarSection";
 import CategoriesList from "../components/CategoriesList";
 import PostList from "../components/PostList";
 import CreatePost from "../components/CreatePost";
 import Modal from "../components/Modal";
-import { fetchPosts } from "../lib/apiPosts";
+import { fetchPosts, fetchPostsByCategory } from "../lib/apiPosts";
 import { usePosts } from "../hooks/usePosts";
 
 import {
@@ -24,8 +24,11 @@ export default function HomePage() {
   const [showModal, setShowModal] = useState(false);
   const { posts, categories, loading, error } = usePosts([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const router = useRouter(); 
+  const router = useRouter();
 
   useEffect(() => {
     async function checkAccess() {
@@ -41,23 +44,38 @@ export default function HomePage() {
     checkAccess();
   }, [router]);
 
+  useEffect(() => {
+    if (!selectedCategory) setFilteredPosts(posts);
+  }, [posts, selectedCategory]);
+
+  const handleCategoryClick = async (cat) => {
+    if (selectedCategory === cat) {
+      setSelectedCategory(null);
+      setFilteredPosts(posts);
+      setCategoryError(null);
+      return;
+    }
+    setSelectedCategory(cat);
+    setCategoryLoading(true);
+    setCategoryError(null);
+    try {
+      const data = await fetchPostsByCategory(cat);
+      setFilteredPosts(data.data.Posts || []);
+    } catch (err) {
+      setCategoryError(err.message);
+      setFilteredPosts([]);
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
   if (!isAuthorized) {
     // Prevent rendering the homepage until access is verified
     return null;
   }
 
   // Filter logic
-  const filteredPosts = selectedCategory
-    ? posts.filter(
-        (post) =>
-          post.categories &&
-          post.categories.some((cat) => cat.name === selectedCategory)
-      )
-    : posts;
-
-  const handleCategoryClick = (cat) => {
-    setSelectedCategory((prev) => (prev === cat ? null : cat));
-  };
+  const displayedPosts = selectedCategory ? filteredPosts : posts;
 
   return (
     <main>
@@ -69,7 +87,6 @@ export default function HomePage() {
               categories={categories}
               loading={loading}
               error={error}
-              selectedCategory={selectedCategory}
               onCategoryClick={handleCategoryClick}
             />
           </SidebarSection>
@@ -117,7 +134,7 @@ export default function HomePage() {
           </div>
           {loading && <div>Loading...</div>}
           {error && <div>Error: {error}</div>}
-          {!loading && !error && <PostList posts={filteredPosts} />}
+          {!loading && !error && <PostList posts={displayedPosts} />}
 
           {showModal && (
             <Modal onClose={() => setShowModal(false)} title="Create Post">
