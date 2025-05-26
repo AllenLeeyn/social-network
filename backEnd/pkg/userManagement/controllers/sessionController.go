@@ -29,7 +29,8 @@ func generateSession(w http.ResponseWriter, r *http.Request, userId int) {
 		Expires:  session.ExpireTime,
 		MaxAge:   int(time.Until(session.ExpireTime).Seconds()),
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 		Path:     "/",
 	})
 }
@@ -43,7 +44,9 @@ func ExtendSession(w http.ResponseWriter, r *http.Request) error {
 		Expires:  time.Now().Add(2 * time.Hour),
 		MaxAge:   7200,
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+		Path:     "/",
 	})
 	return userModel.UpdateSession(&session{
 		IsActive:   true,
@@ -60,8 +63,9 @@ func expireSession(w http.ResponseWriter, r *http.Request, s *session) {
 		Expires:  time.Now(), // Set expiration to a past date
 		MaxAge:   -1,         // Invalidate the cookie immediately
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+		Path:     "/",
 	})
 
 	err := userModel.UpdateSession(&session{
