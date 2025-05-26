@@ -15,13 +15,13 @@ import (
 func (cc *ChatController) WSHandler(w http.ResponseWriter, r *http.Request) {
 	sessionId, userId, _, isOk := middleware.GetSessionCredentials(r.Context())
 	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.UnauthorizedError)
 		return
 	}
 
 	u, err := userModel.SelectUserByField("id", userId)
 	if err != nil || u == nil {
-		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusInternalServerError)
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusUnauthorized)
 		return
 	}
 	cc.WebSocketUpgrade(w, r, sessionId, u)
