@@ -86,12 +86,13 @@ export function WebSocketProvider( { children } ) {
                 // Optionally handle message send confirmation
                 break;
             case 'messageHistory':
-                if (isLoadingMore) {
-                        setMessages(prev => [...data.content, ...prev]);
-                        setHasMore(data.content.length === 10); // If less than 10, no more to load
+                const messagesArray = Array.isArray(data.content) ? data.content : [];
+                    if (isLoadingMore) {
+                        setMessages(prev => [...messagesArray, ...prev]);
+                        setHasMore(messagesArray.length === 10);
                     } else {
-                        setMessages(data.content);
-                        setHasMore(data.content.length === 10);
+                        setMessages(messagesArray);
+                        setHasMore(messagesArray.length === 10);
                     }
                     setIsLoadingMore(false);
                     break;

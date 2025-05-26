@@ -45,17 +45,18 @@ export default function MessagesChatbox() {
         );
     }, [messages, activeChat, userUuid]);
 
-    useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [filteredMessages]);
-
     // Auto-scroll to bottom on new messages
+    const prevMessagesLength = useRef(filteredMessages.length);
+
     useEffect(() => {
-        if (!isLoadingMore && messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        // Only scroll if a new message was added at the end (not when loading older messages)
+        if (
+            !isLoadingMore &&
+            filteredMessages.length > prevMessagesLength.current
+        ) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
+        prevMessagesLength.current = filteredMessages.length;
     }, [filteredMessages, isLoadingMore]);
 
     const handleScroll = useCallback(() => {
