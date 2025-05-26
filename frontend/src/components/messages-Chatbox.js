@@ -23,6 +23,7 @@ export default function MessagesChatbox() {
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const prevScrollHeight = useRef(0);
+    const scrollThrottleRef = useRef(false);
 
 
      // Get your own UUID from context or localStorage
@@ -58,13 +59,18 @@ export default function MessagesChatbox() {
     }, [filteredMessages, isLoadingMore]);
 
     const handleScroll = useCallback(() => {
-        if (!messagesContainerRef.current || isLoadingMore || !hasMore) return;
+        if (scrollThrottleRef.current || !messagesContainerRef.current || isLoadingMore || !hasMore) return;
 
-        const { scrollTop } = messagesContainerRef.current;
+    const { scrollTop } = messagesContainerRef.current;
         if (scrollTop < 100 && filteredMessages.length > 0) {
-            setIsLoadingMore(true); // Set loading state!
+            scrollThrottleRef.current = true;
+            setTimeout(() => {
+                scrollThrottleRef.current = false;
+            }, 300); // 300ms throttle
+
+            setIsLoadingMore(true);
             prevScrollHeight.current = messagesContainerRef.current.scrollHeight;
-            loadPreviousMessages();  // <-- Call the function here!
+            loadPreviousMessages();
         }
     }, [isLoadingMore, hasMore, filteredMessages, activeChat?.id]);
 
@@ -128,7 +134,7 @@ export default function MessagesChatbox() {
         sendAction({
             action: "messageReq",
             receiverUUID: activeChat.id,
-            content: oldestMsg.createdAt, // send timestamp as cursor
+            content: oldestMsg.ID.toString(), // send timestamp as cursor
         });
     }; 
 

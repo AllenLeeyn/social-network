@@ -20,6 +20,7 @@ export function WebSocketProvider( { children } ) {
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
 
+
     const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
 
     // use a ref for currentChatId to avoid unnecessary re-renders ---
@@ -85,16 +86,11 @@ export function WebSocketProvider( { children } ) {
                 // Optionally handle message send confirmation
                 break;
             case 'messageHistory':
-/*                 setMessages(
-                    Array.isArray(data.content)
-                        ? data.content.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-                        : []
-                ); */
                 if (isLoadingMore) {
                         setMessages(prev => [...data.content, ...prev]);
                         setHasMore(data.content.length === 10); // If less than 10, no more to load
                     } else {
-                        setMessages(Array.isArray(data.content) ? data.content : []);
+                        setMessages(data.content);
                         setHasMore(data.content.length === 10);
                     }
                     setIsLoadingMore(false);

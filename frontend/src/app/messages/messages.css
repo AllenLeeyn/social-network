@@ -41,7 +41,7 @@
 }
 
 .messages-list {
-    height: 700px;         /* Or any fixed value that fits your design */
+    height: 550px;         /* Or any fixed value that fits your design */
     overflow-y: auto;      /* Enables vertical scrolling */
     display: flex;
     flex-direction: column-reverse;
@@ -50,6 +50,7 @@
     /* Optional: */
     padding: 10px;
     box-sizing: border-box;
+    overscroll-behavior: contain;
 }
 
 .message-item {
