@@ -4,6 +4,7 @@ import { useWebsocketContext } from '../contexts/WebSocketContext';
 import { useActiveChat } from '../contexts/ActiveChatContext';
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
+
 export default function MessagesChatbox() {
 
     const { 
@@ -18,6 +19,7 @@ export default function MessagesChatbox() {
         setIsLoadingMore,
         hasMore,
     } = useWebsocketContext();
+    
     const { activeChat } = useActiveChat();
     const [inputMessage, setInputMessage] = useState('');
     const messagesEndRef = useRef(null);
@@ -131,6 +133,8 @@ export default function MessagesChatbox() {
         setIsLoadingMore(false);
         return;
     }
+    setIsLoadingMore(true);
+    console.log("Loading more, isLoadingMore:", isLoadingMore);
     const oldestMsg = filteredMessages[0]; // assuming messages are oldest-to-newest
         sendAction({
             action: "messageReq",

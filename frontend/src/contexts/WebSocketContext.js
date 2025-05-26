@@ -18,7 +18,12 @@ export function WebSocketProvider( { children } ) {
     });
         
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const isLoadingMoreRef = useRef(isLoadingMore);
     const [hasMore, setHasMore] = useState(true);
+
+    useEffect(() => {
+        isLoadingMoreRef.current = isLoadingMore;
+    }, [isLoadingMore]);
 
 
     const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
@@ -86,15 +91,18 @@ export function WebSocketProvider( { children } ) {
                 // Optionally handle message send confirmation
                 break;
             case 'messageHistory':
-                const messagesArray = Array.isArray(data.content) ? data.content : [];
-                    if (isLoadingMore) {
-                        setMessages(prev => [...messagesArray, ...prev]);
-                        setHasMore(messagesArray.length === 10);
+                    const newMessages = Array.isArray(data.content) ? [...data.content].reverse() : [];
+                    console.log('isLoadingMore:', isLoadingMore, 'new batch:', newMessages.map(m => m.ID));
+                if (isLoadingMoreRef.current) {
+                    setMessages(prev => {
+                        const combined = [...newMessages, ...prev];
+                        return combined.sort((a, b) => a.ID - b.ID);
+                    });
                     } else {
-                        setMessages(messagesArray);
-                        setHasMore(messagesArray.length === 10);
+                        setMessages(newMessages.sort((a, b) => a.ID - b.ID));
                     }
                     setIsLoadingMore(false);
+                    setHasMore(newMessages.length === 10);
                     break;
             case 'message':
                 setMessages(prev => [...prev, data]);

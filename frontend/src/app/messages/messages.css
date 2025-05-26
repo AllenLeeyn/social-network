@@ -44,7 +44,7 @@
     height: 550px;         /* Or any fixed value that fits your design */
     overflow-y: auto;      /* Enables vertical scrolling */
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     border: 1px solid #ccc;
     background: #fff;
     /* Optional: */
