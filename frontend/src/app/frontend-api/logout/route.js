@@ -1,8 +1,10 @@
 import { cookies } from "next/headers";
 
+const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 export async function POST() {
 
-  const backendUrl = "http://localhost:8080/api/logout";
+  const backendUrl = `${baseURL}/api/logout`;
 
   try {
     const cookieStore = cookies();

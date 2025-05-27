@@ -1,0 +1,18 @@
+# --- Base image with Node.js and Debian Slim ---
+FROM node:18-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copy the rest of the app
+COPY . .
+
+# Expose Next.js dev server port
+EXPOSE 3000
+
+# Default command for development
+CMD ["npm", "run", "dev"]

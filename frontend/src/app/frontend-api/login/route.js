@@ -1,5 +1,7 @@
+const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 export async function POST(req) {
-  const backendUrl = "http://localhost:8080/api/login";
+  const backendUrl = `${baseURL}/api/login`;
 
   try {
     const body = await req.json();
