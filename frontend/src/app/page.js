@@ -12,6 +12,8 @@ import CreatePost from "../components/CreatePost";
 import Modal from "../components/Modal";
 import { fetchPosts, fetchPostsByCategory } from "../lib/apiPosts";
 import { usePosts } from "../hooks/usePosts";
+import ConnectionList from "../components/ConnectionList";
+import { fetchFollowees } from "../lib/apiAuth";
 
 import {
   sampleUsers,
@@ -28,6 +30,9 @@ export default function HomePage() {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [connections, setConnections] = useState([]);
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
+  const [connectionsError, setConnectionsError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -47,6 +52,21 @@ export default function HomePage() {
   useEffect(() => {
     if (!selectedCategory) setFilteredPosts(posts);
   }, [posts, selectedCategory]);
+
+  useEffect(() => {
+    async function loadConnections() {
+      try {
+        setConnectionsLoading(true);
+        const data = await fetchFollowees();
+        setConnections(data || []);
+      } catch (err) {
+        setConnectionsError(err.message);
+      } finally {
+        setConnectionsLoading(false);
+      }
+    }
+    loadConnections();
+  }, []);
 
   const handleCategoryClick = async (cat) => {
     if (selectedCategory === cat) {
@@ -100,17 +120,11 @@ export default function HomePage() {
             </ul>
           </SidebarSection>
           <SidebarSection title="Connections">
-            <ul className="connections">
-              {sampleConnections.map((conn) => (
-                <li key={conn.id} className="connection-item">
-                  <span>
-                    <strong>
-                      {conn.fullName} ({conn.username})
-                    </strong>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <ConnectionList
+              connections={connections}
+              loading={connectionsLoading}
+              error={connectionsError}
+            />
           </SidebarSection>
         </aside>
 

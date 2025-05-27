@@ -1,0 +1,31 @@
+FROM golang:1.23 AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+
+COPY . .
+
+RUN apt-get update
+RUN apt-get install sqlite3
+
+RUN go build -o social-network_backend .
+
+# Using the debian:bookworm-slim image for a small runtime environment
+FROM debian:bookworm-slim
+
+WORKDIR /app
+
+# Metadata
+LABEL project="social-network_backend"
+LABEL version="1.0"
+LABEL description="Social network backend that handles data and business logic"
+
+COPY --from=builder /app/social-network_backend .
+COPY --from=builder /app/pkg/databaseManagement/social_network.db ./pkg/databaseManagement/social_network.db
+COPY --from=builder /app/pkg/databaseManagement/migrate ./pkg/databaseManagement/migrate
+
+EXPOSE 8080
+
+CMD ["./social-network_backend"]

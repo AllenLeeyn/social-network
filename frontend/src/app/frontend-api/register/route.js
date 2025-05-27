@@ -1,5 +1,6 @@
 export async function POST(req) {
-    const backendUrl = "http://localhost:8080/api/register"; 
+    const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const backendUrl = `${baseURL}/api/register`; 
   
     try {
       const body = await req.json(); 

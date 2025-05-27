@@ -47,5 +47,6 @@ func ReadJSON(r *http.Request, data interface{}) error {
 	if err = json.Unmarshal(body, data); err != nil {
 		return err
 	}
+	//log.Println(data)
 	return nil
 }
