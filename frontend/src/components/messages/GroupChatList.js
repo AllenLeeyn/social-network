@@ -1,8 +1,8 @@
 "use client";
 
-import { useActiveChat } from '../contexts/ActiveChatContext';
+import { useActiveChat } from '../../contexts/ActiveChatContext';
 import { useMemo } from 'react';
-import { sampleConversations } from '../data/mockData';
+import { sampleConversations } from '../../data/mockData';
 
 export default function GroupChatsList() {
     const { activeChat, setActiveChat } = useActiveChat();

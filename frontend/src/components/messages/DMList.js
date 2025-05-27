@@ -1,7 +1,7 @@
 "use client";
 
-import { useWebsocketContext } from '../contexts/WebSocketContext';
-import { useActiveChat } from '../contexts/ActiveChatContext';
+import { useWebsocketContext } from '../../contexts/WebSocketContext';
+import { useActiveChat } from '../../contexts/ActiveChatContext';
 import { useMemo } from 'react';
 
 import '/src/styles/messages/DMList.css'

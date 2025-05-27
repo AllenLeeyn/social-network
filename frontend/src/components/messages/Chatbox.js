@@ -1,7 +1,7 @@
 "use client";
 
-import { useWebsocketContext } from '../contexts/WebSocketContext';
-import { useActiveChat } from '../contexts/ActiveChatContext';
+import { useWebsocketContext } from '../../contexts/WebSocketContext';
+import { useActiveChat } from '../../contexts/ActiveChatContext';
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
 
