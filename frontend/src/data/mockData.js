@@ -155,3 +155,77 @@ export const sampleMessages = [
     conversationId: 'conv3'
   }
 ];
+
+export const mockNotifications = [
+  {
+    id: 'notif-1',
+    type: 'follow_request',
+    isRead: false,
+    timestamp: '2025-05-27T08:30:00Z',
+    fromUser: {
+      id: 'user-2',
+      name: 'Alice Johnson',
+      avatar: '/avatars/alice.jpg'
+    },
+    message: 'Alice Johnson wants to follow you.',
+    actions: ['accept', 'decline']
+  },
+  {
+    id: 'notif-2',
+    type: 'group_invitation',
+    isRead: false,
+    timestamp: '2025-05-27T07:50:00Z',
+    group: {
+      id: 'group-1',
+      name: 'React Enthusiasts',
+      avatar: '/groups/react.png'
+    },
+    fromUser: {
+      id: 'user-3',
+      name: 'Bob Lee',
+      avatar: '/avatars/bob.jpg'
+    },
+    message: 'Bob Lee invited you to join React Enthusiasts.',
+    actions: ['accept', 'decline']
+  },
+  {
+    id: 'notif-3',
+    type: 'group_join_request',
+    isRead: true,
+    timestamp: '2025-05-26T20:15:00Z',
+    group: {
+      id: 'group-2',
+      name: 'Next.js Masters',
+      avatar: '/groups/nextjs.png'
+    },
+    fromUser: {
+      id: 'user-4',
+      name: 'Charlie Kim',
+      avatar: '/avatars/charlie.jpg'
+    },
+    message: 'Charlie Kim requested to join your group Next.js Masters.',
+    actions: ['accept', 'decline']
+  },
+  {
+    id: 'notif-4',
+    type: 'group_event',
+    isRead: false,
+    timestamp: '2025-05-27T06:00:00Z',
+    group: {
+      id: 'group-1',
+      name: 'React Enthusiasts',
+      avatar: '/groups/react.png'
+    },
+    event: {
+      id: 'event-1',
+      name: 'React 19 Launch Party'
+    },
+    fromUser: {
+      id: 'user-5',
+      name: 'Dana White',
+      avatar: '/avatars/dana.jpg'
+    },
+    message: 'A new event "React 19 Launch Party" was created in React Enthusiasts.',
+    actions: ['view']
+  }
+];
