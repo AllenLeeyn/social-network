@@ -32,7 +32,7 @@ export default function Navbar() {
           Home
         </Link>
         <Link href="/groups" className="nav-link">
-          Connections
+          Groups
         </Link>
         <Link href="/messages" className="nav-link">
           Messages

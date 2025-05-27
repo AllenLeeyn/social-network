@@ -1,55 +1,62 @@
-import styles from './groups.css';
+// app/groups/page.js
+
+'use client';
+
+import React, { useState } from 'react';
+import SidebarSection from '../../components/SidebarSection';
+import UsersList from '../../components/UsersList';
+import GroupFilterList from '../../components/groups/GroupFilterList';
+import GroupList from '../../components/groups/GroupList';
+import GroupDetail from '../../components/groups/GroupDetail';
+import GroupInvitationList from '../../components/groups/GroupInvitationList';
+
+const groupFilters = [
+  { key: 'my_groups', label: 'My Groups' },
+  { key: 'discover', label: 'Discover' },
+  { key: 'invitations', label: 'Invitations' }
+];
 
 export default function GroupsPage() {
-  const groups = mockGroups;
+  const [selectedFilter, setSelectedFilter] = useState('my_groups');
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Groups</h1>
-      <div className={styles.groupList}>
-        {groups.map(group => (
-          <div key={group.id} className={styles.groupCard}>
-            <h2 className={styles.groupName}>{group.name}</h2>
-            <p className={styles.groupDescription}>{group.description}</p>
-            <p className={styles.groupInfo}>Members: {group.memberCount}</p>
-            <span className={styles.groupTag}>
-              {group.isPublic ? "Public" : "Private"}
-            </span>
-          </div>
-        ))}
+    <main>
+      <div className='groups-page-layout'>
+        {/* Left Sidebar */}
+        <aside className='sidebar left-sidebar'>
+          <SidebarSection title='Groups'>
+            <GroupFilterList
+              filters={groupFilters}
+              selectedFilter={selectedFilter}
+              onSelect={setSelectedFilter}
+            />
+          </SidebarSection>
+        </aside>
+
+        {/* Main Content */}
+        <section className='main-feed group-section'>
+          {selectedFilter === 'my_groups' && (
+            <GroupList onSelectGroup={setSelectedGroup} />
+          )}
+          {selectedFilter === 'discover' && (
+            <GroupList discover onSelectGroup={setSelectedGroup} />
+          )}
+          {selectedFilter === 'invitations' && (
+            <GroupInvitationList />
+          )}
+          {selectedGroup && (
+            <GroupDetail group={selectedGroup} />
+          )}
+        </section>
+
+        {/* Right Sidebar */}
+        <aside className="sidebar right-sidebar">
+          <SidebarSection title="All Users">
+            <UsersList />
+          </SidebarSection>
+        </aside>
       </div>
-    </div>
+    </main>
   );
 }
-
-
-const mockGroups = [
-  {
-    id: 1,
-    name: "Tech Enthusiasts",
-    description: "A group for sharing tech tips and news.",
-    memberCount: 142,
-    isPublic: true
-  },
-  {
-    id: 2,
-    name: "Book Club",
-    description: "Discuss your favorite books every week.",
-    memberCount: 87,
-    isPublic: true
-  },
-  {
-    id: 3,
-    name: "Fitness Group",
-    description: "Workout routines and motivation.",
-    memberCount: 65,
-    isPublic: true
-  },
-  {
-    id: 4,
-    name: "Cooking Masters",
-    description: "Recipes and cooking techniques.",
-    memberCount: 53,
-    isPublic: true
-  }
-];

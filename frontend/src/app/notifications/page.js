@@ -44,8 +44,8 @@ export default function NotificationPage() {
             </aside>
             {/* Main Notification Feed */}
             <section className='main-feed notification-section'>
-            <h2>Notifications</h2>
-            <NotificationList notifications={filteredNotifications} />
+                <h2>Notifications</h2>
+                <NotificationList notifications={filteredNotifications} />
             </section>
             {/* Right Sidebar */}
             <aside className="sidebar right-sidebar">
