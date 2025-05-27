@@ -3,7 +3,7 @@
 .notification-filter-list {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center items horizontally */
+    align-items: center; 
     padding: 0;
     margin: 0 auto;
     list-style: none;
