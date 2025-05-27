@@ -1,7 +1,7 @@
 // src/components/groups/GroupFilterList.js
 
 import React from "react";
-import "../../styles/SidebarSection.css"; // Optional: for consistent sidebar styling
+import "../../styles/SidebarSection.css"; 
 
 export default function GroupFilterList({ filters, selectedFilter, onSelect }) {
     return (
@@ -9,16 +9,16 @@ export default function GroupFilterList({ filters, selectedFilter, onSelect }) {
         {filters.map((filter) => (
             <li
             key={filter.key}
-            className={filter.key === selectedFilter ? "selected" : ""}
-            >
-            <button
-                type="button"
-                onClick={() => onSelect(filter.key)}
-                className="group-filter-btn"
-                aria-current={filter.key === selectedFilter ? "page" : undefined}
-            >
-                {filter.label}
-            </button>
+            className={
+                "group-filter-item" +
+                (filter.key === selectedFilter ? "active" : "")
+            }
+            
+            onClick={() => onSelect(filter.key)}
+            tabIndex={0}
+            role="button"
+        >
+            {filter.label}
             </li>
         ))}
         </ul>

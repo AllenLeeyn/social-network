@@ -10,6 +10,9 @@ import GroupList from '../../components/groups/GroupList';
 import GroupDetail from '../../components/groups/GroupDetail';
 import GroupInvitationList from '../../components/groups/GroupInvitationList';
 
+import '../../styles/groups/FilterList.css'
+import './groups.css'
+
 const groupFilters = [
   { key: 'my_groups', label: 'My Groups' },
   { key: 'discover', label: 'Discover' },
