@@ -47,19 +47,6 @@ export default function MessagesChatbox() {
         );
     }, [messages, activeChat, userUuid]);
 
-    // Auto-scroll to bottom on new messages
-    // const prevMessagesLength = useRef(filteredMessages.length);
-
-    // useEffect(() => {
-    //     if (
-    //         !isLoadingMore &&
-    //         filteredMessages.length > prevMessagesLength.current
-    //     ) {
-    //         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    //     }
-    //     prevMessagesLength.current = filteredMessages.length;
-    // }, [filteredMessages, isLoadingMore]);
-
     useEffect(() => {
         if (filteredMessages.length > 0 && messagesEndRef.current) {
             // messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
@@ -151,7 +138,6 @@ export default function MessagesChatbox() {
             content: oldestMsg.ID.toString(), // send timestamp as cursor
         });
     }; 
-
 
     // console.log("messages:", messages);
     // console.log("activeChat.id:", activeChat?.id, "userUuid:", userUuid);

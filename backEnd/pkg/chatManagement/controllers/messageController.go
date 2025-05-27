@@ -159,4 +159,3 @@ func (cc *ChatController) processTypingEvent(msgData *message, cl *client) {
 	)
 	cc.queuePublicMessage(content, msgData.ReceiverUUID)
 }
-

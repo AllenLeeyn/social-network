@@ -2,15 +2,17 @@
 import Link from "next/link"
 import Image from "next/image"
 import "../styles/Navbar.css"
-import { logout } from "../lib/apiAuth" // Import logout
+import { useAuth } from "../hooks/useAuth";
 
 export default function Navbar() {
   // Logout handler
-  const handleLogout = async (e) => {
-    e.preventDefault()
-    alert("logging out..")
-    await logout()
-  }
+  const { handleLogout } = useAuth();
+
+  const onLogoutClick = async (e) => {
+    e.preventDefault();
+    alert("logging out..");
+    await handleLogout();
+  };
 
   return (
     <div className="navbar">
@@ -43,7 +45,7 @@ export default function Navbar() {
         <Link href="/profile" className="nav-link">
           Profile
         </Link>
-        <a href="/" className="nav-link" onClick={handleLogout}>
+        <a href="/" className="nav-link" onClick={onLogoutClick}>
           Logout
         </a>
       </div>

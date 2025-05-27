@@ -51,6 +51,9 @@ export function useAuth() {
   const handleLogout = async () => {
     await logout()
     setUser(null)
+    localStorage.removeItem('activeDM');
+    localStorage.removeItem('session-id');
+    localStorage.removeItem('user-uuid');
   }
 
   return { user, loading, error, handleLogin, handleSignup, handleLogout }

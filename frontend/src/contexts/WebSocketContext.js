@@ -16,7 +16,15 @@ export function WebSocketProvider( { children } ) {
         }
         return null;
     });
-        
+    
+    const [activeDM, setActiveDM] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('activeDM');
+            return saved ? JSON.parse(saved) : [];
+        }
+        return [];
+    });
+    
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const isLoadingMoreRef = useRef(isLoadingMore);
     const [hasMore, setHasMore] = useState(true);
@@ -24,7 +32,6 @@ export function WebSocketProvider( { children } ) {
     useEffect(() => {
         isLoadingMoreRef.current = isLoadingMore;
     }, [isLoadingMore]);
-
 
     const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
 
@@ -107,6 +114,8 @@ export function WebSocketProvider( { children } ) {
             case 'message':
                 setMessages(prev => [...prev, data]);
                 sendAction({ action: 'userListReq' });
+                const otherUserId = data.senderUUID === userUuid ? data.receiverUUID : data.senderUUID;
+                setActiveDM(prev => prev.includes(otherUserId) ? prev : [...prev, otherUserId]);
                 if (data.senderUUID !== currentChatIdRef.current) {
                     setUserList(prev =>
                         prev.map(user =>
@@ -168,7 +177,11 @@ export function WebSocketProvider( { children } ) {
         }
     }, [currentChatId, userUuid, sendAction]);
 
-
+    useEffect(() => {
+    if (activeDM && activeDM.length > 0) {
+        localStorage.setItem('activeDM', JSON.stringify(activeDM));
+        }
+    }, [activeDM]);
 
 
     return (
@@ -185,6 +198,8 @@ export function WebSocketProvider( { children } ) {
             isLoadingMore,
             setIsLoadingMore,
             hasMore,
+            activeDM,
+            setActiveDM
         }}>
             {children}
         </WebSocketContext.Provider>
