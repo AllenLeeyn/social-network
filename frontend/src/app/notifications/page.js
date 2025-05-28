@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
 import SidebarSection from '../../components/SidebarSection';
 import UsersList from '../../components/UsersList';
 import NotificationFilterList from '../../components/notifications/NotificationFilterList';
@@ -10,6 +11,7 @@ import './notification.css';
 import '../../styles/notifications/FilterList.css'
 
 import { mockNotifications } from '../../data/mockData';
+import { fetchNotifications } from "../../lib/apiNotifications";
 
 const notificationFilters = [
     { key: 'all', label: 'All' },
@@ -21,13 +23,29 @@ const notificationFilters = [
 ];
 
 export default function NotificationPage() {
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [selectedFilter, setSelectedFilter] = useState('all');
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const notificationData = await fetchNotifications();
+                setNotifications(notificationData.data);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
 
     const filteredNotifications = useMemo(() => {
-    if (selectedFilter === 'all') return mockNotifications;
-    if (selectedFilter === 'unread') return mockNotifications.filter(n => !n.isRead);
-    return mockNotifications.filter(n => n.type === selectedFilter);
-    }, [selectedFilter]);
+        if (!notifications) return [];
+        if (selectedFilter === 'all') return notifications;
+        if (selectedFilter === 'unread') return notifications.filter(n => !n.isRead);
+        return notifications.filter(n => n.type === selectedFilter);
+    }, [notifications, selectedFilter]);
 
     return (
         <main>
