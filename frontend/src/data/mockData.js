@@ -293,3 +293,22 @@ export const mockEvents = [
     rsvps: { dave: "going", eve: "going" }
   }
 ];
+
+
+// In mockGroups.js
+export const mockPosts = [
+  {
+    id: 1,
+    groupId: 1,
+    title: "Welcome to React Enthusiasts!",
+    content: "Let's share our favorite React tips here.",
+    author: "alice",
+  },
+  {
+    id: 2,
+    groupId: 2,
+    title: "Next.js Meetup",
+    content: "Who wants to join a virtual meetup next week?",
+    author: "carol",
+  }
+];

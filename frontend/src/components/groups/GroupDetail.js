@@ -1,77 +1,122 @@
 // src/components/groups/GroupDetail.js
 
-import React from "react";
+import React, { useState } from "react";
 import { mockEvents } from "../../data/mockData";
 
-// Props:
-// - group: the group object to display (required)
-// - onBack: function to call when the user wants to go back to the list (optional)
-// - currentUser: string (for permissions, optional)
+import Modal from "../Modal";
+import CreatePostForm from "./CreatePostForm";
+import CreateEventForm from "./CreateEventForm";
+
+import "../../styles/groups/GroupDetail.css"; 
+
 
 export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
+
+    // Modal state
+    const [showPostModal, setShowPostModal] = useState(false);
+    const [showEventModal, setShowEventModal] = useState(false);
+
     if (!group) return null;
 
-    // Filter events for this group
     const groupEvents = mockEvents.filter(e => e.groupId === group.id);
-
-    // Determine if current user is a member
     const isMember = group.members.includes(currentUser);
 
+    const handlePostSubmit = (postData) => {
+        // TODO: Add post to group (API or state update)
+        alert(`Post created: ${postData.title}`);
+        setShowPostModal(false);
+    };
+
+    const handleEventSubmit = (eventData) => {
+        // TODO: Add event to group (API or state update)
+        alert(`Event created: ${eventData.title}`);
+        setShowEventModal(false);
+    };
+
+
     return (
-        <div className="group-detail">
-        <button onClick={onBack} style={{ marginBottom: 16 }}>
-            ← Back to Groups
-        </button>
-        <h2>{group.title}</h2>
-        <p>{group.description}</p>
+            <div className="group-detail">
+                <button onClick={onBack} className="group-detail-back-btn">
+                    ← Back to Groups
+                </button>
+                <h2>{group.title}</h2>
+                <p>{group.description}</p>
 
-        <section style={{ margin: "16px 0" }}>
-            <strong>Members:</strong>
-            <ul>
-            {group.members.map(member => (
-                <li key={member}>{member}</li>
-            ))}
-            </ul>
-            {!isMember && (
-            <button style={{ marginTop: 8 }}>
-                Request to Join
-            </button>
-            )}
-            {isMember && (
-            <button style={{ marginTop: 8 }}>
-                Invite User
-            </button>
-            )}
-        </section>
-
-        <section>
-            <strong>Upcoming Events:</strong>
-            {groupEvents.length === 0 ? (
-            <div>No events yet.</div>
-            ) : (
-            <ul>
-                {groupEvents.map(event => (
-                <li key={event.id} style={{ marginBottom: 12 }}>
-                    <div>
-                    <b>{event.title}</b> — {new Date(event.dateTime).toLocaleString()}
-                    </div>
-                    <div style={{ fontSize: "0.95em" }}>{event.description}</div>
-                    {isMember && (
-                    <div style={{ marginTop: 4 }}>
-                        <button style={{ marginRight: 8 }}>Going</button>
-                        <button>Not Going</button>
-                    </div>
+                <section className="group-detail-members-section">
+                    <strong>Members:</strong>
+                    <ul className="group-detail-members-list">
+                        {group.members.map(member => (
+                            <li key={member}>{member}</li>
+                        ))}
+                    </ul>
+                    {!isMember && (
+                        <button className="group-detail-join-btn">
+                            Request to Join
+                        </button>
                     )}
-                </li>
-                ))}
-            </ul>
-            )}
-            {isMember && (
-            <button style={{ marginTop: 16 }}>
-                Create Event
-            </button>
-            )}
-        </section>
-        </div>
-    );
+                    {isMember && (
+                        <button className="group-detail-invite-btn">
+                            Invite User
+                        </button>
+                    )}
+                </section>
+
+                {/* Action buttons for members */}
+                {isMember && (
+                    <div className="group-detail-actions">
+                        <button onClick={() => setShowPostModal(true)}>
+                            Create Post
+                        </button>
+                        <button onClick={() => setShowEventModal(true)}>
+                            Create Event
+                        </button>
+                    </div>
+                )}
+
+                <section>
+                    <strong>Upcoming Events:</strong>
+                    {groupEvents.length === 0 ? (
+                        <div>No events yet.</div>
+                    ) : (
+                        <ul className="group-detail-events-list">
+                            {groupEvents.map(event => (
+                                <li key={event.id} className="group-detail-event-item">
+                                    <div>
+                                        <b>{event.title}</b> — {new Date(event.dateTime).toLocaleString()}
+                                    </div>
+                                    <div className="group-detail-event-desc">{event.description}</div>
+                                    {isMember && (
+                                        <div className="group-detail-event-actions">
+                                            <button>Going</button>
+                                            <button>Not Going</button>
+                                        </div>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
+
+                {/* Modals */}
+                {showPostModal && (
+                    <Modal onClose={() => setShowPostModal(false)}>
+                        <CreatePostForm
+                            groupId={group.id}
+                            onSubmit={handlePostSubmit}
+                            onClose={() => setShowPostModal(false)}
+                        />
+                    </Modal>
+                )}
+                {showEventModal && (
+                    <Modal onClose={() => setShowEventModal(false)}>
+                        <CreateEventForm
+                            groupId={group.id}
+                            onSubmit={handleEventSubmit}
+                            onClose={() => setShowEventModal(false)}
+                        />
+                    </Modal>
+                )}
+            </div>
+        );
 }
+

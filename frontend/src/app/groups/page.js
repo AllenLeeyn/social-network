@@ -23,6 +23,14 @@ export default function GroupsPage() {
   const [selectedFilter, setSelectedFilter] = useState('my_groups');
   const [selectedGroup, setSelectedGroup] = useState(null);
 
+  const handleSelectGroup = (group) => {
+  if (selectedGroup && selectedGroup.id === group.id) {
+    setSelectedGroup(null); // Deselect if same group is clicked
+  } else {
+    setSelectedGroup(group); // Select new group
+  }
+};
+
   return (
     <main>
       <div className='groups-page-layout'>
@@ -40,10 +48,10 @@ export default function GroupsPage() {
         {/* Main Content */}
         <section className='main-feed group-section'>
           {selectedFilter === 'my_groups' && (
-            <GroupList onSelectGroup={setSelectedGroup} />
+            <GroupList onSelectGroup={handleSelectGroup} />
           )}
           {selectedFilter === 'discover' && (
-            <GroupList discover onSelectGroup={setSelectedGroup} />
+            <GroupList discover onSelectGroup={handleSelectGroup} />
           )}
           {selectedFilter === 'invitations' && (
             <GroupInvitationList />
