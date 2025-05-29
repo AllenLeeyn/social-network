@@ -1,8 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Martian+Mono:wght@100..800&display=swap');
+
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Martian Mono, Arial, sans-serif;
     background-color: #f9f9f9;
     color: #333;
+    overscroll-behavior: none;
+    scroll-behavior: smoth;
+    background-image: url('/bgimage.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
 
 nav {
