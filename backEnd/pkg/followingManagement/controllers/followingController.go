@@ -2,55 +2,51 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	middleware "social-network/pkg/middleware"
 	"social-network/pkg/utils"
 
 	followingModel "social-network/pkg/followingManagement/models"
+	notificationModel "social-network/pkg/notificationManagement/models"
 	userModel "social-network/pkg/userManagement/models"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	userControllers "social-network/pkg/userManagement/controllers"
 )
 
-func ParseFollowingRequest(r *http.Request) (*followingModel.Following, int, string, error) {
-	userID, isOk := middleware.GetUserID(r.Context())
+func ParseFollowingRequest(r *http.Request) (*followingModel.Following, int, string, int, error) {
+	_, userID, userUUID, isOk := middleware.GetSessionCredentials(r.Context())
 	if !isOk {
-		return nil, -1, "", fmt.Errorf("InternalServerError")
+		return nil, -1, "", http.StatusUnauthorized, fmt.Errorf("unauthorized")
 	}
 
 	f := &followingModel.Following{}
 	if err := utils.ReadJSON(r, f); err != nil {
-		return nil, -1, "", fmt.Errorf("invalid input")
+		return nil, -1, "", http.StatusBadRequest, fmt.Errorf("invalid input")
 	}
 	if f.FollowerUUID == "" {
-		f.FollowerID = userID
+		f.FollowerID, f.FollowerUUID = userID, userUUID
 	} else {
-		f.LeaderID = userID
+		f.LeaderID, f.LeaderUUID = userID, userUUID
 	}
 	f.Type = "user"
 
 	if err := followingModel.SelectIDsFromUUIDs(f); err != nil {
-		return nil, -1, "", err
+		return nil, -1, "", http.StatusBadRequest, err
 	}
 
 	followingStatus, err := followingModel.SelectStatus(f)
 	if err != nil {
-		return nil, -1, "", fmt.Errorf("InternalServerError")
+		return nil, -1, "", http.StatusBadRequest, fmt.Errorf("bad request")
 	}
-	return f, userID, followingStatus, nil
+	return f, userID, followingStatus, http.StatusOK, nil
 }
 
 func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
-	f, userID, followingStatus, err := ParseFollowingRequest(r)
+	f, userID, followingStatus, statusCode, err := ParseFollowingRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	f.Status = "requested"
@@ -77,22 +73,23 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := operation(f); err != nil {
-		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotification(&notificationModel.Notification{
+		ToUserId: f.LeaderID, FromUserId: f.FollowerID,
+		TargetType: "follow", TargetDetailedType: "follow_request",
+		TargetId: f.LeaderID, TargetUUID: f.LeaderUUID,
+		Message: f.Status,
+	})
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
 }
 
 func FollowingResponseHandler(w http.ResponseWriter, r *http.Request) {
-	f, userID, followingStatus, err := ParseFollowingRequest(r)
+	f, userID, followingStatus, statusCode, err := ParseFollowingRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	f.UpdatedBy = userID
@@ -104,22 +101,23 @@ func FollowingResponseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := followingModel.UpdateFollowing(f); err != nil {
-		log.Println(err.Error())
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotification(&notificationModel.Notification{
+		ToUserId: f.FollowerID, FromUserId: f.LeaderID,
+		TargetType: "follow", TargetDetailedType: "follow_request",
+		TargetId: f.LeaderID, TargetUUID: f.LeaderUUID,
+		Message: f.Status,
+	})
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
 }
 
 func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
-	f, userID, followingStatus, err := ParseFollowingRequest(r)
+	f, userID, followingStatus, statusCode, err := ParseFollowingRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	f.UpdatedBy, f.Status = userID, "inactive"
@@ -139,18 +137,21 @@ func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	if followingStatus == "requested" {
+		notificationModel.UpdateNotificationOnCancel(
+			&notificationModel.Notification{
+				ToUserId: f.LeaderID, FromUserId: f.FollowerID,
+				Message: "inactive", UpdatedBy: &userID,
+			}, "follow", followingStatus)
+	}
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
 }
 
 func FollowingRemoveHandler(w http.ResponseWriter, r *http.Request) {
-	f, userID, followingStatus, err := ParseFollowingRequest(r)
+	f, userID, followingStatus, statusCode, err := ParseFollowingRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	f.UpdatedBy, f.Status = userID, "declined"
@@ -170,15 +171,9 @@ func FollowingRemoveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewFollowingsHandler(w http.ResponseWriter, r *http.Request) {
-	tgtUUID, statusCode := userControllers.GetTgtUUID(r, "api/followers")
-	if statusCode == http.StatusInternalServerError {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-
-	} else if statusCode == http.StatusForbidden {
-		errorControllers.CustomErrorHandler(w, r,
-			"access denied: private profile and user is not follower",
-			http.StatusForbidden)
+	tgtUUID, statusCode, err := userControllers.GetTgtUUID(r, "api/followers")
+	if err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 
@@ -188,13 +183,13 @@ func ViewFollowingsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, "Data OK", followings)
+	utils.ReturnJsonSuccess(w, "follow data retrieved", followings)
 }
 
 func ViewFollowingRequestsHandler(w http.ResponseWriter, r *http.Request) {
 	userUUID, isOk := middleware.GetUserUUID(r.Context())
 	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.UnauthorizedError)
 		return
 	}
 
@@ -204,5 +199,5 @@ func ViewFollowingRequestsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userControllers.ExtendSession(w, r)
-	utils.ReturnJsonSuccess(w, "Data OK", pendingFollowing)
+	utils.ReturnJsonSuccess(w, "follow requests retrieved", pendingFollowing)
 }

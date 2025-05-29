@@ -3,14 +3,15 @@ package controller
 import (
 	// "forum/middlewares"
 
-	"database/sql"
 	"errors"
 	"net/http"
-	errorControllers "social-network/pkg/errorManagement/controllers"
-	"social-network/pkg/middleware"
-	"social-network/pkg/notificationManagement/models"
-	"social-network/pkg/utils"
 	"strconv"
+
+	"social-network/pkg/middleware"
+	"social-network/pkg/utils"
+
+	errorControllers "social-network/pkg/errorManagement/controllers"
+	"social-network/pkg/notificationManagement/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -55,9 +56,6 @@ func isValidNotificationInfo(notification *models.Notification) error {
 	}
 	if notification.Message, isValid = utils.IsValidContent(notification.Message, 3, 1000); !isValid {
 		return errors.New("message is required and must be between 3 to 1000 alphanumeric characters, '_' or '-'")
-	}
-	if notification.TargetUUIDForm != "" {
-		notification.TargetUUID = sql.NullString{Valid: true, String: notification.TargetUUIDForm}
 	}
 
 	return nil

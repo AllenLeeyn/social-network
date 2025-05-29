@@ -32,11 +32,9 @@ export async function signup(userData) {
 
 export async function logout() {
   const response = await fetch(`${API_URL}/logout`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: "GET",
     credentials: "include", // Ensure cookies are included
   });
-
 
   if (response.status === 200) {
     window.location.href = "/login"; // Redirect to login
@@ -47,4 +45,14 @@ export async function logout() {
     const errorData = await response.json();
     throw new Error(errorData.message || "Logout failed");
   }
+}
+
+export async function fetchFollowees() {
+  const response = await fetch("/frontend-api/followers/", {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error("Failed to fetch followees");
+  const result = await response.json();
+  return result.data;
 }

@@ -13,6 +13,8 @@ import {
 import { usePosts } from "../../hooks/usePosts";
 import { fetchPostById, submitPostFeedback } from "../../lib/apiPosts";
 import CategoriesList from "../../components/CategoriesList";
+import ConnectionList from "../../components/ConnectionList";
+import { fetchFollowees } from "../../lib/apiAuth";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -22,6 +24,9 @@ export default function PostPage() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [connections, setConnections] = useState([]);
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
+  const [connectionsError, setConnectionsError] = useState(null);
 
   // Fetch categories (and optionally users, etc.)
   const {
@@ -44,6 +49,21 @@ export default function PostPage() {
     }
     if (id) fetchData();
   }, [id]);
+
+  useEffect(() => {
+    async function loadConnections() {
+      try {
+        setConnectionsLoading(true);
+        const data = await fetchFollowees();
+        setConnections(data || []);
+      } catch (err) {
+        setConnectionsError(err.message);
+      } finally {
+        setConnectionsLoading(false);
+      }
+    }
+    loadConnections();
+  }, []);
 
   const refreshComments = async () => {
     try {
@@ -93,17 +113,11 @@ export default function PostPage() {
             </ul>
           </SidebarSection>
           <SidebarSection title="Connections">
-            <ul className="connections">
-              {sampleConnections.map((conn) => (
-                <li key={conn.id} className="connection-item">
-                  <span>
-                    <strong>
-                      {conn.fullName} ({conn.username})
-                    </strong>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <ConnectionList
+              connections={connections}
+              loading={connectionsLoading}
+              error={connectionsError}
+            />
           </SidebarSection>
         </aside>
 

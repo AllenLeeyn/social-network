@@ -105,9 +105,9 @@ func GroupUpdateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewGroupsHandler(w http.ResponseWriter, r *http.Request) {
-	tgtUUID, statusCode := userControllers.GetTgtUUID(r, "api/groups")
-	if statusCode != http.StatusOK {
-		errorControllers.CustomErrorHandler(w, r, tgtUUID, statusCode)
+	tgtUUID, statusCode, err := userControllers.GetTgtUUID(r, "api/groups")
+	if err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 

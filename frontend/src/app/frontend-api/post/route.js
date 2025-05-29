@@ -8,5 +8,5 @@ export async function GET(req) {
       status: 400,
     });
   }
-  return proxyToBackend(req, `http://localhost:8080/api/post/${id}`, "GET");
+  return proxyToBackend(req, `/api/post/${id}`, "GET");
 }
