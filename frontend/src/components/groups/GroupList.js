@@ -23,6 +23,7 @@ export default function GroupList({ type = "my_groups", onSelectGroup, currentUs
 
     return (
         <ul className="group-list">
+        <h3>My Group</h3>
         {groupsToShow.map(group => (
             <li
             key={group.id}
