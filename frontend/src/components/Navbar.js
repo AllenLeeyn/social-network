@@ -3,10 +3,13 @@ import Link from "next/link"
 import Image from "next/image"
 import "../styles/Navbar.css"
 import { useAuth } from "../hooks/useAuth";
+import NotificationBell from './notifications/NotificationBell';
+import { useNotifications } from "../contexts/NotificationsContext";
 
 export default function Navbar() {
   // Logout handler
   const { handleLogout } = useAuth();
+  const { notifications } = useNotifications();
 
   const onLogoutClick = async (e) => {
     e.preventDefault();
@@ -37,9 +40,10 @@ export default function Navbar() {
         <Link href="/messages" className="nav-link">
           Messages
         </Link>
-        <Link href="/notifications" className="nav-link">
+        {/* <Link href="/notifications" className="nav-link">
           Notifications
-        </Link>
+        </Link> */}
+        <NotificationBell notifications={notifications} />
       </div>
       <div className="right-links">
         <Link href="/profile" className="nav-link">

@@ -12,6 +12,7 @@ import '../../styles/notifications/FilterList.css'
 
 import { mockNotifications } from '../../data/mockData';
 import { fetchNotifications } from "../../lib/apiNotifications";
+import { useNotifications } from '../../contexts/NotificationsContext';
 
 const notificationFilters = [
     { key: 'all', label: 'All' },
@@ -24,22 +25,8 @@ const notificationFilters = [
 ];
 
 export default function NotificationPage() {
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { notifications, loadingNotification } = useNotifications();
     const [selectedFilter, setSelectedFilter] = useState('all');
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const notificationData = await fetchNotifications();
-                setNotifications(notificationData.data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchData();
-    }, []);
 
     const filteredNotifications = useMemo(() => {
         if (!notifications) return [];
@@ -47,6 +34,8 @@ export default function NotificationPage() {
         if (selectedFilter === 'unread') return notifications.filter(n => !n.isRead);
         return notifications.filter(n => n.target_detailed_type === selectedFilter);
     }, [notifications, selectedFilter]);
+
+    if (loadingNotification) return <p>Loading notifications...</p>;
 
     return (
         <main>
