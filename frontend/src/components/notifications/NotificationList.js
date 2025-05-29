@@ -4,7 +4,6 @@ import React from 'react';
 import NotificationCard from './NotificationCard';
 
 export default function NotificationList({ notifications }) {
-    console.log('NotificationList notifications:', notifications);
     if (!notifications.length) {
         return <p>No notifications found.</p>;
     }

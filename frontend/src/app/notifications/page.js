@@ -16,8 +16,9 @@ import { fetchNotifications } from "../../lib/apiNotifications";
 const notificationFilters = [
     { key: 'all', label: 'All' },
     { key: 'follow_request', label: 'Follow Requests' },
-    { key: 'group_invitation', label: 'Group Invitations' },
-    { key: 'group_join_request', label: 'Join Requests' },
+    { key: 'follow_request_accepted', label: 'Accepted Follow Requests' },
+    { key: 'group_invite', label: 'Group Invitations' },
+    { key: 'group_request', label: 'Group Join Requests' },
     { key: 'group_event', label: 'Group Events' },
     { key: 'unread', label: 'Unread' }
 ];
@@ -44,7 +45,7 @@ export default function NotificationPage() {
         if (!notifications) return [];
         if (selectedFilter === 'all') return notifications;
         if (selectedFilter === 'unread') return notifications.filter(n => !n.isRead);
-        return notifications.filter(n => n.type === selectedFilter);
+        return notifications.filter(n => n.target_detailed_type === selectedFilter);
     }, [notifications, selectedFilter]);
 
     return (
