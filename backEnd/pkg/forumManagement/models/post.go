@@ -18,7 +18,7 @@ type Post struct {
 	Content      string     `json:"content"`
 	Visibility   string     `json:"visibility"`
 	LikeCount    int        `json:"like_count"`
-	DisikeCount  int        `json:"dilike_count"`
+	DisikeCount  int        `json:"dislike_count"`
 	CommentCount int        `json:"comment_count"`
 	Type         string     `json:"type"`
 	Status       string     `json:"status"`
@@ -212,7 +212,7 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 	rows, selectError := sqlDB.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
-			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id,
@@ -282,7 +282,7 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
@@ -363,7 +363,7 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
 	rows, selectError := sqlDB.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
-			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id
@@ -428,7 +428,7 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
 		err := rows.Scan(
 			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
@@ -510,7 +510,7 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 	rows, selectError := sqlDB.Query(`
         SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
-			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id
@@ -572,7 +572,7 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 		err := rows.Scan(
 			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,

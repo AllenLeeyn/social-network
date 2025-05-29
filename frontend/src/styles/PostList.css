@@ -17,3 +17,56 @@
     margin-bottom: 0.5rem;
     font-size: 1.7rem;
 }
+.post-item pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 1em; 
+}
+
+/* Container for the category tags */
+.category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* Individual category badge */
+.category-badge {
+  background-color: #e5e7eb;
+  color: #374151;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+.post-stats {
+  display: flex;
+  gap: 1rem; /* space between buttons */
+}
+
+.stat-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 6px 6px;
+  background: transparent; 
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.stat-btn:hover {
+  background-color: #eaeaea;
+}
+
+.stat-btn.liked {
+  color: green;
+}
+
+.stat-btn.disliked {
+  color: red;
+}
+
+.stat-btn svg {
+  vertical-align: middle;
+}
