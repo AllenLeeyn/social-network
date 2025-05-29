@@ -3,6 +3,7 @@ import Link from "next/link"
 import Image from "next/image"
 import "../styles/Navbar.css"
 import { useAuth } from "../hooks/useAuth";
+import { toast } from 'react-toastify';
 
 export default function Navbar() {
   // Logout handler
@@ -10,7 +11,7 @@ export default function Navbar() {
 
   const onLogoutClick = async (e) => {
     e.preventDefault();
-    alert("logging out..");
+    toast.success("logging out..");
     await handleLogout();
   };
 

@@ -6,13 +6,12 @@ export async function login(email, password) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  const data = await response.json();
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.message || "Login failed");
   }
+  const data = await response.json();
 
-  // return response.json(); // Return user data or success message
   return data;
 }
 
@@ -26,8 +25,9 @@ export async function signup(userData) {
     const errorData = await response.json();
     throw new Error(errorData.message || "Signup failed");
   }
+  const data = await response.json();
 
-  return response.json(); // Return success message or user data
+  return data;
 }
 
 export async function logout() {

@@ -15,9 +15,8 @@ export async function POST(req) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      return new Response(JSON.stringify(errorData), {
-        status: response.status,
-      });
+      return new Response(JSON.stringify(errorData),
+      { status: response.status });
     }
 
     // Forward cookies from backend to client

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth"; // Import the useAuth hook
 import "./login.css";
+import { toast } from 'react-toastify';
 
 export default function AuthPage() {
   const { handleLogin, handleSignup, error, loading } = useAuth(); // Use the hook for login and signup logic
@@ -30,10 +31,11 @@ export default function AuthPage() {
     e.preventDefault();
     try {
       // await handleLogin(loginEmail, loginPassword); // Pass the credentials
-      const sessionId = await handleLogin(loginEmail, loginPassword);
-      // connect(sessionId); // Only call this once after login
-      alert("Login successful! Redirecting...");
-      window.location.href = "/"; // Redirect to posts page
+      const response = await handleLogin(loginEmail, loginPassword);
+      toast.success("Login successful! Redirecting...");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     } catch (err) {
       console.error("Login failed:", err.message);
     }
@@ -64,7 +66,10 @@ export default function AuthPage() {
 
     try {
       await handleSignup(userData);
-      setMode("login"); // Switch to login mode after successful signup
+      toast.success("Signup successful! Redirecting...")
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     } catch (err) {
       console.error("Signup failed:", err.message);
     }

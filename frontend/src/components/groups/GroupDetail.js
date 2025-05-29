@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { mockEvents } from "../../data/mockData";
+import { toast } from 'react-toastify';
 
 import Modal from "../Modal";
 import CreatePostForm from "./CreatePostForm";
@@ -23,13 +24,13 @@ export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
 
     const handlePostSubmit = (postData) => {
         // TODO: Add post to group (API or state update)
-        alert(`Post created: ${postData.title}`);
+        toast.success(`Post created: ${postData.title}`);
         setShowPostModal(false);
     };
 
     const handleEventSubmit = (eventData) => {
         // TODO: Add event to group (API or state update)
-        alert(`Event created: ${eventData.title}`);
+        toast.success(`Event created: ${eventData.title}`);
         setShowEventModal(false);
     };
 

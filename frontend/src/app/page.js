@@ -32,17 +32,12 @@ export default function HomePage() {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [connections, setConnections] = useState([]);
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
+  const [connectionsError, setConnectionsError] = useState(null);
   const router = useRouter(); 
 
   const { isConnected, connect } = useWebsocketContext();
-  const [sessionId, setSessionId] = useState(null);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setSessionId(localStorage.getItem('session-id'));
-    }
-  }, []);
-  //const sessionId = localStorage.getItem('session-id'); // Or from cookies/auth context
-
   useEffect(() => {
     async function checkAccess() {
       try {
@@ -53,7 +48,6 @@ export default function HomePage() {
         router.push("/login");
       }
     }
-    console.log('Session ID:', localStorage.getItem('session-id'));
     checkAccess();
   }, [router]);
 
@@ -101,11 +95,6 @@ export default function HomePage() {
   // Filter logic
   const displayedPosts = selectedCategory ? filteredPosts : posts;
 
-    useEffect(() => {
-    if (sessionId && !isConnected) {
-      connect(sessionId); // Trigger connection
-    }
-  }, [sessionId, connect, isConnected]);
 
   if (!isAuthorized) {
     // Prevent rendering the homepage until access is verified

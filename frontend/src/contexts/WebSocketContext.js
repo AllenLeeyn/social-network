@@ -10,12 +10,6 @@ export function WebSocketProvider( { children } ) {
     const [currentChatId, setCurrentChatId] = useState(null); // consider UUID for chatID
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
-    const [sessionId, setSessionId] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('session-id') || null;
-        }
-        return null;
-    });
     
     const [activeDM, setActiveDM] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -33,32 +27,13 @@ export function WebSocketProvider( { children } ) {
         isLoadingMoreRef.current = isLoadingMore;
     }, [isLoadingMore]);
 
-    const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
+    const userUUID = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
 
     // use a ref for currentChatId to avoid unnecessary re-renders ---
     const currentChatIdRef = useRef(currentChatId);
     useEffect(() => {
         currentChatIdRef.current = currentChatId;
     }, [currentChatId]);
-
-    // Sync session ID with localStorage
-    useEffect(() => {
-        const handleStorage = () => {
-            const newSession = localStorage.getItem('session-id');
-            if (newSession !== sessionId) {
-                setSessionId(newSession);
-            }
-        };
-        window.addEventListener('storage', handleStorage);
-        return () => window.removeEventListener('storage', handleStorage);
-    }, [sessionId]);
-
-    // Handle manual connection (e.g., after login)
-    const connect = useCallback((newSessionId) => {
-        localStorage.setItem('session-id', newSessionId);
-        setSessionId(newSessionId);
-    }, []);
-
 
     // memoize the onMessage handler with useCallback
     // if this doesnt change, it will pass and wont re-render; WS connection will always render when new data gets passed
@@ -143,9 +118,12 @@ export function WebSocketProvider( { children } ) {
         }
     }, []);
 
+    
     // Declare useWebsocket AFTER onMessage is defined, BEFORE any useEffect that uses sendAction
-        const { isConnected, sendAction } = useWebsocket(
-        sessionId ? `ws://localhost:8080/api/ws?session=${sessionId}` : null,
+    const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const { isConnected, sendAction } = userUUID ? 
+        useWebsocket(
+        `${baseURL}/api/ws`,
         onMessage,
         {
             initialDelay: 1000,
@@ -153,7 +131,8 @@ export function WebSocketProvider( { children } ) {
             backoffFactor: 2,
             maxAttempts: null,
         }
-    );
+        ) : 
+        {isConnected: false, sendAction: () => {}};
 
     
     // Reset typing state when changing chat
@@ -162,7 +141,7 @@ export function WebSocketProvider( { children } ) {
     }, [currentChatId]);
 
     useEffect(() => {
-        if (currentChatId && userUuid) {
+        if (currentChatId && userUUID) {
             // console.log("Sending messageReq for chat history:", currentChatId, userUuid);
             sendAction({
                 action: "messageReq",
@@ -172,10 +151,10 @@ export function WebSocketProvider( { children } ) {
             sendAction({
                 action: 'messageAck',
                 receiverUUID: currentChatId,
-                senderUUID: userUuid
+                senderUUID: userUUID
             });
         }
-    }, [currentChatId, userUuid, sendAction]);
+    }, [currentChatId, userUUID, sendAction]);
 
     useEffect(() => {
     if (activeDM && activeDM.length > 0) {
@@ -191,7 +170,6 @@ export function WebSocketProvider( { children } ) {
             setUserList,
             messages, 
             sendAction, 
-            connect,
             isTyping,
             currentChatId,
             setCurrentChatId,

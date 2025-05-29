@@ -5,14 +5,15 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { WebSocketProvider } from '../contexts/WebSocketContext'
 import { ActiveChatProvider } from "../contexts/ActiveChatContext";
-
-
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function RootLayout({ children }) {
     
 return (
     <html lang="en">
         <body>
+            <ToastContainer position="top-right" autoClose={1500} />
             <WebSocketProvider>
                 <ActiveChatProvider>
                     <Navbar />

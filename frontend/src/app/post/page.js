@@ -15,6 +15,7 @@ import { fetchPostById, submitPostFeedback } from "../../lib/apiPosts";
 import CategoriesList from "../../components/CategoriesList";
 import ConnectionList from "../../components/ConnectionList";
 import { fetchFollowees } from "../../lib/apiAuth";
+import { toast } from 'react-toastify';
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -81,7 +82,7 @@ export default function PostPage() {
       const postData = await fetchPostById(id);
       setPost(postData.data.Post);
     } catch (err) {
-      alert(err.message || "Failed to submit feedback");
+      toast.error(err.message || "Failed to submit feedback");
     }
   };
 
