@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import "../styles/CreatePost.css";
 import { createPost, fetchCategories } from "../lib/apiPosts";
+import { toast } from 'react-toastify';
 
 export default function CreatePost({ onClose }) {
   const [title, setTitle] = useState("");
@@ -51,10 +52,10 @@ export default function CreatePost({ onClose }) {
       if (data) {
         window.location.href = `/post?id=${data.data}`;
       } else {
-        alert(data.message || "Failed to create post");
+        toast.error(data.message || "Failed to create post");
       }
     } catch (err) {
-      alert(err.message || "Error creating post");
+      toast.error(err.message || "Error creating post");
     }
     if (onClose) onClose();
   }

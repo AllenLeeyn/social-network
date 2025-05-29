@@ -18,7 +18,7 @@ type user = userModel.User
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
 	if err := utils.ReadJSON(r, u); err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -35,7 +35,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	u.PasswordHash = string(password_hash)
 
-	userId, err := userModel.InsertUser(u)
+	userId, userUUID, err := userModel.InsertUser(u)
 	if err != nil {
 		if err.Error() == "email is already used" ||
 			err.Error() == "nick name is already used" ||
@@ -47,13 +47,17 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	generateSession(w, r, userId)
-	utils.ReturnJsonSuccess(w, "Registered successfully", nil)
+	utils.ReturnJsonSuccess(w, "Registered successfully", userModel.UserView{
+		UUID:         userUUID,
+		NickName:     u.NickName,
+		ProfileImage: u.ProfileImage,
+	})
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	u := &user{}
 	if err := utils.ReadJSON(r, u); err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
 		return
 	}
 
@@ -74,28 +78,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if session, err := userModel.SelectActiveSessionBy("user_id", user.ID);
-		err == nil && session != nil {
+	if session, err := userModel.SelectActiveSessionBy("user_id", user.ID); err == nil && session != nil {
 		expireSession(w, r, session)
 	}
 	generateSession(w, r, user.ID)
 
-	// Fetch the newly created session
-    newSession, err := userModel.SelectActiveSessionBy("user_id", user.ID)
-    if err != nil || newSession == nil {
-        errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-        return
-    }
-
-	// UUID
-	userWithUUID, err := userModel.SelectUserByField("id", user.ID)
-    if err != nil || userWithUUID == nil {
-        errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-        return
-    }
-	utils.ReturnJsonSuccess(w, "Logged in successfully", map[string]interface{}{
-		"uuid": userWithUUID.UUID,
-		"sessionId": newSession.ID,
+	utils.ReturnJsonSuccess(w, "Registered successfully", userModel.UserView{
+		UUID:         user.UUID,
+		NickName:     u.NickName,
+		ProfileImage: u.ProfileImage,
 	})
 }
 
@@ -111,7 +102,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 func UserUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.UnauthorizedError)
 		return
 	}
 	currentUserInfo, err := userModel.SelectUserByField("id", userID)
@@ -121,7 +112,7 @@ func UserUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	u := &user{}
 	if err := utils.ReadJSON(r, u); err != nil {
-		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusInternalServerError)
+		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -156,21 +147,15 @@ func ViewUsersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewUserHandler(w http.ResponseWriter, r *http.Request) {
-	tgtUUID, statusCode := GetTgtUUID(r, "api/user")
-	if statusCode == http.StatusInternalServerError {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		return
-
-	} else if statusCode == http.StatusForbidden {
-		errorControllers.CustomErrorHandler(w, r,
-			"access denied: private profile and user is not follower",
-			http.StatusForbidden)
+	tgtUUID, statusCode, err := GetTgtUUID(r, "api/user")
+	if err != nil {
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 
 	uProfile, err := userModel.SelectUser(tgtUUID)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 	ExtendSession(w, r)

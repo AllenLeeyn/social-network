@@ -31,7 +31,7 @@ type User struct {
 	UpdatedAt       *time.Time `json:"updated_at"`
 }
 
-type userView struct {
+type UserView struct {
 	UUID         string `json:"uuid"`
 	NickName     string `json:"nick_name"`
 	ProfileImage string `json:"profile_image"`
@@ -51,7 +51,7 @@ type userProfile struct {
 	Visibility   string    `json:"visibility"`
 }
 
-func SelectUsers() (*[]userView, error) {
+func SelectUsers() (*[]UserView, error) {
 	qry := `SELECT uuid, nick_name, profile_image, visibility
 			FROM users
 			WHERE id != 0`
@@ -62,9 +62,9 @@ func SelectUsers() (*[]userView, error) {
 	}
 	defer rows.Close()
 
-	var uViews []userView
+	var uViews []UserView
 	for rows.Next() {
-		var uv userView
+		var uv UserView
 		err := rows.Scan(&uv.UUID, &uv.NickName, &uv.ProfileImage, &uv.Visibility)
 		if err != nil {
 			return nil, err
@@ -110,9 +110,8 @@ func SelectUUIDByID(userID int) (string, error) {
 	return uuid, err
 }
 
-
 func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) {
-	if fieldName != "id" && fieldName != "nick_name" && fieldName != "email" && fieldName != "uuid"{
+	if fieldName != "id" && fieldName != "nick_name" && fieldName != "email" && fieldName != "uuid" {
 		return nil, fmt.Errorf("invalid field")
 	}
 	qry := `SELECT * FROM users WHERE ` + fieldName + ` = ?`
@@ -154,15 +153,15 @@ func checkUniqueUser(user *User) error {
 	return nil
 }
 
-func InsertUser(user *User) (int, error) {
+func InsertUser(user *User) (int, string, error) {
 	uuid, err := utils.GenerateUuid()
 	if err != nil {
-		return -1, err
+		return -1, "", err
 	}
 	user.UUID = uuid
 
 	if err = checkUniqueUser(user); err != nil {
-		return -1, err
+		return -1, "", err
 	}
 
 	qry := `INSERT INTO users (
@@ -184,17 +183,17 @@ func InsertUser(user *User) (int, error) {
 		// Check if the error is a SQLite constraint violation (duplicate entry)
 		if sqliteErr, ok := insertErr.(interface{ ErrorCode() int }); ok {
 			if sqliteErr.ErrorCode() == 19 { // 19 = UNIQUE constraint failed (SQLite error code)
-				return -1, errors.New("email or nick name already exists")
+				return -1, "", errors.New("email or nick name already exists")
 			}
 		}
-		return -1, insertErr // Other DB errors
+		return -1, "", insertErr // Other DB errors
 	}
 
 	userId, err := result.LastInsertId()
 	if err != nil {
-		return -1, err
+		return -1, "", err
 	}
-	return int(userId), nil
+	return int(userId), user.UUID, nil
 }
 
 func UpdateUser(user *User) error {

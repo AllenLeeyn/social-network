@@ -229,3 +229,86 @@ export const mockNotifications = [
     actions: ['view']
   }
 ];
+
+
+// src/data/mockGroups.js
+
+export const mockGroups = [
+  {
+    id: 1,
+    title: "React Enthusiasts",
+    description: "A group for React lovers",
+    members: ["alice", "bob"]
+  },
+  {
+    id: 2,
+    title: "Next.js Learners",
+    description: "Learning Next.js together",
+    members: ["carol"]
+  },
+  {
+    id: 3,
+    title: "Open Source Contributors",
+    description: "Contribute to open source projects",
+    members: ["dave", "eve"]
+  }
+];
+
+export const mockInvitations = [
+  {
+    id: 101,
+    groupId: 1,
+    groupTitle: "React Enthusiasts",
+    fromUser: "alice",
+    toUser: "frank",
+    status: "pending"
+  },
+  {
+    id: 102,
+    groupId: 2,
+    groupTitle: "Next.js Learners",
+    fromUser: "carol",
+    toUser: "grace",
+    status: "pending"
+  }
+];
+
+export const mockEvents = [
+  {
+    id: 201,
+    groupId: 1,
+    groupTitle: "React Enthusiasts",
+    title: "React Hooks Deep Dive",
+    description: "An in-depth look at React Hooks",
+    dateTime: "2025-06-01T18:00:00Z",
+    rsvps: { alice: "going", bob: "not_going" }
+  },
+  {
+    id: 202,
+    groupId: 3,
+    groupTitle: "Open Source Contributors",
+    title: "Monthly OSS Meeting",
+    description: "Discuss open source projects and contributions",
+    dateTime: "2025-06-05T15:00:00Z",
+    rsvps: { dave: "going", eve: "going" }
+  }
+];
+
+
+// In mockGroups.js
+export const mockPosts = [
+  {
+    id: 1,
+    groupId: 1,
+    title: "Welcome to React Enthusiasts!",
+    content: "Let's share our favorite React tips here.",
+    author: "alice",
+  },
+  {
+    id: 2,
+    groupId: 2,
+    title: "Next.js Meetup",
+    content: "Who wants to join a virtual meetup next week?",
+    author: "carol",
+  }
+];

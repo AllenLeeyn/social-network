@@ -32,9 +32,8 @@ export function useWebsocket(
             ws.current = null;
         }
 
-
         // no url, return
-        if (!url || url.includes('session=undefined')) {
+        if (!url) {
             console.warn('Skipping WebSocket connection - invalid URL');
             return;
         }

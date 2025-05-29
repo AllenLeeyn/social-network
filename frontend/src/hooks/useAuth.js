@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { login, logout, signup } from "../lib/apiAuth"
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export function useAuth() {
   const [user, setUser] = useState(null)
@@ -15,20 +17,13 @@ export function useAuth() {
       console.log('Login response', userData)
       setUser(userData) // Save user data after successful login
 
-      // localStorage.setItem('session-id', userData.sessionId);
+      localStorage.setItem('user-uuid', userData.data.uuid);
+      localStorage.setItem('user-nick_name', userData.data.nick_name);
 
-      // Store UUID and sessionId in localStorage
-      const uuid = userData?.data?.uuid;
-      const sessionId = userData?.data?.sessionId;
-      console.log('uuid', uuid)
-      console.log(sessionId)
-      if (uuid)      localStorage.setItem('user-uuid', uuid);
-      if (sessionId) localStorage.setItem('session-id', sessionId);
-
-      return userData.sessionId;
-      
     } catch (err) {
       setError(err.message)
+      throw err;
+
     } finally {
       setLoading(false)
     }
@@ -40,9 +35,16 @@ export function useAuth() {
 
     try {
       const response = await signup(userData)
-      alert("Signup successful! You can now log in.")
+      console.log('Login response', userData)
+      setUser(response)
+
+      localStorage.setItem('user-uuid', response.data.uuid);
+      localStorage.setItem('user-nick_name', response.data.nick_name);
+
     } catch (err) {
       setError(err.message)
+      throw err;
+
     } finally {
       setLoading(false)
     }
@@ -52,8 +54,8 @@ export function useAuth() {
     await logout()
     setUser(null)
     localStorage.removeItem('activeDM');
-    localStorage.removeItem('session-id');
     localStorage.removeItem('user-uuid');
+    localStorage.removeItem('user-nick_name');
   }
 
   return { user, loading, error, handleLogin, handleSignup, handleLogout }

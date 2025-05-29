@@ -1,5 +1,7 @@
+const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 export async function POST(req) {
-  const backendUrl = "http://localhost:8080/api/login";
+  const backendUrl = `${baseURL}/api/login`;
 
   try {
     const body = await req.json();
@@ -13,9 +15,8 @@ export async function POST(req) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      return new Response(JSON.stringify(errorData), {
-        status: response.status,
-      });
+      return new Response(JSON.stringify(errorData),
+      { status: response.status });
     }
 
     // Forward cookies from backend to client

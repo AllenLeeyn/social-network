@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 
+const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 export async function proxyToBackend(req, backendUrl, method = "POST") {
   try {
     const cookieStore = await cookies();
@@ -17,7 +19,7 @@ export async function proxyToBackend(req, backendUrl, method = "POST") {
       body = await req.json();
     }
 
-    const response = await fetch(backendUrl, {
+    const response = await fetch(`${baseURL}${backendUrl}`, {
       method,
       headers: {
         "Content-Type": "application/json",

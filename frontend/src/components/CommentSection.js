@@ -4,6 +4,7 @@
 import CommentForm from "./CommentForm";
 import "../styles/Comments.css";
 import { submitCommentFeedback } from "../lib/apiPosts";
+import { toast } from 'react-toastify';
 
 export default function CommentSection({
   comments = [],
@@ -20,7 +21,7 @@ export default function CommentSection({
       await submitCommentFeedback({ parent_id: commentId, rating });
       if (onCommentSubmitted) onCommentSubmitted(); // Refresh comments
     } catch (err) {
-      alert(err.message || "Failed to submit feedback");
+      toast.error(err.message || "Failed to submit feedback");
     }
   };
 

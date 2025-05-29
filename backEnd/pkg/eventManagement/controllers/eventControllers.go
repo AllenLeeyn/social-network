@@ -8,9 +8,11 @@ import (
 	"social-network/pkg/middleware"
 	"social-network/pkg/utils"
 
-	errorControllers "social-network/pkg/errorManagement/controllers"
 	eventModel "social-network/pkg/eventManagement/models"
 	groupModel "social-network/pkg/groupManagement/models"
+	notificationModel "social-network/pkg/notificationManagement/models"
+
+	errorControllers "social-network/pkg/errorManagement/controllers"
 	userControllers "social-network/pkg/userManagement/controllers"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -42,45 +44,41 @@ func isValidEventInfo(e *event) error {
 	return nil
 }
 
-func parseEventRequest(r *http.Request) (*event, int, error) {
+func parseEventRequest(r *http.Request) (*event, int, int, error) {
 	e := &event{}
 	if err := utils.ReadJSON(r, e); err != nil {
-		return nil, -1, fmt.Errorf("invalid input")
+		return nil, -1, http.StatusBadRequest, fmt.Errorf("invalid input")
 	}
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
-		return nil, -1, fmt.Errorf("InternalServerError")
+		return nil, -1, http.StatusUnauthorized, fmt.Errorf("unauthorized")
 	}
 
 	if err := isValidEventInfo(e); err != nil {
-		return nil, -1, err
+		return nil, -1, http.StatusBadRequest, err
 	}
 
 	groupID, _, err := groupModel.SelectGroupIDcreatedByfromUUID(e.GroupUUID)
 	if err != nil {
-		return nil, -1, fmt.Errorf("group not found")
+		return nil, -1, http.StatusNotFound, fmt.Errorf("group not found")
 	}
 	if !groupModel.IsGroupMember(e.GroupUUID, userID) {
-		return nil, -1, fmt.Errorf("only group members allowed")
+		return nil, -1, http.StatusForbidden, fmt.Errorf("only group members allowed")
 	}
 	e.GroupID = groupID
 
-	return e, userID, nil
+	return e, userID, http.StatusOK, nil
 }
 
 func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
-	e, userID, err := parseEventRequest(r)
+	e, userID, statusCode, err := parseEventRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	e.CreatedBy = userID
 
-	_, eventUUID, err := eventModel.InsertEvent(e)
+	eventID, eventUUID, err := eventModel.InsertEvent(e)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
@@ -91,6 +89,9 @@ func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
+	notificationModel.InsertNotificationForEvent(&notificationModel.Notification{
+		FromUserId: userID, TargetId: eventID, TargetUUID: eventUUID,
+	}, e.GroupID, userID)
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "event created",
 		struct {
@@ -99,13 +100,9 @@ func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func EventUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	e, userID, err := parseEventRequest(r)
+	e, userID, statusCode, err := parseEventRequest(r)
 	if err != nil {
-		if err.Error() == "InternalServerError" {
-			errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
-		} else {
-			errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
-		}
+		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
 		return
 	}
 	e.UpdatedBy = userID
@@ -126,23 +123,22 @@ func EventUpdateHandler(w http.ResponseWriter, r *http.Request) {
 func ViewEventsHandler(w http.ResponseWriter, r *http.Request) {
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.UnauthorizedError)
 		return
 	}
 	groupUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group/events")
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 	if !groupModel.IsGroupMember(groupUUID, userID) {
-		errorControllers.CustomErrorHandler(w, r,
-			"only members can view", http.StatusBadRequest)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 
 	events, err := eventModel.SelectEvents(groupUUID, userID)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 	userControllers.ExtendSession(w, r)
@@ -152,23 +148,22 @@ func ViewEventsHandler(w http.ResponseWriter, r *http.Request) {
 func ViewEventHandler(w http.ResponseWriter, r *http.Request) {
 	userID, isOk := middleware.GetUserID(r.Context())
 	if !isOk {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.UnauthorizedError)
 		return
 	}
 	eventUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/group/event")
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.BadRequestError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 	if !eventModel.IsGroupMemberFromEventUUID(eventUUID, userID) {
-		errorControllers.CustomErrorHandler(w, r,
-			"only members can view", http.StatusBadRequest)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 
 	events, err := eventModel.SelectEvent(eventUUID, userID)
 	if err != nil {
-		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
 	userControllers.ExtendSession(w, r)

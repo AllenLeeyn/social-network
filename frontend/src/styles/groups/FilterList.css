@@ -1,0 +1,38 @@
+/* Group Filter List */
+.group-filter-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    padding: 0;
+    margin: 0 auto;
+    list-style: none;
+    width: 100%;
+}
+
+/* Group Filter Items */
+.group-filter-item {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    width: 120px;
+    padding: 5px 15px;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    color: #333;
+    margin: 3px auto;
+    font-size: 1em;
+    text-align: left;
+}
+
+.group-filter-item:hover {
+    background: #005bb5;
+    color: #fff;
+}
+
+.group-filter-item.active {
+    background: #0070f3;
+    color: white;
+    font-weight: bold;
+}

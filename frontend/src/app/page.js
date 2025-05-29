@@ -14,6 +14,8 @@ import UsersList from "../components/UsersList";
 
 import { fetchPosts, fetchPostsByCategory } from "../lib/apiPosts";
 import { usePosts } from "../hooks/usePosts";
+import ConnectionList from "../components/ConnectionList";
+import { fetchFollowees } from "../lib/apiAuth";
 
 import { useWebsocketContext } from '../contexts/WebSocketContext';
 
@@ -30,17 +32,12 @@ export default function HomePage() {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [connections, setConnections] = useState([]);
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
+  const [connectionsError, setConnectionsError] = useState(null);
   const router = useRouter(); 
 
   const { isConnected, connect } = useWebsocketContext();
-  const [sessionId, setSessionId] = useState(null);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setSessionId(localStorage.getItem('session-id'));
-    }
-  }, []);
-  //const sessionId = localStorage.getItem('session-id'); // Or from cookies/auth context
-
   useEffect(() => {
     async function checkAccess() {
       try {
@@ -51,13 +48,27 @@ export default function HomePage() {
         router.push("/login");
       }
     }
-    console.log('Session ID:', localStorage.getItem('session-id'));
     checkAccess();
   }, [router]);
 
   useEffect(() => {
     if (!selectedCategory) setFilteredPosts(posts);
   }, [posts, selectedCategory]);
+
+  useEffect(() => {
+    async function loadConnections() {
+      try {
+        setConnectionsLoading(true);
+        const data = await fetchFollowees();
+        setConnections(data || []);
+      } catch (err) {
+        setConnectionsError(err.message);
+      } finally {
+        setConnectionsLoading(false);
+      }
+    }
+    loadConnections();
+  }, []);
 
   const handleCategoryClick = async (cat) => {
     if (selectedCategory === cat) {
@@ -84,11 +95,6 @@ export default function HomePage() {
   // Filter logic
   const displayedPosts = selectedCategory ? filteredPosts : posts;
 
-    useEffect(() => {
-    if (sessionId && !isConnected) {
-      connect(sessionId); // Trigger connection
-    }
-  }, [sessionId, connect, isConnected]);
 
   if (!isAuthorized) {
     // Prevent rendering the homepage until access is verified
@@ -119,17 +125,11 @@ export default function HomePage() {
             </ul>
           </SidebarSection>
           <SidebarSection title="Connections">
-            <ul className="connections">
-              {sampleConnections.map((conn) => (
-                <li key={conn.id} className="connection-item">
-                  <span>
-                    <strong>
-                      {conn.fullName} ({conn.username})
-                    </strong>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <ConnectionList
+              connections={connections}
+              loading={connectionsLoading}
+              error={connectionsError}
+            />
           </SidebarSection>
         </aside>
 
