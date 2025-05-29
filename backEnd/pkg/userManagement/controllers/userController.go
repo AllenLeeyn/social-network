@@ -85,8 +85,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.ReturnJsonSuccess(w, "Registered successfully", userModel.UserView{
 		UUID:         user.UUID,
-		NickName:     u.NickName,
-		ProfileImage: u.ProfileImage,
+		NickName:     user.NickName,
+		ProfileImage: user.ProfileImage,
 	})
 }
 

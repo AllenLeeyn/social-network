@@ -225,6 +225,7 @@ export default function AuthPage() {
                 />
               </fieldset>
 
+              {error && <p style={{ color: "red" }}>{error}</p>}
               <button type="submit">Sign Up</button>
             </form>
           )}
