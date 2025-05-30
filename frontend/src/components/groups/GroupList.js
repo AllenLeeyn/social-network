@@ -42,8 +42,8 @@ export default function GroupList({ filter, onSelectGroup }) {
     return (
         <div className="group-list">
         {loading && <p>Loading groups...</p>}
-        {!loading && filteredGroups.length === 0 && <p>No groups found.</p>}
-        {!loading && filteredGroups.map(group => (
+        {!loading && filteredGroups !==null && filteredGroups.length === 0 && <p>No groups found.</p>}
+        {!loading && filteredGroups !==null && filteredGroups.map(group => (
             <GroupCard
                 key={group.uuid}
                 group={group}
