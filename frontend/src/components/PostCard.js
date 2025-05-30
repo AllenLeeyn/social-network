@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { FaThumbsUp, FaThumbsDown, FaCommentAlt } from 'react-icons/fa';
-import { TimeAgo } from '../utils/formatDate';
+import { TimeAgo } from '../utils/TimeAgo';
 import { toast } from 'react-toastify';
 import { fetchPostById, submitPostFeedback } from "../lib/apiPosts";
 

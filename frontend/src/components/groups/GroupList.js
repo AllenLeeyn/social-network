@@ -19,11 +19,12 @@ export default function GroupList({ filter, onSelectGroup }) {
         });
     }, []);
 
+    // req 
     let filteredGroups = groups;
     if (filter === 'my_groups') {
         filteredGroups = groups.filter(g => g.status === "accepted");
     } else if (filter === 'discover') {
-        filteredGroups = groups.filter(g => g.status === "");
+        filteredGroups = groups.filter(g => g.status !== "accepted");
     }
 
     // Handlers for group actions

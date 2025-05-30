@@ -48,3 +48,21 @@
 .group-detail-event-actions button:last-child {
     margin-right: 0;
 }
+
+.group-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* space between title and actions */
+    gap: 1.5rem; /* gap between title and button group */
+    margin-bottom: 1.2rem;
+}
+
+.group-detail-header h2 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.group-detail-actions {
+    display: flex;
+    gap: 0.7rem;
+}
