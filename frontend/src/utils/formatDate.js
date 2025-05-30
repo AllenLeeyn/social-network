@@ -1,22 +1,16 @@
-export function TimeAgo(date) {
-  const now = new Date();
-  const past = new Date(date);
-  const diffInSeconds = Math.floor((now - past) / 1000);
+export function formatDate(dateString, options = {}) {
+  
+  if (!dateString) return '';
+  const date = new Date(dateString);
 
-  if (diffInSeconds < 60) {
-    return 'moments ago';
-  }
+  // Default options: e.g., "May 30, 2025, 5:22 PM"
+  const defaultOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  };
 
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`;
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
+  return date.toLocaleString(undefined, { ...defaultOptions, ...options });
 }

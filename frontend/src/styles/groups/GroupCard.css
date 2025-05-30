@@ -1,0 +1,16 @@
+.group-card {
+  border: 1px solid #000;      /* Thin black border */
+  border-radius: 6px;          /* Optional: slightly rounded corners */
+  margin-bottom: 20px;         /* Space between cards */
+  padding: 16px;               /* Space inside each card */
+  background: inherit;         /* Keeps your existing background */
+  box-sizing: border-box;      /* Ensures padding doesn't affect width */
+}
+
+.group-card-link .group-card {
+  transition: box-shadow 0.2s;
+}
+.group-card-link:hover .group-card {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  cursor: pointer;
+}

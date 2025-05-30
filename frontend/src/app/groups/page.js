@@ -1,14 +1,14 @@
-// app/groups/page.js
-
 'use client';
 
 import React, { useState } from 'react';
 import SidebarSection from '../../components/SidebarSection';
 import UsersList from '../../components/UsersList';
+import Modal from '../../components/Modal';
 import GroupFilterList from '../../components/groups/GroupFilterList';
 import GroupList from '../../components/groups/GroupList';
 import GroupDetail from '../../components/groups/GroupDetail';
 import GroupInvitationList from '../../components/groups/GroupInvitationList';
+import CreateGroupForm from '../../components/groups/CreateGroupForm';
 
 import '../../styles/groups/FilterList.css'
 import './groups.css'
@@ -22,6 +22,8 @@ const groupFilters = [
 export default function GroupsPage() {
   const [selectedFilter, setSelectedFilter] = useState('my_groups');
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+
 
   const handleSelectGroup = (group) => {
   if (selectedGroup && selectedGroup.id === group.id) {
@@ -34,6 +36,7 @@ export default function GroupsPage() {
   return (
     <main>
       <div className='groups-page-layout'>
+
         {/* Left Sidebar */}
         <aside className='sidebar left-sidebar'>
           <SidebarSection title='Groups'>
@@ -47,6 +50,13 @@ export default function GroupsPage() {
 
         {/* Main Content */}
         <section className='main-feed group-section'>
+
+        {/* Create Group Button */}
+        <div style={{ margin: '1rem 0', textAlign: 'right' }}>
+          <button onClick={() => setCreateModalOpen(true)}>
+            + Create Group
+          </button>
+        </div>
           {selectedFilter === 'my_groups' && (
             <GroupList onSelectGroup={handleSelectGroup} />
           )}
@@ -58,6 +68,12 @@ export default function GroupsPage() {
           )}
           {selectedGroup && (
             <GroupDetail group={selectedGroup} />
+          )}
+
+          {isCreateModalOpen && (
+            <Modal title="Create Group" onClose={() => setCreateModalOpen(false)}>
+              <CreateGroupForm onSuccess={() => setCreateModalOpen(false)} />
+            </Modal>
           )}
         </section>
 

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
-import { TimeAgo } from '../utils/formatDate';
+import { TimeAgo } from '../utils/TimeAgo';
 import { toast } from 'react-toastify';
 import { submitCommentFeedback } from "../lib/apiPosts";
 import { FaUserCircle } from 'react-icons/fa';
