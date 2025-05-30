@@ -6,6 +6,8 @@ import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import { TimeAgo } from '../utils/formatDate';
 import { toast } from 'react-toastify';
 import { submitCommentFeedback } from "../lib/apiPosts";
+import { FaUserCircle } from 'react-icons/fa';
+import Image from 'next/image';
 
 export default function CommentCard({ comment }) {
   const [liked, setLiked] = useState(comment.liked);
@@ -60,13 +62,26 @@ export default function CommentCard({ comment }) {
     <div>
       <pre>{comment.content}</pre>
 
-      <small>
-        By{' '}
-        <Link href={`/user/${comment.user.uuid}`}>
-          {comment.user.nick_name}
-        </Link>{' '}
-        [{TimeAgo(comment.created_at)}]
-      </small>
+      <div className="user-info">
+        <div className="user-avatar">
+        {comment.user.profile_image ? (
+          <Image
+            src={`/frontend-api/image/${comment.user.profile_image}`}
+            alt="User Avatar"
+            width={30}
+            height={30}
+          />
+        ) : (
+          <FaUserCircle size={30} color="#aaa"/>
+        )}
+        </div>
+        <div className="user-details">
+          <Link href={`/user/${comment.user.uuid}`} className="user-name">
+            {comment.user.nick_name}
+          </Link>
+          <div className="timestamp">{TimeAgo(comment.created_at)}</div>
+        </div>
+      </div>
 
       <div className="post-stats">
         <button

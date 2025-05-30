@@ -71,3 +71,30 @@
 .stat-btn svg {
   vertical-align: middle;
 }
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.user-avatar img {
+  border-radius: 50%;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: bold;
+  color: #0070f3;
+  text-decoration: none;
+}
+
+.timestamp {
+  font-size: 0.85rem;
+  color: #888;
+}

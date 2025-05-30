@@ -18,6 +18,7 @@ export function useAuth() {
 
       localStorage.setItem('user-uuid', userData.data.uuid);
       localStorage.setItem('user-nick_name', userData.data.nick_name);
+      localStorage.setItem('user-profile_image', userData.data.profile_image);
 
     } catch (err) {
       setError(err.message)
@@ -38,6 +39,7 @@ export function useAuth() {
 
       localStorage.setItem('user-uuid', response.data.uuid);
       localStorage.setItem('user-nick_name', response.data.nick_name);
+      localStorage.setItem('user-profile_image', response.data.profile_image);
 
     } catch (err) {
       setError(err.message)

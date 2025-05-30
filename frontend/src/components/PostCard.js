@@ -6,6 +6,8 @@ import { FaThumbsUp, FaThumbsDown, FaCommentAlt } from 'react-icons/fa';
 import { TimeAgo } from '../utils/formatDate';
 import { toast } from 'react-toastify';
 import { fetchPostById, submitPostFeedback } from "../lib/apiPosts";
+import { FaUserCircle } from 'react-icons/fa';
+import Image from 'next/image';
 
 export default function PostCard({ post }) {
   const [liked, setLiked] = useState(post.liked);
@@ -62,13 +64,26 @@ export default function PostCard({ post }) {
         <Link href={`/post?id=${post.uuid}`}>{post.title}</Link>
       </h2>
 
-      <small>
-        By{' '}
-        <Link href={`/user/${post.user.uuid}`}>
-          {post.user.nick_name}
-        </Link>{' '}
-        [{TimeAgo(post.created_at)}]
-      </small>
+      <div className="user-info">
+        <div className="user-avatar">
+        {post.user.profile_image ? (
+          <Image
+            src={`/frontend-api/image/${post.user.profile_image}`}
+            alt="User Avatar"
+            width={50}
+            height={50}
+          />
+        ) : (
+          <FaUserCircle size={50} color="#aaa"/>
+        )}
+        </div>
+        <div className="user-details">
+          <Link href={`/user/${post.user.uuid}`} className="user-name">
+            {post.user.nick_name}
+          </Link>
+          <div className="timestamp">{TimeAgo(post.created_at)}</div>
+        </div>
+      </div>
 
       <pre>{post.content}</pre>
 

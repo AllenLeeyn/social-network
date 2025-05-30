@@ -4,15 +4,34 @@ import Image from "next/image"
 import "../styles/Navbar.css"
 import { useAuth } from "../hooks/useAuth";
 import { toast } from 'react-toastify';
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { FaUserCircle } from 'react-icons/fa';
 
 export default function Navbar() {
   // Logout handler
   const { handleLogout } = useAuth();
+  const router = useRouter(); 
+
+  const [userName, setUserName] = useState("");
+  const [profileImage, setProfileImage] = useState("");
+
+  useEffect(() => {
+    const storedUserName = localStorage.getItem("user-nick_name");
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+
+    const storedProfileImage = localStorage.getItem("user-profile_image") || null;
+    const imageUrl = storedProfileImage ? `/frontend-api/image/${storedProfileImage}` : null;
+    setProfileImage(imageUrl);
+  }, []);
 
   const onLogoutClick = async (e) => {
     e.preventDefault();
     toast.success("logging out..");
     await handleLogout();
+    router.push("/login");
   };
 
   return (
@@ -43,8 +62,19 @@ export default function Navbar() {
         </Link>
       </div>
       <div className="right-links">
+        {profileImage ? (
+          <Image
+            src={profileImage}
+            alt="Profile Image"
+            width={30}
+            height={30}
+            style={{ borderRadius: '50%' }}
+          />
+        ) : (
+          <FaUserCircle size={30} color="#aaa" style={{ verticalAlign: 'middle' }} />
+        )}
         <Link href="/profile" className="nav-link">
-          Profile
+          {userName || "Profile"}
         </Link>
         <a href="/" className="nav-link" onClick={onLogoutClick}>
           Logout

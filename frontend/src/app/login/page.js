@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth"; // Import the useAuth hook
 import "./login.css";
 import { toast } from 'react-toastify';
+import { handleImage } from "../../lib/handleImage"; 
 
 export default function AuthPage() {
   const { handleLogin, handleSignup, error, loading } = useAuth(); // Use the hook for login and signup logic
@@ -44,6 +45,24 @@ export default function AuthPage() {
   // Handle registration submission
   const handleRegister = async (e) => {
     e.preventDefault();
+
+    if (registerPassword !== registerConfirmPassword) {
+      setFormError("Passwords do not match.");
+      return;
+    }
+    setFormError("");
+
+    let imageUUID = null;
+
+    if (registerAvatar) {
+      try {
+        imageUUID = await handleImage(registerAvatar);
+      } catch (err) {
+        setFormError("Image upload failed: " + err.message);
+        return;
+      }
+    }
+
     const userData = {
       first_name: registerFirstName,
       last_name: registerLastName,
@@ -55,14 +74,8 @@ export default function AuthPage() {
       about_me: registerAboutMe,
       gender: registerGender,
       visibility: registerVisibility, 
+      profile_image: imageUUID,
     };
-
-    if (registerPassword !== registerConfirmPassword) {
-      setFormError("Passwords do not match.");
-      return;
-    }
-    setFormError("");
-
 
     try {
       await handleSignup(userData);

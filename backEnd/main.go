@@ -52,6 +52,9 @@ func modelsInitDb(db *sql.DB) {
 }
 
 func main() {
+	fs := http.FileServer(http.Dir("./pkg/fileManagement/static/uploads"))
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", fs))
+
 	log.Println("\033[31mSetup routes\033[0m")
 	routes.SetupRoutes(cc)
 
