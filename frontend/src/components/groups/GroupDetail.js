@@ -11,7 +11,7 @@ import CreateEventForm from "./CreateEventForm";
 import "../../styles/groups/GroupDetail.css"; 
 
 
-export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
+export default function GroupDetail({ group, onBack }) {
 
     // Modal state
     const [showPostModal, setShowPostModal] = useState(false);
