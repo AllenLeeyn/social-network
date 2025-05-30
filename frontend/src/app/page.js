@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-// This is our homepage
-
 "use client";
-=======
-'use client';
->>>>>>> gigi
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -21,12 +15,9 @@ import { usePosts } from "../hooks/usePosts";
 import ConnectionList from "../components/ConnectionList";
 import { fetchFollowees } from "../lib/apiAuth";
 
-import { useWebsocketContext } from '../contexts/WebSocketContext';
+import { useWebsocketContext } from "../contexts/WebSocketContext";
 
-import {
-  sampleGroups,
-  sampleConnections,
-} from "../data/mockData";
+import { sampleGroups, sampleConnections } from "../data/mockData";
 
 export default function HomePage() {
   const [showModal, setShowModal] = useState(false);
@@ -39,7 +30,7 @@ export default function HomePage() {
   const [connections, setConnections] = useState([]);
   const [connectionsLoading, setConnectionsLoading] = useState(true);
   const [connectionsError, setConnectionsError] = useState(null);
-  const router = useRouter(); 
+  const router = useRouter();
 
   const { isConnected, connect } = useWebsocketContext();
   useEffect(() => {
@@ -95,16 +86,13 @@ export default function HomePage() {
     }
   };
 
-
   // Filter logic
   const displayedPosts = selectedCategory ? filteredPosts : posts;
-
 
   if (!isAuthorized) {
     // Prevent rendering the homepage until access is verified
     return null;
   }
-
 
   return (
     <main>
