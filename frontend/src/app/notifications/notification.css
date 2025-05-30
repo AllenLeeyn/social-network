@@ -137,3 +137,69 @@
     .notification-actions button:last-child {
     margin-right: 0;
 }
+
+
+
+
+
+
+.notif-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.bell-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  position: relative;
+  cursor: pointer;
+}
+
+.notif-count {
+  background: red;
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+  padding: 2px 6px;
+  position: absolute;
+  top: -5px;
+  right: -10px;
+}
+
+.notif-dropdown {
+  position: absolute;
+  right: -300;
+  top: 40px;
+  width: 350px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.notif-list {
+  list-style: none;
+  padding: 10px;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.notif-empty {
+  padding: 10px;
+  text-align: center;
+  color: #777;
+}
+
+.view-all-btn{
+    display: block;
+    text-align: center;
+    padding: 10px;
+    margin: 10px;
+    background: #f0f0f0;
+    color: #333;
+    text-decoration: none;
+    border-top: 1px solid #ddd;
+}
