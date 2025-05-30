@@ -39,6 +39,7 @@
   border-radius: 9999px;
   font-size: 0.75rem;
 }
+
 .post-stats {
   display: flex;
   gap: 1rem; /* space between buttons */
