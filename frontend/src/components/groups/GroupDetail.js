@@ -33,9 +33,23 @@ export default function GroupDetail({ group, onBack }) {
         setShowPostModal(false);
     };
 
-    const handleEventSubmit = (eventData) => {
-        // TODO: Add event to group (API or state update)
-        toast.success(`Event created: ${eventData.title}`);
+    const handleEventSubmit = async (eventData) => {
+        console.log("Submitting eventData:", eventData);
+        try {
+            const res = await fetch('/frontend-api/events/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(eventData),
+            });
+            if (res.ok) {
+                toast.success('Event created!');
+                // Optionally: refresh event list here
+            } else {
+                toast.error('Failed to create event.');
+            }
+        } catch (err) {
+            toast.error('Network error.');
+        }
         setShowEventModal(false);
     };
 
