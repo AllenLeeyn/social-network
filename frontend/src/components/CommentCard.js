@@ -68,8 +68,8 @@ export default function CommentCard({ comment }) {
           <Image
             src={`/frontend-api/image/${comment.user.profile_image}`}
             alt="User Avatar"
-            width={30}
-            height={30}
+            width={40}
+            height={40}
           />
         ) : (
           <FaUserCircle size={30} color="#aaa"/>

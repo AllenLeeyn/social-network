@@ -79,7 +79,7 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	notificationModel.InsertNotification(&notificationModel.Notification{
 		ToUserId: f.LeaderID, FromUserId: f.FollowerID,
 		TargetType: "follow", TargetDetailedType: "follow_request",
-		TargetId: f.LeaderID, TargetUUID: f.LeaderUUID,
+		TargetId: f.FollowerID, TargetUUID: f.FollowerUUID,
 		Message: f.Status,
 	})
 	userControllers.ExtendSession(w, r)

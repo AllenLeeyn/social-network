@@ -146,7 +146,7 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 
 	// ---------------------------- file management controller APIs ---------------------------- //
 	http.HandleFunc("/api/uploadFile",
-		middleware.CheckHttpRequest("guest", http.MethodPost,
+		middleware.CheckHttpRequest("", http.MethodPost,
 			fileControllers.FileUploadHandler)) /*post method*/
 
 	// ---------------------------- forum management controller APIs ---------------------------- //

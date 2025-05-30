@@ -53,7 +53,6 @@ export default function AuthPage() {
     setFormError("");
 
     let imageUUID = null;
-
     if (registerAvatar) {
       try {
         imageUUID = await handleImage(registerAvatar);
@@ -74,7 +73,7 @@ export default function AuthPage() {
       about_me: registerAboutMe,
       gender: registerGender,
       visibility: registerVisibility, 
-      profile_image: imageUUID,
+      profile_image: imageUUID ? Object.values(imageUUID)[0] : null,
     };
 
     try {

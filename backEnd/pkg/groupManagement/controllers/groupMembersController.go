@@ -114,7 +114,7 @@ func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
 	notificationModel.InsertNotification(&notificationModel.Notification{
 		ToUserId: m.LeaderID, FromUserId: userID,
 		TargetType: "group", TargetDetailedType: "group_request",
-		TargetId: m.GroupID, TargetUUID: m.GroupUUID,
+		TargetId: m.FollowerID, TargetUUID: m.FollowerUUID,
 		Message: m.Status,
 	})
 	userControllers.ExtendSession(w, r)

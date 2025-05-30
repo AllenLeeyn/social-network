@@ -70,8 +70,8 @@ export default function PostCard({ post }) {
           <Image
             src={`/frontend-api/image/${post.user.profile_image}`}
             alt="User Avatar"
-            width={50}
-            height={50}
+            width={40}
+            height={40}
           />
         ) : (
           <FaUserCircle size={50} color="#aaa"/>
@@ -86,6 +86,21 @@ export default function PostCard({ post }) {
       </div>
 
       <pre>{post.content}</pre>
+
+      {post.post_files && post.post_files.length > 0 && (
+        <div className="post-images">
+          {post.post_files.map((file, index) => (
+            <Image
+              key={index}
+              src={`/frontend-api/image/${file.file_uploaded_name}`}
+              alt={`Post attachment ${index + 1}`}
+              width={400}
+              height={300}
+              className="post-image"
+            />
+          ))}
+        </div>
+      )}
 
       <div className="post-stats">
         <button

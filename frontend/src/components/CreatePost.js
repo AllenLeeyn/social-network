@@ -4,12 +4,15 @@ import React, { useState, useEffect } from "react";
 import "../styles/CreatePost.css";
 import { createPost, fetchCategories } from "../lib/apiPosts";
 import { toast } from 'react-toastify';
+import { handleImage } from "../lib/handleImage"; 
 
 export default function CreatePost({ onClose }) {
   const [title, setTitle] = useState("");
   const [content, setcontent] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [postVisibility, setVisibility] = useState("");
+  const [postImages, setImages] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -46,7 +49,18 @@ export default function CreatePost({ onClose }) {
       (name) => categoryNameToId[name]
     );
 
-    const postData = { title, content, category_ids: categoryIds };
+
+    let imageUUIDs = null;
+    if (postImages) {
+      try {
+        imageUUIDs = await handleImage(postImages);
+      } catch (err) {
+        toast.error("Image upload failed: " + err.message);
+        return;
+      }
+    }
+
+    const postData = { title, content, category_ids: categoryIds, file_attachments: imageUUIDs};
     try {
       const data = await createPost(postData);
       if (data) {
@@ -89,6 +103,15 @@ export default function CreatePost({ onClose }) {
           required
         />
       </div>
+      <select
+        value={postVisibility}
+        onChange={(e) => setVisibility(e.target.value)}
+        required
+      >
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+        <option value="selected">Select users</option>
+      </select>
       {/* Categories checkboxes */}
       <div className="input-group">
         <h4>Click to select categories</h4>
@@ -108,6 +131,12 @@ export default function CreatePost({ onClose }) {
           ))}
         </div>
       </div>
+      <input
+        type="file"
+        accept="image/*"
+        multiple={true}
+        onChange={(e) => setImages([...e.target.files])}
+      />
       {/* Submit button */}
       <div className="input-group">
         <button className="new-post" type="submit">
