@@ -1,26 +1,31 @@
 // src/components/groups/GroupDetail.js
 
 import React, { useState } from "react";
-import { mockEvents } from "../../data/mockData";
 import { toast } from 'react-toastify';
 
 import Modal from "../Modal";
 import CreatePostForm from "./CreatePostForm";
 import CreateEventForm from "./CreateEventForm";
 
+import { formatDate } from '../../utils/formatDate';
+
 import "../../styles/groups/GroupDetail.css"; 
 
 
-export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
+export default function GroupDetail({ group, onBack }) {
 
     // Modal state
     const [showPostModal, setShowPostModal] = useState(false);
     const [showEventModal, setShowEventModal] = useState(false);
 
+    const eventDate = "2025-06-09T15:04:05Z";
+
     if (!group) return null;
 
-    const groupEvents = mockEvents.filter(e => e.groupId === group.id);
-    const isMember = group.members.includes(currentUser);
+    const isMember = group.status === "accepted";
+
+    // PH
+    const groupEvents = [];
 
     const handlePostSubmit = (postData) => {
         // TODO: Add post to group (API or state update)
@@ -36,20 +41,31 @@ export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
 
 
     return (
-            <div className="group-detail">
-                <button onClick={onBack} className="group-detail-back-btn">
-                    ← Back to Groups
-                </button>
-                <h2>{group.title}</h2>
+        <div>
+            <div className="group-detail-header">
+                <h2>Welcome to {group.title}</h2>
                 <p>{group.description}</p>
-
+                {/* Action buttons for members */}
+                {isMember && (
+                    <div className="group-detail-actions">
+                        <button onClick={() => setShowPostModal(true)}>
+                            Create Post
+                        </button>
+                        <button onClick={() => setShowEventModal(true)}>
+                            Create Event
+                        </button>
+                    </div>
+                )}
+            </div>
+            <div className="group-detail">
+                {onBack && (
+                    <button onClick={onBack} className="group-detail-back-btn">
+                        ← Back to Groups
+                    </button>
+                )}
                 <section className="group-detail-members-section">
-                    <strong>Members:</strong>
-                    <ul className="group-detail-members-list">
-                        {group.members.map(member => (
-                            <li key={member}>{member}</li>
-                        ))}
-                    </ul>
+                    <strong>Members:</strong> {group.members_count}
+                    {/* You can add more member info if backend provides it */}
                     {!isMember && (
                         <button className="group-detail-join-btn">
                             Request to Join
@@ -62,18 +78,6 @@ export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
                     )}
                 </section>
 
-                {/* Action buttons for members */}
-                {isMember && (
-                    <div className="group-detail-actions">
-                        <button onClick={() => setShowPostModal(true)}>
-                            Create Post
-                        </button>
-                        <button onClick={() => setShowEventModal(true)}>
-                            Create Event
-                        </button>
-                    </div>
-                )}
-
                 <section>
                     <strong>Upcoming Events:</strong>
                     {groupEvents.length === 0 ? (
@@ -83,7 +87,7 @@ export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
                             {groupEvents.map(event => (
                                 <li key={event.id} className="group-detail-event-item">
                                     <div>
-                                        <b>{event.title}</b> — {new Date(event.dateTime).toLocaleString()}
+                                        <b>{event.title}</b> — {formatDate(event.start_time || event.dateTime)}
                                     </div>
                                     <div className="group-detail-event-desc">{event.description}</div>
                                     {isMember && (
@@ -102,7 +106,7 @@ export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
                 {showPostModal && (
                     <Modal onClose={() => setShowPostModal(false)}>
                         <CreatePostForm
-                            groupId={group.id}
+                            groupId={group.uuid}
                             onSubmit={handlePostSubmit}
                             onClose={() => setShowPostModal(false)}
                         />
@@ -111,13 +115,15 @@ export default function GroupDetail({ group, onBack, currentUser = "alice" }) {
                 {showEventModal && (
                     <Modal onClose={() => setShowEventModal(false)}>
                         <CreateEventForm
-                            groupId={group.id}
+                            groupId={group.uuid}
                             onSubmit={handleEventSubmit}
                             onClose={() => setShowEventModal(false)}
                         />
                     </Modal>
                 )}
             </div>
-        );
+                        
+        </div>
+    );
 }
 

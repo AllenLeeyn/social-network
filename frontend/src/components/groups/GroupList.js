@@ -1,55 +1,56 @@
-// src/components/groups/GroupList.js
-
-import React from "react";
-import { mockGroups } from "../../data/mockData";
+import React, { useState, useEffect } from "react";
+import GroupCard from "./GroupCard"; 
+import { toast } from "react-toastify";
 
 // Props:
-// - type: "my_groups" | "discover"
+// - filter: "my_groups" | "discover"
 // - onSelectGroup: function(group) => void
-// - currentUser: string (optional, for filtering "my groups")
 
-export default function GroupList({ type = "my_groups", onSelectGroup, currentUser = "alice" }) {
-    // Filter groups based on type
-    let groupsToShow = mockGroups;
-    if (type === "my_groups") {
-        groupsToShow = mockGroups.filter(g => g.members.includes(currentUser));
-    } else if (type === "discover") {
-        groupsToShow = mockGroups.filter(g => !g.members.includes(currentUser));
+export default function GroupList({ filter, onSelectGroup }) {
+    const [groups, setGroups] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/frontend-api/groups')
+        .then(res => res.json())
+        .then(data => {
+            setGroups(data.data); 
+            setLoading(false);
+        });
+    }, []);
+
+    // req 
+    let filteredGroups = groups;
+    if (filter === 'my_groups') {
+        filteredGroups = groups.filter(g => g.status === "accepted");
+    } else if (filter === 'discover') {
+        filteredGroups = groups.filter(g => g.status !== "accepted");
     }
 
-    if (groupsToShow.length === 0) {
-        return <div className="group-list-empty">No groups to display.</div>;
+    // Handlers for group actions
+    function handleInvite(group) {
+        // TODO: Implement invite logic
+    toast.info(`Invite sent to group: ${group.title}`);
     }
+
+    function handleRequestJoin(group) {
+        // TODO: Implement request to join logic
+    toast.success(`Request to join "${group.title}" sent!`);
+    }
+
 
     return (
-        <ul className="group-list">
-        <h3>My Group</h3>
-        {groupsToShow.map(group => (
-            <li
-            key={group.id}
-            className="group-list-item"
-            onClick={() => onSelectGroup(group)}
-            tabIndex={0}
-            role="button"
-            style={{
-                cursor: "pointer",
-                padding: "12px",
-                borderBottom: "1px solid #ececec",
-                background: "#fff",
-                borderRadius: "4px",
-                marginBottom: "8px",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.02)"
-            }}
-            >
-            <div>
-                <strong>{group.title}</strong>
-            </div>
-            <div style={{ color: "#666", fontSize: "0.95em" }}>{group.description}</div>
-            <div style={{ color: "#888", fontSize: "0.85em" }}>
-                Members: {group.members.length}
-            </div>
-            </li>
+        <div className="group-list">
+        {loading && <p>Loading groups...</p>}
+        {!loading && filteredGroups.length === 0 && <p>No groups found.</p>}
+        {!loading && filteredGroups.map(group => (
+            <GroupCard
+                key={group.uuid}
+                group={group}
+                onInvite={handleInvite}
+                onRequestJoin={handleRequestJoin}
+            />
         ))}
-        </ul>
+        </div>
     );
 }

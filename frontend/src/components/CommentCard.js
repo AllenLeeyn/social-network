@@ -2,20 +2,20 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FaThumbsUp, FaThumbsDown, FaCommentAlt } from 'react-icons/fa';
+import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import { TimeAgo } from '../utils/TimeAgo';
 import { toast } from 'react-toastify';
-import { fetchPostById, submitPostFeedback } from "../lib/apiPosts";
+import { submitCommentFeedback } from "../lib/apiPosts";
 
-export default function PostCard({ post }) {
-  const [liked, setLiked] = useState(post.liked);
-  const [disliked, setDisliked] = useState(post.disliked);
-  const [likeCount, setLikeCount] = useState(post.like_count);
-  const [dislikeCount, setDislikeCount] = useState(post.dislike_count);
+export default function CommentCard({ comment }) {
+  const [liked, setLiked] = useState(comment.liked);
+  const [disliked, setDisliked] = useState(comment.disliked);
+  const [likeCount, setLikeCount] = useState(comment.like_count);
+  const [dislikeCount, setDislikeCount] = useState(comment.dislike_count);
 
-  const handlePostFeedback = async (rating) => {
+  const handleCommentFeedback = async (rating) => {
     try {
-      await submitPostFeedback({ parent_id: post.id, rating });
+      await submitCommentFeedback({ parent_id: comment.id, rating });
     } catch (err) {
       toast.error(err.message || "Failed to submit feedback");
     }
@@ -24,11 +24,11 @@ export default function PostCard({ post }) {
   const handleLike = () => {
     if (liked) {
       setLiked(false);
-      handlePostFeedback(0)
+      handleCommentFeedback(0)
       setLikeCount((c) => c - 1);
     } else {
       setLiked(true);
-      handlePostFeedback(1)
+      handleCommentFeedback(1)
       setLikeCount((c) => c + 1);
       if (disliked) {
         setDisliked(false);
@@ -41,12 +41,12 @@ export default function PostCard({ post }) {
   const handleDislike = () => {
     if (disliked) {
       setDisliked(false);
-      handlePostFeedback(0)
+      handleCommentFeedback(0)
       setDislikeCount((c) => c - 1);
       // optionally call API to undo dislike
     } else {
       setDisliked(true);
-      handlePostFeedback(-1)
+      handleCommentFeedback(-1)
       setDislikeCount((c) => c + 1);
       if (liked) {
         setLiked(false);
@@ -58,19 +58,15 @@ export default function PostCard({ post }) {
 
   return (
     <div>
-       <h1>
-        <Link href={`/post?id=${post.uuid}`}>{post.title}</Link>
-      </h1>
+      <pre>{comment.content}</pre>
 
       <small>
         By{' '}
-        <Link href={`/user/${post.user.uuid}`}>
-          {post.user.nick_name}
+        <Link href={`/user/${comment.user.uuid}`}>
+          {comment.user.nick_name}
         </Link>{' '}
-        [{TimeAgo(post.created_at)}]
+        [{TimeAgo(comment.created_at)}]
       </small>
-
-      <pre>{post.content}</pre>
 
       <div className="post-stats">
         <button
@@ -86,19 +82,7 @@ export default function PostCard({ post }) {
         >
           <FaThumbsDown /> {dislikeCount}
         </button>
-
-        <button className="stat-btn" aria-disabled="true">
-          <FaCommentAlt /> {post.comment_count}
-        </button>
       </div>
-
-      <small className="category-tags">
-        {post.categories.map((cat) => (
-          <span key={cat.id || cat.name} className="category-badge">
-            {cat.name}
-          </span>
-        ))}
-      </small>
     </div>
   );
 }
