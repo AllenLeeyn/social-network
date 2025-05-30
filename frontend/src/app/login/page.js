@@ -55,7 +55,7 @@ export default function AuthPage() {
     let imageUUID = null;
     if (registerAvatar) {
       try {
-        imageUUID = await handleImage(registerAvatar);
+        imageUUID = await handleImage([registerAvatar]);
       } catch (err) {
         setFormError("Image upload failed: " + err.message);
         return;

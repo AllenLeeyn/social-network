@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TimeAgo } from '../../utils/formatDate';
+import { TimeAgo } from '../../utils/TimeAgo';
 import { readNotification } from "../../lib/apiNotifications";
 import { submitFollowResponse } from "../../lib/apiFollow";
 import { submitGroupRequestOrInviteResponse } from "../../lib/apiGroups";
