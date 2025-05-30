@@ -24,37 +24,32 @@ export default function CommentCard({ comment }) {
   };
 
   const handleLike = () => {
+      handleCommentFeedback(1)
     if (liked) {
       setLiked(false);
-      handleCommentFeedback(0)
       setLikeCount((c) => c - 1);
     } else {
       setLiked(true);
-      handleCommentFeedback(1)
       setLikeCount((c) => c + 1);
       if (disliked) {
         setDisliked(false);
         setDislikeCount((c) => c - 1);
       }
-      // optionally call API to like
     }
   };
 
   const handleDislike = () => {
+      handleCommentFeedback(-1)
     if (disliked) {
       setDisliked(false);
-      handleCommentFeedback(0)
       setDislikeCount((c) => c - 1);
-      // optionally call API to undo dislike
     } else {
       setDisliked(true);
-      handleCommentFeedback(-1)
       setDislikeCount((c) => c + 1);
       if (liked) {
         setLiked(false);
         setLikeCount((c) => c - 1);
       }
-      // optionally call API to dislike
     }
   };
 

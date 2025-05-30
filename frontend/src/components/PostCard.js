@@ -24,37 +24,32 @@ export default function PostCard({ post }) {
   };
 
   const handleLike = () => {
+      handlePostFeedback(1)
     if (liked) {
       setLiked(false);
-      handlePostFeedback(0)
       setLikeCount((c) => c - 1);
     } else {
       setLiked(true);
-      handlePostFeedback(1)
       setLikeCount((c) => c + 1);
       if (disliked) {
         setDisliked(false);
         setDislikeCount((c) => c - 1);
       }
-      // optionally call API to like
     }
   };
 
   const handleDislike = () => {
+      handlePostFeedback(-1)
     if (disliked) {
       setDisliked(false);
-      handlePostFeedback(0)
       setDislikeCount((c) => c - 1);
-      // optionally call API to undo dislike
     } else {
       setDisliked(true);
-      handlePostFeedback(-1)
       setDislikeCount((c) => c + 1);
       if (liked) {
         setLiked(false);
         setLikeCount((c) => c - 1);
       }
-      // optionally call API to dislike
     }
   };
 
