@@ -156,6 +156,7 @@ export default function PostPage() {
   );
 }
 
+<<<<<<< HEAD
 
 
 // "use client";
@@ -280,3 +281,5 @@ export default function PostPage() {
 //     </main>
 //   );
 // }
+=======
+>>>>>>> gigi

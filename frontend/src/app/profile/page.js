@@ -1,166 +1,142 @@
-// This is our homepage
-
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-
+import React, { useState } from "react";
+import "./profile.css";
 import SidebarSection from "../../components/SidebarSection";
-import CategoriesList from "../../components/CategoriesList";
-import PostList from "../../components/PostList";
-import CreatePost from "../../components/CreatePost";
-import Modal from "../../components/Modal";
-import UsersList from "../../components/UsersList";
+import { sampleUsers,myActivity,sampleGroups,sampleFollowers,sampleFollowing } from "../../data/mockData";
 
-import { fetchPosts, fetchPostsByCategory } from "../../lib/apiPosts";
-import { usePosts } from "../../hooks/usePosts";
+export default function ProfilePage() {
+    const [showFollowers, setShowFollowers] = useState(false);
+    const [showFollowing, setShowFollowing] = useState(false); 
 
-import { useWebsocketContext } from '../../contexts/WebSocketContext';
+    const currentUser = {
+        id: 99,
+        username: "UserA",
+        fullName: "Allen Lee",
+        email: "allen.lee@grytlab.sg",
+        dateOfBirth: "2003-01-01",
+        avatar: "/avatars/allen.png",
+        bio: "Backend developer and cartographer.",
+        email: "allen.lee@grytlab.sg"
+    };
 
-import {
-  sampleGroups,
-  sampleConnections,
-} from "../../data/mockData";
+    return (
+        <main>
+            <div className="homepage-layout">
+                {/* Left Sidebar */}
+                <aside className="sidebar left-sidebar">
+                    <SidebarSection title="My Activity">
+                        <ul className="categories">
+                            {myActivity.map(cat => (
+                                <li key={cat.id} className="category-item">
+                                    <strong>{cat.name}</strong>
+                                </li>
+                            ))}
+                        </ul>
+                    </SidebarSection>
+                    <SidebarSection title="My Groups">
+                        <ul className="groups">
+                            {sampleGroups.map(group => (
+                                <li key={group.id} className="group-item">
+                                    <strong>{group.name}</strong>
+                                </li>
+                            ))}
+                        </ul>
+                    </SidebarSection>
+                </aside>
 
-export default function HomePage() {
-  const [showModal, setShowModal] = useState(false);
-  const { posts, categories, loading, error } = usePosts([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [filteredPosts, setFilteredPosts] = useState([]);
-  const [categoryLoading, setCategoryLoading] = useState(false);
-  const [categoryError, setCategoryError] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const router = useRouter(); 
+                {/* Profile Content */}
+                <section className="main-post-section">
+                    <div className="profile-header">
+                        <img
+                            src={currentUser.avatar}
+                            alt={currentUser.username}
+                            className="profile-avatar"
+                        />
+                        <div className="profile-info">
+                            <h2>{currentUser.username}</h2>
+                            <p><strong>{currentUser.fullName}</strong></p>
+                            <p>{currentUser.email}</p>
+                            <p><span>Date of Birth:</span> {currentUser.dateOfBirth}</p>
+                            <p className="bio">{currentUser.bio}</p>
+                            <div className="connection-buttons">
+                                <button onClick={() => setShowFollowers(true)}>
+                                    Followers ({sampleFollowers.length})
+                                </button>
+                                <button onClick={() => setShowFollowing(true)}>
+                                    Following ({sampleFollowing.length})
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
-  const { isConnected, connect } = useWebsocketContext();
+                    {/* Followers Modal */}
+                    {showFollowers && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <h3>Followers</h3>
+                                <button className="close" onClick={() => setShowFollowers(false)}>✖</button>
+                                <ul className="users">
+                                    {sampleFollowers.map(user => (
+                                        <li key={user.id} className="user-item">
+                                            <img src={user.avatar} alt={user.username} />
+                                            <span>{user.fullName} ({user.username})</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
 
-  useEffect(() => {
-    async function checkAccess() {
-      try {
-        await fetchPosts();
-        setIsAuthorized(true);
-      } catch (error) {
-        console.error("Access denied, redirecting to login:", error);
-        router.push("/login");
-      }
-    }
-    checkAccess();
-  }, [router]);
+                    {/* Following Modal */}
+                    {showFollowing && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <h3>Following</h3>
+                                <button className="close" onClick={() => setShowFollowing(false)}>✖</button>
+                                <ul className="users">
+                                    {sampleFollowing.map(user => (
+                                        <li key={user.id} className="user-item">
+                                            <img src={user.avatar} alt={user.username} />
+                                            <span>{user.fullName} ({user.username})</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
 
-  useEffect(() => {
-    if (!selectedCategory) setFilteredPosts(posts);
-  }, [posts, selectedCategory]);
+                    {/* Main Post Content */}
+                    {/*{post ? (
+                        <div key={post.id} className="post-item">
+                            <h3>{post.title}</h3>
+                            <p><em>by {post.author}</em></p>
+                            <p>{post.snippet}</p>
+                        </div>
+                     ) : (
+                        <div className="post-item">
+                            <h3>Post not found</h3>
+                        </div>
+                    )}
+                    
+                    <CommentsSection title="Comments" comments={commentsForThisPost}/>*/}
 
-  const handleCategoryClick = async (cat) => {
-    if (selectedCategory === cat) {
-      setSelectedCategory(null);
-      setFilteredPosts(posts);
-      setCategoryError(null);
-      return;
-    }
-    setSelectedCategory(cat);
-    setCategoryLoading(true);
-    setCategoryError(null);
-    try {
-      const data = await fetchPostsByCategory(cat);
-      setFilteredPosts(data.data.Posts || []);
-    } catch (err) {
-      setCategoryError(err.message);
-      setFilteredPosts([]);
-    } finally {
-      setCategoryLoading(false);
-    }
-  };
+                </section>
 
-
-  // Filter logic
-  const displayedPosts = selectedCategory ? filteredPosts : posts;
-
-  if (!isAuthorized) {
-    // Prevent rendering the homepage until access is verified
-    return null;
-  }
-
-
-  return (
-    <main>
-      <div className="homepage-layout">
-        {/* Left Sidebar */}
-        <aside className="sidebar left-sidebar">
-          <SidebarSection title="Categories">
-            <CategoriesList
-              categories={categories}
-              loading={loading}
-              error={error}
-              onCategoryClick={handleCategoryClick}
-            />
-          </SidebarSection>
-          <SidebarSection title="Groups">
-            <ul className="groups">
-              {sampleGroups.map((group) => (
-                <li key={group.id} className="group-item">
-                  <strong>{group.name}</strong>
-                </li>
-              ))}
-            </ul>
-          </SidebarSection>
-          <SidebarSection title="Connections">
-            <ul className="connections">
-              {sampleConnections.map((conn) => (
-                <li key={conn.id} className="connection-item">
-                  <span>
-                    <strong>
-                      {conn.fullName} ({conn.username})
-                    </strong>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </SidebarSection>
-        </aside>
-
-        {/* Center / Main View */}
-        <div>
-            <h1>BIG BOX</h1>
-        </div>
-        <section className="main-feed post-list-section">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <h2>Latest Posts</h2>
-            <button
-              className="create-post-btn"
-              onClick={() => setShowModal(true)}
-              aria-label="Create a new post"
-            >
-              + Create Post
-            </button>
-          </div>
-          {loading && <div>Loading...</div>}
-          {error && <div>Error: {error}</div>}
-          {!loading && !error && <PostList posts={displayedPosts} />}
-
-          {showModal && (
-            <Modal onClose={() => setShowModal(false)} title="Create Post">
-              <CreatePost
-                categories={categories}
-                onClose={() => setShowModal(false)}
-              />
-            </Modal>
-          )}
-        </section>
-
-        {/* Right Sidebar */}
-        <aside className="sidebar right-sidebar">
-          <SidebarSection title="Active Users">
-            <UsersList />
-          </SidebarSection>
-        </aside>
-      </div>
-    </main>
-  );
+                {/* Right Sidebar */}
+                <aside className="sidebar right-sidebar">
+                    <SidebarSection title="Active Users">
+                        <ul className="users">
+                            {sampleUsers.map(user => (
+                                <li key={user.id} className={`user-item${user.online ? " online" : ""}${user.unread ? " unread" : ""}`}>
+                                    <img src={user.avatar} alt={user.username} />
+                                    <span>{user.fullName} ({user.username})</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </SidebarSection>
+                </aside>
+            </div>
+        </main>
+    );
 }

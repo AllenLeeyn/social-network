@@ -104,6 +104,7 @@ export const sampleConnections = [
     { id: 2, username: "UserE", fullName: "Evan Evans" }
 ];
 
+<<<<<<< HEAD
 
 export const sampleConversations = [
   {
@@ -311,4 +312,21 @@ export const mockPosts = [
     content: "Who wants to join a virtual meetup next week?",
     author: "carol",
   }
+=======
+export const sampleFollowers = [
+    { id: 1, username: "UserA", fullName: "Alice Anderson", avatar: "/avatars/alice.png" },
+    { id: 2, username: "UserB", fullName: "Bob Brown", avatar: "/avatars/bob.png" },
+    { id: 3, username: "UserC", fullName: "Charlie Clark", avatar: "/avatars/charlie.png" },
+];
+
+export const sampleFollowing = [
+    { id: 4, username: "UserD", fullName: "David Davis", avatar: "/avatars/david.png" },
+    { id: 5, username: "UserE", fullName: "Emma Evans", avatar: "/avatars/emma.png" },
+    { id: 6, username: "UserF", fullName: "Frank Foster", avatar: "/avatars/frank.png" },
+];
+
+export const myActivity = [
+    { id: 1, name: "My Posts" },
+    { id: 2, name: "My Group Posts" },
+>>>>>>> gigi
 ];

@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 // This is our homepage
 
 "use client";
+=======
+'use client';
+>>>>>>> gigi
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
