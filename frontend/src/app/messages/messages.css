@@ -99,6 +99,28 @@
     font-style: italic;
 }
 
+.message-input {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f7faff;
+    width: 100%;
+    border: 1px solid #ccc;
+    font-family: Martian Mono, Arial, sans-serif;
+
+}
+
+.message-input input {
+    flex: 1 ;
+    min-width: 70% ;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-right:1rem;
+    resize: vertical;
+} 
+
 
 @media (max-width: 1100px) {
     .message-page-layout {
