@@ -4,7 +4,7 @@ CREATE TABLE notifications (
     from_user_id            INTEGER NOT NULL DEFAULT 0,
     target_id               INTEGER NOT NULL,
     target_uuid             TEXT NULL,
-    target_type             TEXT NOT NULL CHECK (target_type IN ('follow', 'group', 'group_event')),
+    target_type             TEXT NOT NULL CHECK (target_type IN ('following', 'groups', 'group_event')),
     target_detailed_type    TEXT NOT NULL CHECK (target_detailed_type IN (
                                 'follow_request',
                                 'follow_request_accepted',

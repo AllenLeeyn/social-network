@@ -12,7 +12,7 @@ type NotificationFromUser struct {
 	UUID      string `json:"uuid"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	NickName  sql.NullString
+	NickName  string `json:"nick_name"`
 }
 
 // Post struct represents the user data model
@@ -139,7 +139,15 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 	rows, selectError := sqlDB.Query(`
         SELECT n.id as notification_id, n.to_user_id as notification_to_user_id, n.from_user_id as notification_from_user_id, 
 			n.target_id as notification_target_id, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
-			n.message as notification_message, n.is_read as notification_is_read, n.data as notification_data,
+			case
+				when n.target_detailed_type = 'follow_request' then 'You have a follow request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
+				when n.target_detailed_type = 'follow_request_accepted' then 'Your follow request to ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been accepted'
+				when n.target_detailed_type = 'group_invite' then 'You have been invited to group ' || (SELECT title FROM groups WHERE id = n.target_id)
+				when n.target_detailed_type = 'group_request' then 'You have a group joining request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
+				when n.target_detailed_type = 'group_event' then 'You have been invited to event' || (SELECT title FROM group_events WHERE id = n.target_id)
+				else ''
+			end as notification_message
+			, n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
 			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name
 		FROM notifications n
@@ -190,7 +198,15 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 	rows, selectError := sqlDB.Query(`
         SELECT n.id as notification_id, n.to_user_id as notification_to_user_id, n.from_user_id as notification_from_user_id, 
 			n.target_id as notification_target_id, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
-			n.message as notification_message, n.is_read as notification_is_read, n.data as notification_data,
+			case
+				when n.target_detailed_type = 'follow_request' then 'You have a follow request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
+				when n.target_detailed_type = 'follow_request_accepted' then 'Your follow request to ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been accepted'
+				when n.target_detailed_type = 'group_invite' then 'You have been invited to group ' || (SELECT title FROM groups WHERE id = n.target_id)
+				when n.target_detailed_type = 'group_request' then 'You have a group joining request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
+				when n.target_detailed_type = 'group_event' then 'You have been invited to event' || (SELECT title FROM group_events WHERE id = n.target_id)
+				else ''
+			end as notification_message, 
+			n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
 			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name
 		FROM notifications n

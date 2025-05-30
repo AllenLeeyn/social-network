@@ -81,13 +81,13 @@ func ReadAllNotificationsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := models.ReadAllNotifications(userID)
+	notifications, err := models.ReadAllNotifications(userID)
 	if err != nil {
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
-	utils.ReturnJsonSuccess(w, "Notifications fetched successfully", posts)
+	utils.ReturnJsonSuccess(w, "Notifications fetched successfully", notifications)
 }
 
 func ReadNotificationByIdHandler(w http.ResponseWriter, r *http.Request) {

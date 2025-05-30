@@ -7,6 +7,8 @@ import { toast } from 'react-toastify';
 import NotificationBell from './notifications/NotificationBell';
 import { useNotifications } from "../contexts/NotificationsContext";
 
+import '../styles/notifications/Bell.css'
+
 export default function Navbar() {
   // Logout handler
   const { handleLogout } = useAuth();

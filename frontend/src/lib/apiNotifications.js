@@ -11,17 +11,8 @@ export async function fetchNotifications() {
   return response.json();
 }
 
-export async function fetchNotificationById(id) {
-  const response = await fetch(`${API_URL}/notifications?id=${id}`, {
-    method: "GET",
-    credentials: "include",
-  });
-  if (!response.ok) throw new Error("Failed to fetch notification");
-  return response.json();
-}
-
-export async function createNotification(notificationData) {
-  const response = await fetch(`${API_URL}/submitNotification`, {
+export async function readNotification(notificationData) {
+  const response = await fetch("/frontend-api/readNotification", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(notificationData),
@@ -29,7 +20,7 @@ export async function createNotification(notificationData) {
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Failed to create notification");
+    throw new Error(data.message || "Failed to make notification read");
   }
   return data;
 }
