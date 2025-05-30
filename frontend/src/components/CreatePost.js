@@ -60,7 +60,10 @@ export default function CreatePost({ onClose }) {
       }
     }
 
-    const postData = { title, content, category_ids: categoryIds, file_attachments: imageUUIDs};
+    const postData = { title, content, 
+      category_ids: categoryIds, 
+      file_attachments: imageUUIDs, 
+      visibility: postVisibility};
     try {
       const data = await createPost(postData);
       if (data) {
