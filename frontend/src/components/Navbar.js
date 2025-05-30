@@ -8,6 +8,10 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
+import NotificationBell from './notifications/NotificationBell';
+import { useNotifications } from "../contexts/NotificationsContext";
+
+import '../styles/notifications/Bell.css'
 
 export default function Navbar() {
   // Logout handler
@@ -30,6 +34,8 @@ export default function Navbar() {
       : null;
     setProfileImage(imageUrl);
   }, []);
+  
+  const { notifications } = useNotifications();
 
   const onLogoutClick = async (e) => {
     e.preventDefault();
@@ -61,9 +67,10 @@ export default function Navbar() {
         <Link href="/messages" className="nav-link">
           Messages
         </Link>
-        <Link href="/notifications" className="nav-link">
+        {/*<Link href="/notifications" className="nav-link">
           Notifications
-        </Link>
+        </Link>*/}
+        <NotificationBell notifications={notifications} />
       </div>
       <div className="right-links">
         {profileImage ? (
