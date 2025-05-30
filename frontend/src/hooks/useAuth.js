@@ -14,8 +14,7 @@ export function useAuth() {
 
     try {
       const userData = await login(email, password)
-      console.log('Login response', userData)
-      setUser(userData) // Save user data after successful login
+      setUser(userData)
 
       localStorage.setItem('user-uuid', userData.data.uuid);
       localStorage.setItem('user-nick_name', userData.data.nick_name);
@@ -35,7 +34,6 @@ export function useAuth() {
 
     try {
       const response = await signup(userData)
-      console.log('Login response', userData)
       setUser(response)
 
       localStorage.setItem('user-uuid', response.data.uuid);

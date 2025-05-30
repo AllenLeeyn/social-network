@@ -1,7 +1,6 @@
 "use client";
-import Link from "next/link";
 import "../styles/PostList.css";
-
+import PostCard from './PostCard';
 
 export default function PostsPage({ posts = [] }) {
     return (
@@ -9,11 +8,7 @@ export default function PostsPage({ posts = [] }) {
             <ul>
                 {posts.map((post) => (
                     <li className="post-item" key={post.id}>
-                        <h1>
-                        <Link href={`/post?id=${post.uuid}`}>{post.title}</Link>
-                        </h1>
-                        <p>{post.content}</p>
-                        <small>By {post.user.nick_name}</small>
+                    <   PostCard post={post} />
                     </li>
                 ))}
             </ul>

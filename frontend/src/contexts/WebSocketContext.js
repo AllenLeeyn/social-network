@@ -89,7 +89,7 @@ export function WebSocketProvider( { children } ) {
             case 'message':
                 setMessages(prev => [...prev, data]);
                 sendAction({ action: 'userListReq' });
-                const otherUserId = data.senderUUID === userUuid ? data.receiverUUID : data.senderUUID;
+                const otherUserId = data.senderUUID === userUUID ? data.receiverUUID : data.senderUUID;
                 setActiveDM(prev => prev.includes(otherUserId) ? prev : [...prev, otherUserId]);
                 if (data.senderUUID !== currentChatIdRef.current) {
                     setUserList(prev =>

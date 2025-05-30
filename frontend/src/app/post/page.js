@@ -16,6 +16,7 @@ import CategoriesList from "../../components/CategoriesList";
 import ConnectionList from "../../components/ConnectionList";
 import { fetchFollowees } from "../../lib/apiAuth";
 import { toast } from 'react-toastify';
+import PostCard from '../../components/PostCard';
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -75,17 +76,6 @@ export default function PostPage() {
     }
   };
 
-  const handlePostFeedback = async (rating) => {
-    try {
-      await submitPostFeedback({ parent_id: post.id, rating });
-      // Refresh post data to update like/dislike counts
-      const postData = await fetchPostById(id);
-      setPost(postData.data.Post);
-    } catch (err) {
-      toast.error(err.message || "Failed to submit feedback");
-    }
-  };
-
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -125,30 +115,7 @@ export default function PostPage() {
         {/* Main Post Content */}
         <section className="main-post-section">
           {post ? (
-            <div key={post.ID} className="post-item">
-              <h3>{post.title}</h3>
-              <p>
-                <em>by {post.user.nick_name}</em>
-              </p>
-              <p>{post.content}</p>
-              <div className="post-actions" style={{ marginTop: "1em" }}>
-                <button
-                  onClick={() => handlePostFeedback(1)}
-                  disabled={post.liked}
-                  aria-label="Like"
-                >
-                  👍 Like {post.like_count}
-                </button>
-                <button
-                  onClick={() => handlePostFeedback(-1)}
-                  disabled={post.disliked}
-                  aria-label="Dislike"
-                  style={{ marginLeft: "1em" }}
-                >
-                  👎 Dislike {post.dilike_count}
-                </button>
-              </div>
-            </div>
+            <PostCard post={post} />
           ) : (
             <div className="post-item">
               <h3>Post not found</h3>

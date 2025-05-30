@@ -14,7 +14,9 @@ BACKEND_PID=$!
 
 echo "Starting Next.js frontend..."
 cd ../frontend
-npm install  # optional, skip if already installed
+npm install
+npm install react-toastify
+npm install react-icons
 npm run dev &
 
 FRONTEND_PID=$!

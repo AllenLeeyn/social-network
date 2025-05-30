@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { WebSocketProvider } from '../contexts/WebSocketContext'
 import { ActiveChatProvider } from "../contexts/ActiveChatContext";
+import { NotificationsProvider } from '../contexts/NotificationsContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -14,15 +15,17 @@ return (
     <html lang="en">
         <body>
             <ToastContainer position="top-right" autoClose={1500} />
-            <WebSocketProvider>
-                <ActiveChatProvider>
-                    <Navbar />
-                    <main>
-                        {children}
-                    </main>
-                    <Footer />
-                </ActiveChatProvider>
-            </WebSocketProvider>
+            <NotificationsProvider>
+                <WebSocketProvider>
+                    <ActiveChatProvider>
+                        <Navbar />
+                        <main>
+                            {children}
+                        </main>
+                        <Footer />
+                    </ActiveChatProvider>
+                </WebSocketProvider>
+            </NotificationsProvider>
         </body>
     </html>
     );

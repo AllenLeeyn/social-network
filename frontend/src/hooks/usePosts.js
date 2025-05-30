@@ -15,6 +15,7 @@ export function usePosts() {
           fetchPosts(),
           fetchCategories(),
         ]);
+        console.log(postsData)
         setPosts(postsData.data);
         setCategories(categoriesData.data);
         setUsers(postsData.users);
