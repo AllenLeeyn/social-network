@@ -74,7 +74,7 @@ func GroupInviteRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	notificationModel.InsertNotification(&notificationModel.Notification{
 		ToUserId: m.FollowerID, FromUserId: m.LeaderID,
-		TargetType: "group", TargetDetailedType: "group_invite",
+		TargetType: "groups", TargetDetailedType: "group_invite",
 		TargetId: m.GroupID, TargetUUID: m.GroupUUID,
 		Message: m.Status,
 	})
@@ -113,7 +113,7 @@ func GroupJoinRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	notificationModel.InsertNotification(&notificationModel.Notification{
 		ToUserId: m.LeaderID, FromUserId: userID,
-		TargetType: "group", TargetDetailedType: "group_request",
+		TargetType: "groups", TargetDetailedType: "group_request",
 		TargetId: m.FollowerID, TargetUUID: m.FollowerUUID,
 		Message: m.Status,
 	})
@@ -154,7 +154,7 @@ func GroupQuitHandler(w http.ResponseWriter, r *http.Request) {
 			&notificationModel.Notification{
 				ToUserId: toUserID, FromUserId: fromUserID,
 				Message: m.Status, UpdatedBy: &userID,
-			}, "group", memberStatus)
+			}, "groups", memberStatus)
 	}
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)
@@ -215,7 +215,7 @@ func GroupMemberResponseHandler(w http.ResponseWriter, r *http.Request) {
 	notificationModel.InsertNotification(
 		&notificationModel.Notification{
 			ToUserId: toUserID, FromUserId: fromUserID,
-			TargetType: "group", TargetDetailedType: detailedType,
+			TargetType: "groups", TargetDetailedType: detailedType,
 			TargetId: m.GroupID, TargetUUID: m.GroupUUID,
 			Message: m.Status, UpdatedBy: &userID,
 		})

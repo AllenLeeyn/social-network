@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { FaThumbsUp, FaThumbsDown, FaCommentAlt } from 'react-icons/fa';
 import { TimeAgo } from '../utils/TimeAgo';
+import DynamicImage from './DynamicImage';
 import { toast } from 'react-toastify';
 import { fetchPostById, submitPostFeedback } from "../lib/apiPosts";
 import { FaUserCircle } from 'react-icons/fa';
@@ -85,13 +86,10 @@ export default function PostCard({ post }) {
       {post.post_files && post.post_files.length > 0 && (
         <div className="post-images">
           {post.post_files.map((file, index) => (
-            <Image
+            <DynamicImage
               key={index}
               src={`/frontend-api/image/${file.file_uploaded_name}`}
               alt={`Post attachment ${index + 1}`}
-              width={400}
-              height={300}
-              className="post-image"
             />
           ))}
         </div>

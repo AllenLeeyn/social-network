@@ -40,11 +40,8 @@ func isValidPostInfo(post *models.Post) error {
 	}
 
 	if post.Visibility == "selected" {
-		if post.SelectedAudienceUserIds == nil {
-			return errors.New("audience ids is required and must be a list of integers")
-		}
-		if post.SelectedAudienceUserIds, isValid = utils.IsValidIntegerList(post.SelectedAudienceUserIds); !isValid {
-			return errors.New("audience ids is required and must be a list of integers")
+		if post.SelectedAudienceUserUUIDS == nil {
+			return errors.New("no audience is selected")
 		}
 	}
 	if post.Visibility == "" {

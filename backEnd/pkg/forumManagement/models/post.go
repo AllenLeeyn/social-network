@@ -30,12 +30,12 @@ type Post struct {
 	IsDislikedByUser bool                      `json:"disliked"`
 	User             userManagementModels.User `json:"user"` // Embedded user data
 
-	CategoryIds             []int                  `json:"category_ids"`               // List of category ids related to the post
-	SelectedAudienceUserIds []int                  `json:"selected_audience_user_ids"` // List of selected audience user ids related to the post
-	FileAttachments         map[string]string      `json:"file_attachments"`           // List of file attachments
-	Categories              []Category             `json:"categories"`                 // List of categories related to the post
-	PostFiles               []PostFile             `json:"post_files"`                 // List of files related to the post
-	PostSelectedAudiences   []PostSelectedAudience `json:"post_selected_audiences"`    // List of selected audience related to the post
+	CategoryIds               []int                  `json:"category_ids"`                 // List of category ids related to the post
+	SelectedAudienceUserUUIDS []string               `json:"selected_audience_user_uuids"` // List of selected audience user ids related to the post
+	FileAttachments           map[string]string      `json:"file_attachments"`             // List of file attachments
+	Categories                []Category             `json:"categories"`                   // List of categories related to the post
+	PostFiles                 []PostFile             `json:"post_files"`                   // List of files related to the post
+	PostSelectedAudiences     []PostSelectedAudience `json:"post_selected_audiences"`      // List of selected audience related to the post
 }
 
 func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) (string, error) {
@@ -78,7 +78,7 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 	}
 
 	if post.Visibility == "selected" {
-		insertPostSelectedAudienceErr := InsertPostSelectedAudience(int(lastInsertID), post.SelectedAudienceUserIds, post.UserId, tx)
+		insertPostSelectedAudienceErr := InsertPostSelectedAudience(int(lastInsertID), post.SelectedAudienceUserUUIDS, post.UserId, tx)
 		if insertPostSelectedAudienceErr != nil {
 			tx.Rollback() // Rollback on error
 			return "", insertPostSelectedAudienceErr
@@ -151,7 +151,7 @@ func UpdatePost(post *Post, categories []int, uploadedFiles map[string]string, u
 			return deletePostSelectedAudienceErr
 		}
 
-		insertPostSelectedAudienceErr := InsertPostSelectedAudience(int(post.ID), post.SelectedAudienceUserIds, post.UserId, tx)
+		insertPostSelectedAudienceErr := InsertPostSelectedAudience(int(post.ID), post.SelectedAudienceUserUUIDS, post.UserId, tx)
 		if insertPostSelectedAudienceErr != nil {
 			tx.Rollback() // Rollback on error
 			return insertPostSelectedAudienceErr
