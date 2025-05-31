@@ -1,13 +1,20 @@
 form {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1rem;
+    font-family: "Inter", sans-serif;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+}
+
+.input-group h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #233144;
+    margin-bottom: 0.5rem;
 }
 
 .input-group label {
@@ -75,6 +82,48 @@ form {
     transform: scale(1.05);
 
 }
+
+/* select {
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    background-color: white;
+} */
+
+/* select option:checked{
+    background-color: #233144;
+    color: white;
+}
+
+select option {
+    background-color: white !important;
+    color: #333 !important;
+} */
+select {
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    background-color: white;
+    border: 1px solid #d1d5db;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+select option:not(:checked) {
+    background-color: white !important;
+    color: #333 !important;
+}
+
+select:focus {
+    border-color: #233144;
+    background: #fff;
+}
+
 
 @media (max-width: 600px) {
     .checkbox-group {

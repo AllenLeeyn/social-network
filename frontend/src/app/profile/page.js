@@ -118,7 +118,7 @@ export default function ProfilePage() {
           <div className="user-posts-section">
             <h3>{currentUser.username}'s Posts</h3>
             {myPosts.length > 0 ? (
-              myPosts.map((post) => <PostCard key={post.id} post={post} />)
+              myPosts.map((post) => <PostCard key={post.id} post={post} />) 
             ) : (
               <p>No posts yet.</p>
             )}

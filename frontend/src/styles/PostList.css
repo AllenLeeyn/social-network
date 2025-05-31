@@ -15,11 +15,15 @@
 .post-item h2 {
     margin-top: 0.7rem;
     margin-bottom: 0.5rem;
-    font-size: 1.7rem;
+    font-size: 1.6rem;
 }
 .post-item h2 a {
-    color: #0070f3;
+    color: #233144;
     text-decoration: none;
+}
+
+.post-item h2 a:hover {
+    text-decoration: underline;
 }
 
 .post-item pre {
@@ -42,7 +46,7 @@
   color: #374151;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .post-stats {
@@ -95,8 +99,12 @@
 
 .user-name {
   font-weight: bold;
-  color: #0070f3;
+  color: #1c54a2;
   text-decoration: none;
+}
+
+.user-name:hover {
+  text-decoration: underline;
 }
 
 .timestamp {
