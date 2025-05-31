@@ -5,6 +5,7 @@ import { fetchMyPosts } from "../../lib/apiPosts";
 import "./profile.css";
 import SidebarSection from "../../components/SidebarSection";
 import PostCard from "../../components/PostCard";
+import ProfileCard from '../../components/ProfileCard';
 import UsersList from "../../components/UsersList";
 import {
 myPosts,
@@ -88,32 +89,7 @@ return (
 
     {/* Profile Content */}
     <section className="main-post-section">
-        <div className="profile-header">
-        <img
-            src={currentUser.avatar}
-            alt={currentUser.username}
-            className="profile-avatar"
-        />
-        <div className="profile-info">
-            <h2>{currentUser.username}</h2>
-            <p>
-            <strong>{currentUser.fullName}</strong>
-            </p>
-            <p>{currentUser.email}</p>
-            <p>
-            <span>Date of Birth:</span> {currentUser.dateOfBirth}
-            </p>
-            <p className="bio">{currentUser.bio}</p>
-            <div className="connection-buttons">
-            <button onClick={() => setShowFollowers(true)}>
-                Followers ({sampleFollowers.length})
-            </button>
-            <button onClick={() => setShowFollowing(true)}>
-                Following ({sampleFollowing.length})
-            </button>
-            </div>
-        </div>
-        </div>
+        <ProfileCard />
 
         {/* Main Post Content */}
         <div className="user-posts-section">
