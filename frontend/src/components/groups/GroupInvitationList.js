@@ -2,7 +2,7 @@
 // src/components/groups/GroupInvitationList.js
 
 import React, { useState } from "react";
-import { mockInvitations } from "../../data/mockData";
+// import { mockInvitations } from "../../data/mockData";
 
 // Props:
 // - currentUser: string (the logged-in user)

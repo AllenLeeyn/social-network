@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import GroupDetail from '../../../components/groups/GroupDetail';
 import SidebarSection from '../../../components/SidebarSection';
 import UsersList from '../../../components/UsersList';
+import GroupHeader from '../../../components/groups/GroupHeader';
 import '../groups.css'; // or './uuid.css' if you want special styling
 
 export default function GroupDetailPage() {

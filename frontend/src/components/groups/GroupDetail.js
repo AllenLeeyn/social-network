@@ -1,11 +1,13 @@
 // src/components/groups/GroupDetail.js
+// groups/uuid/main-view, main-feed
 
 import React, { useState } from "react";
 import { toast } from 'react-toastify';
 
 import Modal from "../Modal";
-import CreatePostForm from "./CreatePostForm";
-import CreateEventForm from "./CreateEventForm";
+import CreatePostForm from "./posts/CreatePostForm";
+import CreateEventForm from "./events/CreateEventForm";
+import GroupHeader from "./GroupHeader";
 
 import { formatDate } from '../../utils/formatDate';
 
@@ -56,21 +58,14 @@ export default function GroupDetail({ group, onBack }) {
 
     return (
         <div>
-            <div className="group-detail-header">
-                <h2>Welcome to {group.title}</h2>
-                <p>{group.description}</p>
-                {/* Action buttons for members */}
-                {isMember && (
-                    <div className="group-detail-actions">
-                        <button onClick={() => setShowPostModal(true)}>
-                            Create Post
-                        </button>
-                        <button onClick={() => setShowEventModal(true)}>
-                            Create Event
-                        </button>
-                    </div>
-                )}
-            </div>
+            <GroupHeader
+                group={group}
+                isMember={isMember}
+                onShowPostModal={() => setShowPostModal(true)}
+                onShowEventModal={() => setShowEventModal(true)}
+                onRequestJoin={() => {/* handle join logic */}}
+                onInviteUser={() => {/* handle invite logic */}}
+            />
             <div className="group-detail">
                 {onBack && (
                     <button onClick={onBack} className="group-detail-back-btn">
