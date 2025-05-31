@@ -3,11 +3,13 @@
 import React, { useState } from "react";
 import "./profile.css";
 import SidebarSection from "../../components/SidebarSection";
-import { sampleUsers,myActivity,sampleGroups,sampleFollowers,sampleFollowing } from "../../data/mockData";
+import PrivacyToggle from "../../components/PrivacyToggle";
+import { myActivity,sampleGroups,sampleFollowers,sampleFollowing } from "../../data/mockData";
 
 export default function ProfilePage() {
     const [showFollowers, setShowFollowers] = useState(false);
-    const [showFollowing, setShowFollowing] = useState(false); 
+    const [showFollowing, setShowFollowing] = useState(false);
+    const [isPrivate, setIsPrivate] = useState(false);
 
     const currentUser = {
         id: 99,
@@ -25,6 +27,7 @@ export default function ProfilePage() {
             <div className="homepage-layout">
                 {/* Left Sidebar */}
                 <aside className="sidebar left-sidebar">
+                    <PrivacyToggle isPrivate={isPrivate} setIsPrivate={setIsPrivate} />
                     <SidebarSection title="My Activity">
                         <ul className="categories">
                             {myActivity.map(cat => (
@@ -113,7 +116,7 @@ export default function ProfilePage() {
                             <p><em>by {post.author}</em></p>
                             <p>{post.snippet}</p>
                         </div>
-                     ) : (
+                    ) : (
                         <div className="post-item">
                             <h3>Post not found</h3>
                         </div>
@@ -127,7 +130,7 @@ export default function ProfilePage() {
                 <aside className="sidebar right-sidebar">
                     <SidebarSection title="Active Users">
                         <ul className="users">
-                            {sampleUsers.map(user => (
+                            {sampleFollowers.map(user => (
                                 <li key={user.id} className={`user-item${user.online ? " online" : ""}${user.unread ? " unread" : ""}`}>
                                     <img src={user.avatar} alt={user.username} />
                                     <span>{user.fullName} ({user.username})</span>
