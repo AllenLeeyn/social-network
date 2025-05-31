@@ -1,13 +1,13 @@
-import React from "react";
+// src/components/groups/events/EventCard.js
 
-export default function EventCard({ event }) {
+import React from "react";
+import { formatDate } from '../../../utils/formatDate';
+
+export default function EventCard({ event, onClick }) {
     return (
-        <div className="event-card">
-        <h3>{event.title}</h3>
-        <div>
-            {event.location} — {event.start_time}
-        </div>
-        <div>{event.description}</div>
+        <div className="event-card" onClick={onClick} style={{ cursor: 'pointer' }}>
+            <b>{event.title}</b>
+            <span> — {formatDate(event.start_time)}</span>
         </div>
     );
 }

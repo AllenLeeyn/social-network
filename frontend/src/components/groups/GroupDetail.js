@@ -1,13 +1,14 @@
 // src/components/groups/GroupDetail.js
 // groups/uuid/main-view, main-feed
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
 
 import Modal from "../Modal";
 import CreatePostForm from "./posts/CreatePostForm";
 import CreateEventForm from "./events/CreateEventForm";
 import GroupHeader from "./GroupHeader";
+import EventCard from "./events/EventCard";
 
 import { formatDate } from '../../utils/formatDate';
 
@@ -15,19 +16,44 @@ import "../../styles/groups/GroupDetail.css";
 
 
 export default function GroupDetail({ group, onBack }) {
+        
+    if (!group) return null;
 
     // Modal state
     const [showPostModal, setShowPostModal] = useState(false);
     const [showEventModal, setShowEventModal] = useState(false);
 
-    const eventDate = "2025-06-09T15:04:05Z";
+    // Events state
+    const [groupEvents, setGroupEvents] = useState([]);
+    const [loadingEvents, setLoadingEvents] = useState(true);
 
-    if (!group) return null;
+    // Event modal state
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [currentRSVP, setCurrentRSVP] = useState(null);
+
+    // const eventDate = "2025-06-09T15:04:05Z";
 
     const isMember = group.status === "accepted";
 
-    // PH
-    const groupEvents = [];
+    const refreshEvents = () => {
+        fetch(`/frontend-api/events/${group.uuid}`)
+            .then(res => res.json())
+            .then(data => setGroupEvents(data.data || []));
+    };
+
+
+    // Fetch events for this group
+    useEffect(() => {
+        if (!group?.uuid) return;
+        setLoadingEvents(true);
+        fetch(`/frontend-api/events/${group.uuid}`)
+            .then(res => res.json())
+            .then(data => {
+                setGroupEvents(data.data || []);
+                setLoadingEvents(false);
+            })
+            .catch(() => setLoadingEvents(false));
+    }, [group?.uuid]);
 
     const handlePostSubmit = (postData) => {
         // TODO: Add post to group (API or state update)
@@ -45,7 +71,7 @@ export default function GroupDetail({ group, onBack }) {
             });
             if (res.ok) {
                 toast.success('Event created!');
-                // Optionally: refresh event list here
+                refreshEvents();
             } else {
                 toast.error('Failed to create event.');
             }
@@ -53,6 +79,31 @@ export default function GroupDetail({ group, onBack }) {
             toast.error('Network error.');
         }
         setShowEventModal(false);
+    };
+
+    // RSVP handler for modal
+    const handleRSVP = async (status) => {
+        if (!selectedEvent) return;
+        try {
+            // Example RSVP endpoint, adjust as needed
+            const res = await fetch('/frontend-api/groups/event/response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_uuid: selectedEvent.uuid,
+                    status,
+                }),
+            });
+            if (res.ok) {
+                setCurrentRSVP(status);
+                toast.success(`RSVP updated: ${status === "accepted" ? "Going" : "Not Going"}`);
+                refreshEvents();
+            } else {
+                toast.error('Failed to update RSVP.');
+            }
+        } catch (err) {
+            toast.error('Network error.');
+        }
     };
 
 
@@ -72,39 +123,27 @@ export default function GroupDetail({ group, onBack }) {
                         ← Back to Groups
                     </button>
                 )}
-                <section className="group-detail-members-section">
-                    <strong>Members:</strong> {group.members_count}
-                    {/* You can add more member info if backend provides it */}
-                    {!isMember && (
-                        <button className="group-detail-join-btn">
-                            Request to Join
-                        </button>
-                    )}
-                    {isMember && (
-                        <button className="group-detail-invite-btn">
-                            Invite User
-                        </button>
-                    )}
-                </section>
 
+                {/* Events Section */}
                 <section>
                     <strong>Upcoming Events:</strong>
-                    {groupEvents.length === 0 ? (
+                    {loadingEvents ? (
+                        <div>Loading events...</div>
+                    ) : groupEvents.length === 0 ? (
                         <div>No events yet.</div>
                     ) : (
                         <ul className="group-detail-events-list">
                             {groupEvents.map(event => (
-                                <li key={event.id} className="group-detail-event-item">
-                                    <div>
-                                        <b>{event.title}</b> — {formatDate(event.start_time || event.dateTime)}
-                                    </div>
-                                    <div className="group-detail-event-desc">{event.description}</div>
-                                    {isMember && (
-                                        <div className="group-detail-event-actions">
-                                            <button>Going</button>
-                                            <button>Not Going</button>
-                                        </div>
-                                    )}
+                                <li key={event.uuid} className="group-detail-event-item">
+                                    <EventCard
+                                        event={event}
+                                        isMember={isMember}
+                                        onClick={() => {
+                                            // OPEN THE MODAL with event details!
+                                            setSelectedEvent(event);
+                                            setCurrentRSVP(event.status); // If you have RSVP info in event
+                                        }}
+                                    />
                                 </li>
                             ))}
                         </ul>
@@ -130,8 +169,42 @@ export default function GroupDetail({ group, onBack }) {
                         />
                     </Modal>
                 )}
+                {/* THIS IS YOUR EVENT DETAIL MODAL! */}
+                {selectedEvent && (
+                    <Modal
+                        onClose={() => {
+                            setSelectedEvent(null);
+                            setCurrentRSVP(null);
+                        }}
+                        title={selectedEvent.title}
+                    >
+                        <div>
+                            <p><strong>Date/Time:</strong> {formatDate(selectedEvent.start_time)}</p>
+                            {selectedEvent.location && (
+                                <p><strong>Location:</strong> {selectedEvent.location}</p>
+                            )}
+                            <p><strong>Description:</strong> {selectedEvent.description}</p>
+                            <p><strong>Attending:</strong> {selectedEvent.attend_count} going</p>
+                            {isMember && (
+                                <div style={{ marginTop: "1rem" }}>
+                                    <button
+                                        onClick={() => handleRSVP("accepted")}
+                                        className={currentRSVP === "accepted" ? "active" : ""}
+                                    >
+                                        Going
+                                    </button>
+                                    <button
+                                        onClick={() => handleRSVP("declined")}
+                                        className={currentRSVP === "declined" ? "active" : ""}
+                                    >
+                                        Not Going
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </Modal>
+                )}
             </div>
-                        
         </div>
     );
 }

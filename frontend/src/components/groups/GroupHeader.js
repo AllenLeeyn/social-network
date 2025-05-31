@@ -21,7 +21,6 @@ export default function GroupHeader({
             <>
                 <button onClick={onShowPostModal}>Create Post</button>
                 <button onClick={onShowEventModal}>Create Event</button>
-                <button onClick={onInviteUser}>Invite User</button>
             </>
             ) : (
             <button onClick={onRequestJoin}>Request to Join</button>

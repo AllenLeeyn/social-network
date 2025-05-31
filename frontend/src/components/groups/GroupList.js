@@ -27,11 +27,6 @@ export default function GroupList({ filter, onSelectGroup }) {
         filteredGroups = groups.filter(g => g.status !== "accepted");
     }
 
-    // Handlers for group actions
-    function handleInvite(group) {
-        // TODO: Implement invite logic
-    toast.info(`Invite sent to group: ${group.title}`);
-    }
 
     function handleRequestJoin(group) {
         // TODO: Implement request to join logic
@@ -47,7 +42,6 @@ export default function GroupList({ filter, onSelectGroup }) {
             <GroupCard
                 key={group.uuid}
                 group={group}
-                onInvite={handleInvite}
                 onRequestJoin={handleRequestJoin}
             />
         ))}
