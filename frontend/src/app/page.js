@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import SidebarSection from "../components/SidebarSection";
 import CategoriesList from "../components/CategoriesList";
 import PostList from "../components/PostList";
+import GroupList from "../components/GroupList";
 import CreatePost from "../components/CreatePost";
 import Modal from "../components/Modal";
 import UsersList from "../components/UsersList";
@@ -13,11 +14,9 @@ import UsersList from "../components/UsersList";
 import { fetchPosts, fetchPostsByCategory } from "../lib/apiPosts";
 import { usePosts } from "../hooks/usePosts";
 import ConnectionList from "../components/ConnectionList";
-import { fetchFollowees } from "../lib/apiAuth";
+import { fetchFollowees, fetchGroups } from "../lib/apiAuth";
 
 import { useWebsocketContext } from "../contexts/WebSocketContext";
-
-import { sampleGroups, sampleConnections } from "../data/mockData";
 
 export default function HomePage() {
   const [showModal, setShowModal] = useState(false);
@@ -27,9 +26,15 @@ export default function HomePage() {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
+
   const [connections, setConnections] = useState([]);
   const [connectionsLoading, setConnectionsLoading] = useState(true);
   const [connectionsError, setConnectionsError] = useState(null);
+
+  const [groups, setGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const [groupsError, setGroupsError] = useState(null);
+  
   const router = useRouter();
 
   const { isConnected, connect } = useWebsocketContext();
@@ -63,6 +68,21 @@ export default function HomePage() {
       }
     }
     loadConnections();
+  }, []);
+
+  useEffect(() => {
+    async function loadGroups() {
+      try {
+        setGroupsLoading(true);
+        const data = await fetchGroups();
+        setGroups(data || []);
+      } catch (err) {
+        setGroupsError(err.message);
+      } finally {
+        setGroupsLoading(false);
+      }
+    }
+    loadGroups();
   }, []);
 
   const handleCategoryClick = async (cat) => {
@@ -108,13 +128,11 @@ export default function HomePage() {
             />
           </SidebarSection>
           <SidebarSection title="Groups">
-            <ul className="groups">
-              {sampleGroups.map((group) => (
-                <li key={group.id} className="group-item">
-                  <strong>{group.name}</strong>
-                </li>
-              ))}
-            </ul>
+            <GroupList
+              groups={groups}
+              loading={groupsLoading}
+              error={groupsError}
+            />
           </SidebarSection>
           <SidebarSection title="Connections">
             <ConnectionList
