@@ -127,9 +127,9 @@ export function WebSocketProvider( { children } ) {
         onMessage,
         {
             initialDelay: 1000,
-            maxDelay: 30000,
+            maxDelay: 1000,
             backoffFactor: 2,
-            maxAttempts: null,
+            maxAttempts: 5,
         }
         ) : 
         {isConnected: false, sendAction: () => {}};
