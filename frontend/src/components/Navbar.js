@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { FaUserGroup } from "react-icons/fa6";
+import { FaArrowRightToBracket } from "react-icons/fa6";
 import { FaMessage } from "react-icons/fa6";
 import NotificationBell from './notifications/NotificationBell';
 import { useNotifications } from "../contexts/NotificationsContext";
@@ -60,43 +61,43 @@ export default function Navbar() {
         </div>
 
         <div className="center-links">
-        <Link href="/" className="nav-link">
+        <Link href="/" className="icon-wrapper">
             <FaHouse />
         </Link>
-        <Link href="/groups" className="nav-link">
+        <Link href="/groups" className="icon-wrapper">
             <FaUserGroup />
         </Link>
-        <Link href="/messages" className="nav-link">
+        <Link href="/messages" className="icon-wrapper">
             <FaMessage />
         </Link>
         {/*<Link href="/notifications" className="nav-link">
             Notifications
         </Link>*/}
         <NotificationBell notifications={notifications} />
-      </div>
-      <div className="right-links">
+        </div>
+        <div className="right-links">
         {profileImage ? (
-          <Image
+            <Image
             src={profileImage}
             alt="Profile Image"
             width={30}
             height={30}
             style={{ borderRadius: "50%" }}
-          />
+        />
         ) : (
-          <FaUserCircle
+            <FaUserCircle
             size={30}
             color="#aaa"
             style={{ verticalAlign: "middle" }}
-          />
+        />
         )}
-        <Link href="/profile" className="nav-link">
-          {userName || "Profile"}
+        <Link href="/profile" className="icon-wrapper">
+            {userName || "Profile"}
         </Link>
-        <a href="/" className="nav-link" onClick={onLogoutClick}>
-          Logout
+        <a href="/" className="icon-wrapper" onClick={onLogoutClick}>
+            Logout<FaArrowRightToBracket />
         </a>
-      </div>
+        </div>
     </div>
-  );
+    );
 }
