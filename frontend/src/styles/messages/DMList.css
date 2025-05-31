@@ -18,18 +18,22 @@
     border-radius: 8px;
     background: #fff;
     cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
     transition: background 0.2s, color 0.2s;
     color: #333;
     margin: 3px auto;
 }
 
 .dm-item:hover {
-    background: #005bb5;
+    background: linear-gradient(135deg, #233144 40%, #4682B4 100%);
     color: #fff;
+    cursor: pointer;
+
 }
 
 .dm-item.active {
     background: #0070f3;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
     color: white;
     font-weight: bold;
 }
