@@ -5,11 +5,12 @@ import "../styles/Navbar.css";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { FaUserGroup } from "react-icons/fa6";
-import { FaArrowRightToBracket } from "react-icons/fa6";
+import { FaArrowRightFromBracket } from "react-icons/fa6";
 import { FaMessage } from "react-icons/fa6";
 import NotificationBell from './notifications/NotificationBell';
 import { useNotifications } from "../contexts/NotificationsContext";
@@ -20,7 +21,7 @@ export default function Navbar() {
   // Logout handler
     const { handleLogout } = useAuth();
     const router = useRouter();
-
+    const pathname = usePathname();
     const [userName, setUserName] = useState("");
     const [profileImage, setProfileImage] = useState("");
 
@@ -61,14 +62,14 @@ export default function Navbar() {
         </div>
 
         <div className="center-links">
-        <Link href="/" className="icon-wrapper">
-            <FaHouse />
+        <Link href="/" className={`nav-link ${pathname === '/' ? 'active' : ''}`}>
+            <FaHouse /> Home
         </Link>
-        <Link href="/groups" className="icon-wrapper">
-            <FaUserGroup />
+        <Link href="/groups" className={`nav-link ${pathname === '/groups' ? 'active' : ''}`}>
+            <FaUserGroup /> Groups
         </Link>
-        <Link href="/messages" className="icon-wrapper">
-            <FaMessage />
+        <Link href="/messages" className={`nav-link ${pathname === '/messages' ? 'active' : ''}`}>
+            <FaMessage /> Messages
         </Link>
         {/*<Link href="/notifications" className="nav-link">
             Notifications
@@ -91,11 +92,11 @@ export default function Navbar() {
             style={{ verticalAlign: "middle" }}
         />
         )}
-        <Link href="/profile" className="icon-wrapper">
+        <Link href="/profile" className={`nav-link ${pathname === '/profile' ? 'active' : ''}`}>
             {userName || "Profile"}
         </Link>
-        <a href="/" className="icon-wrapper" onClick={onLogoutClick}>
-            Logout<FaArrowRightToBracket />
+        <a href="/" className="nav-link" onClick={onLogoutClick}>
+            <FaArrowRightFromBracket />
         </a>
         </div>
     </div>
