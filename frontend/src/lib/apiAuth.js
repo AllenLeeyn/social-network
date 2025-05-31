@@ -56,3 +56,13 @@ export async function fetchFollowees() {
   const result = await response.json();
   return result.data;
 }
+
+export async function fetchGroups() {
+  const response = await fetch("/frontend-api/groups?joined=true", {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error("Failed to fetch groups");
+  const result = await response.json();
+  return result.data;
+}

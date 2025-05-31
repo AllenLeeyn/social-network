@@ -2,17 +2,16 @@
 
 import { useActiveChat } from '../../contexts/ActiveChatContext';
 import { useMemo } from 'react';
-import { sampleConversations } from '../../data/mockData';
 
 export default function GroupChatsList() {
     const { activeChat, setActiveChat } = useActiveChat();
 
     const groups = useMemo(
-        () => sampleConversations.filter(c => c.type === 'group'),
+        () => {},
         []
     );  
 
-    return (
+    return /* (
         <ul className='groups'>
             {groups.map(convo => (
                 <li
@@ -25,5 +24,5 @@ export default function GroupChatsList() {
                 </li>
             ))}
         </ul>
-    );
+    ); */
 }
