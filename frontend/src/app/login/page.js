@@ -93,7 +93,7 @@ export default function AuthPage() {
       <div
         className="auth-left"
         style={{
-          background: mode === "login" ? "#1e293b" : "#059669",
+          background: mode === "login" ? "#1e293bCC" : "transparent",
           color: "#fff",
           transition: "background 0.5s",
         }}

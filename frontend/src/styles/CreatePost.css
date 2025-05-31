@@ -29,7 +29,7 @@ form {
 
 .input-group input[type="text"]:focus,
 .input-group textarea:focus {
-    border-color: #5b6dcd;
+    border-color: #233144;
     outline: none;
     background: #fff;
 }
@@ -53,11 +53,11 @@ form {
 }
 
 .checkbox-item input[type="checkbox"] {
-    accent-color: #5b6dcd;
+    accent-color: #233144;
 }
 
 .new-post {
-    background: #5b6dcd;
+    background: linear-gradient(135deg, #233144 40%, #4682B4 100%);
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -71,8 +71,9 @@ form {
 
 .new-post:hover,
 .new-post:focus {
-    background: #3b4db7;
     outline: none;
+    transform: scale(1.05);
+
 }
 
 @media (max-width: 600px) {

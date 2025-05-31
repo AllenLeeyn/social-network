@@ -2,7 +2,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #222;
+    background: #233144;
     padding: 0 2rem;
     height: 60px;
 }
@@ -45,5 +45,5 @@ transition: color 0.2s;
 }
 
 .nav-link:hover {
-color: #b2dfdb;
+color: #4682B4;
 }

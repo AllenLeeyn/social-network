@@ -17,6 +17,11 @@
     margin-bottom: 0.5rem;
     font-size: 1.7rem;
 }
+.post-item h2 a {
+    color: #0070f3;
+    text-decoration: none;
+}
+
 .post-item pre {
   white-space: pre-wrap;
   word-break: break-word;
