@@ -33,7 +33,8 @@ type Notification struct {
 	UpdatedAt          *time.Time       `json:"updated_at"`
 	UpdatedBy          *int             `json:"updated_by"`
 
-	FromUser NotificationFromUser `json:"from_user"` // Embedded from user data
+	FromUser   NotificationFromUser `json:"from_user"` // Embedded from user data
+	ToUserUUID string               `json:"to_user_uuid"`
 }
 
 var sqlDB *sql.DB
@@ -138,7 +139,7 @@ func DeleteNotification(notification_id int, user_id int) error {
 func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 	rows, selectError := sqlDB.Query(`
         SELECT n.id as notification_id, n.to_user_id as notification_to_user_id, n.from_user_id as notification_from_user_id, 
-			n.target_id as notification_target_id, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
+			n.target_id as notification_target_id, n.target_uuid as notification_target_uuid, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
 			case
 				when n.target_detailed_type = 'follow_request' then 'You have a follow request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
 				when n.target_detailed_type = 'follow_request_accepted' then 'Your follow request to ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been accepted'
@@ -149,7 +150,8 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 			end as notification_message
 			, n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name
+			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name,
+			to_user.uuid as to_user_uuid
 		FROM notifications n
 			INNER JOIN users to_user
 				ON n.to_user_id = to_user.id
@@ -173,10 +175,11 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 		// Scan the post and user data
 		err := rows.Scan(
 			&notification.ID, &notification.ToUserId, &notification.FromUserId,
-			&notification.TargetId, &notification.TargetType, &notification.TargetDetailedType,
+			&notification.TargetId, &notification.TargetUUIDForm, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
 			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
+			&notification.ToUserUUID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
@@ -197,7 +200,7 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 func ReadNotificationById(notification_id int, to_user_id int) (Notification, error) {
 	rows, selectError := sqlDB.Query(`
         SELECT n.id as notification_id, n.to_user_id as notification_to_user_id, n.from_user_id as notification_from_user_id, 
-			n.target_id as notification_target_id, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
+			n.target_id as notification_target_id, n.target_uuid as notification_target_uuid, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
 			case
 				when n.target_detailed_type = 'follow_request' then 'You have a follow request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
 				when n.target_detailed_type = 'follow_request_accepted' then 'Your follow request to ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been accepted'
@@ -208,7 +211,8 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 			end as notification_message, 
 			n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name
+			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name,
+			to_user.uuid as to_user_uuid
 		FROM notifications n
 			INNER JOIN users to_user
 				ON n.to_user_id = to_user.id
@@ -232,10 +236,11 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 		// Scan the post and user data
 		err := rows.Scan(
 			&notification.ID, &notification.ToUserId, &notification.FromUserId,
-			&notification.TargetId, &notification.TargetType, &notification.TargetDetailedType,
+			&notification.TargetId, &notification.TargetUUIDForm, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
 			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
+			&notification.ToUserUUID,
 		)
 		if err != nil {
 			return Notification{}, fmt.Errorf("error scanning row: %v", err)

@@ -16,8 +16,10 @@ export default function NotificationCard({ notification }) {
 
             if (notification.target_detailed_type === 'follow_request') {
                 await submitFollowResponse({ follower_uuid: notification.target_uuid, status });
-            } else if (notification.target_detailed_type === 'group_invite' || notification.target_detailed_type === 'group_request') {
-                await submitGroupRequestOrInviteResponse({ follower_uuid: notification.target_uuid, group_uuid: notification.target_uuid, status });
+            } else if (notification.target_detailed_type === 'group_invite') {
+                await submitGroupRequestOrInviteResponse({ follower_uuid: notification.to_user_uuid, group_uuid: notification.target_uuid, status });
+            } else if (notification.target_detailed_type === 'group_request') {
+                await submitGroupRequestOrInviteResponse({ follower_uuid: notification.from_user.uuid, group_uuid: notification.target_uuid, status });
             } else if (notification.target_detailed_type === 'follow_request_accepted') {
                 //todo go to the user's profile /profile/uuid
             } else if (notification.target_detailed_type === 'group_event') {
