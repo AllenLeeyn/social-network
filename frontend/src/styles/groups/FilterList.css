@@ -20,17 +20,21 @@
     border-radius: 8px;
     background: #fff;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
     color: #333;
     margin: 3px auto;
-    font-size: 1em;
+    font-size: 14px;
     text-align: left;
+    border-left: 6px solid transparent;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
 }
-
 .group-filter-item:hover {
     background: linear-gradient(135deg, #233144 40%, #4682B4 100%);
     transition: all 0.3s ease;
     color: #fff;
+    border-left: 6px solid white;
+    border-bottom: 2px solid white;
+
 }
 
 .group-filter-item.active {

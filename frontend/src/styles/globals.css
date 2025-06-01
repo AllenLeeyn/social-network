@@ -16,7 +16,6 @@ footer {
     background-color: #f1f1f1cc;
     text-align: center;
     padding: 0.5rem;
-    margin-top: 2rem;
     font-size: 0.9rem;
     color: #666;
 }
@@ -69,6 +68,7 @@ textarea:focus {
     border-color: #233144;
     outline: none;
 }
+
 /* ------------------------------ */
 
 /* Layout */
@@ -154,7 +154,6 @@ textarea:focus {
     border-radius: 8px;
     background: #fff;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
     color: #333;
     margin: 3px auto;
     border-left: 6px solid transparent;
@@ -173,7 +172,6 @@ textarea:focus {
     border-radius: 8px;
     background: #fff;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
     color: #333;
     margin: 3px auto;
     border-left: 6px solid transparent;

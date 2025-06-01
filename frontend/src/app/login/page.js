@@ -27,6 +27,7 @@ export default function AuthPage() {
   const [registerVisibility, setVisibility] = useState("");
   const [formError, setFormError] = useState("");
 
+
   // Handle login submission
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -197,7 +198,68 @@ export default function AuthPage() {
                   onChange={(e) => setDateOfBirth(e.target.value)}
                   required
                 />
-                <select
+                {/* Gender Radio Group */}
+                <div className="form-field">
+                  <label className="field-label">Gender</label>
+                  <div className="radio-group">
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Male"
+                        checked={registerGender === "Male"}
+                        onChange={(e) => setGender(e.target.value)}
+                        required
+                      />
+                      <span className="radio-custom"></span>
+                      Male
+                    </label>
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Female"
+                        checked={registerGender === "Female"}
+                        onChange={(e) => setGender(e.target.value)}
+                        required
+                      />
+                      <span className="radio-custom"></span>
+                      Female
+                    </label>
+                  </div>
+                </div>
+
+                {/* Visibility Radio Group */}
+                <div className="form-field">
+                  <label className="field-label">Profile Visibility</label>
+                  <div className="radio-group">
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="public"
+                        checked={registerVisibility === "public"}
+                        onChange={(e) => setVisibility(e.target.value)}
+                        required
+                      />
+                      <span className="radio-custom"></span>
+                      Public
+                    </label>
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="private"
+                        checked={registerVisibility === "private"}
+                        onChange={(e) => setVisibility(e.target.value)}
+                        required
+                      />
+                      <span className="radio-custom"></span>
+                      Private
+                    </label>
+                  </div>
+                </div>
+                {/* <select
                   value={registerGender}
                   onChange={(e) => setGender(e.target.value)}
                   required
@@ -206,6 +268,7 @@ export default function AuthPage() {
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
+
                 <select
                   value={registerVisibility}
                   onChange={(e) => setVisibility(e.target.value)}
@@ -214,7 +277,8 @@ export default function AuthPage() {
                   <option value="">Select Visibility</option>
                   <option value="public">Public</option>
                   <option value="private">Private</option>
-                </select>
+                </select> */}
+
               </fieldset>
 
               <fieldset className="auth-form">
@@ -246,3 +310,36 @@ export default function AuthPage() {
     </div>
   );
 }
+
+// let isToggling = false;
+
+// function smoothToggleAuthForm() {
+//     if (isToggling) return;
+    
+//     isToggling = true;
+//     const container = document.querySelector('.auth-form-container');
+    
+//     // Fade out
+//     container.style.transition = 'all 1.5s cubic-bezier(0.23, 1, 0.32, 1)';
+//     container.style.opacity = '0';
+//     container.style.transform = 'translateY(-35px) scale(0.94)';
+//     container.style.filter = 'blur(1px)';
+    
+//     setTimeout(() => {
+//         // Your form switching logic here
+//         // updateFormContent(); // Call your existing function
+        
+//         // Fade in
+//         container.style.opacity = '1';
+//         container.style.transform = 'translateY(0) scale(1)';
+//         container.style.filter = 'blur(0px)';
+        
+//         setTimeout(() => {
+//             isToggling = false;
+//         }, 1800);
+        
+//     }, 1500);
+// }
+
+// // Attach to button
+// document.querySelector('.auth-toggle-btn').addEventListener('click', smoothToggleAuthForm);
