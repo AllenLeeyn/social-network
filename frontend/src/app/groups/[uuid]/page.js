@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import GroupDetail from '../../../components/groups/GroupDetail';
 import SidebarSection from '../../../components/SidebarSection';
 import UsersList from '../../../components/UsersList';
-import GroupHeader from '../../../components/groups/GroupHeader';
 import GroupMembersList from '../../../components/groups/GroupMemberList';
 import '../groups.css'; // or './uuid.css' if you want special styling
 
@@ -13,18 +12,32 @@ export default function GroupDetailPage() {
     const { uuid } = useParams();
     const [group, setGroup] = useState(null);
     const [members, setMembers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingGroup, setLoadingGroup] = useState(true);
+    const [loadingMembers, setLoadingMembers] = useState(true);
 
     useEffect(() => {
+        setLoadingGroup(true);
         fetch(`/frontend-api/groups/${uuid}`)
         .then(res => res.json())
         .then(data => {
             setGroup(data.data); 
-            setLoading(false);
+            setLoadingGroup(false);
         });
     }, [uuid]);
 
-    if (loading) return <div>Loading...</div>;
+    // Fetch group members (using your backend handler)
+    useEffect(() => {
+        setLoadingMembers(true);
+        fetch(`/frontend-api/groups/members/${uuid}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log("Members data:", data.data)
+                setMembers(data.data || []);
+                setLoadingMembers(false);
+            });
+    }, [uuid]);
+
+    if (loadingGroup) return <div>Loading...</div>;
     if (!group) return <div>Group not found.</div>;
 
     function handleInviteUser() {
@@ -43,7 +56,10 @@ export default function GroupDetailPage() {
                 </SidebarSection>
                 {/* Members List in Sidebar */}
                 <SidebarSection title="Members">
-                    <GroupMembersList members={members} />
+                    {loadingMembers
+                        ? <div>Loading members...</div>
+                        : <GroupMembersList members={members} />
+                    }
                 </SidebarSection>
             </aside>
 

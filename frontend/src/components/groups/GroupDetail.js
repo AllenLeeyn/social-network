@@ -5,10 +5,10 @@ import React, { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
 
 import Modal from "../Modal";
-import CreatePostForm from "./posts/CreatePostForm";
-import CreateEventForm from "./events/CreateEventForm";
-import GroupHeader from "./GroupHeader";
-import EventCard from "./events/EventCard";
+import CreatePostForm from "./[uuid]/posts/CreatePostForm";
+import CreateEventForm from "./[uuid]/events/CreateEventForm";
+import GroupHeader from "./[uuid]/GroupHeader";
+import EventCard from "./[uuid]/events/EventCard";
 
 import { formatDate } from '../../utils/formatDate';
 
