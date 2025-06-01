@@ -55,18 +55,18 @@
 
 /* Online dot before username */
 .dm-item::before {
-    content: '';
+    /* content: ''; */
     width: 10px;
     height: 10px;
     margin-right: 5px;
     border-radius: 50%;
-    background-color: rgb(193, 189, 189);
+    /* background-color: rgb(193, 189, 189); */
     display: inline-block;
 }
 
-.dm-item.online::before {
+/* .dm-item.online::before {
     background-color: rgba(5, 183, 5, 0.966);
-}
+} */
 
 /* Unread indicator after username */
 .dm-item.unread::after {

@@ -10,6 +10,7 @@ import { FaUserCircle } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { FaUserGroup } from "react-icons/fa6";
 import { FaMessage } from "react-icons/fa6";
+import { FaBell } from "react-icons/fa6";
 import NotificationBell from './notifications/NotificationBell';
 import { useNotifications } from "../contexts/NotificationsContext";
 
@@ -69,10 +70,10 @@ export default function Navbar() {
         <Link href="/messages" className="nav-link">
             <FaMessage />
         </Link>
-        {/*<Link href="/notifications" className="nav-link">
-            Notifications
-        </Link>*/}
-        <NotificationBell notifications={notifications} />
+        <Link href="/notifications" className="nav-link">
+            <FaBell />
+        </Link>
+        {/* <NotificationBell notifications={notifications} /> */}
       </div>
       <div className="right-links">
         {profileImage ? (
