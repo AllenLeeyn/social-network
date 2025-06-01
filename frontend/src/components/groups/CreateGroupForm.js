@@ -23,13 +23,14 @@ export default function CreateGroupForm({ onSuccess }) {
                 toast.success('Group created!');
                 if (onSuccess) onSuccess();
             } else {
+                console.log(res)
                 toast.error('Failed to create group.');
             }
             } catch (err) {
-            setLoading(false);
-            toast.error('Network error.');
-        }
-    };
+                setLoading(false);
+                toast.error('Network error.');
+            }
+        };
 
     return (
         <form onSubmit={handleSubmit}>
@@ -40,6 +41,7 @@ export default function CreateGroupForm({ onSuccess }) {
                     type="text"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
+                    placeholder='Write your Group Title'
                     required
                 />
                 </label>
@@ -50,6 +52,7 @@ export default function CreateGroupForm({ onSuccess }) {
                 <textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
+                    placeholder='Your group descrption'
                     required
                 />
                 </label>

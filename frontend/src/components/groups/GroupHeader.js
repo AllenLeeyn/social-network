@@ -8,7 +8,6 @@ export default function GroupHeader({
     onShowPostModal,
     onShowEventModal,
     onRequestJoin,
-    onInviteUser
 }) {
     if (!group) return null;
 
