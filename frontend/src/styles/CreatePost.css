@@ -2,7 +2,7 @@ form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    font-family: "Inter", sans-serif;
+    font-family: monospace, sans-serif;
 }
 
 .input-group {
@@ -44,6 +44,28 @@ form {
 .input-group textarea {
     min-height: 120px;
     resize: vertical;
+}
+
+.input-group input[type="file"] {
+    width: 100%;
+    font-family: "Inter", Arial, sans-serif;
+    font-size: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fafbfc;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.input-group input[type="file"]::file-selector-button {
+    font-family: "Inter", Arial, sans-serif;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fafbfc;
+    font-size: 1rem;
+    box-sizing: border-box;
 }
 
 .checkbox-group {
@@ -102,6 +124,7 @@ select option {
     color: #333 !important;
 } */
 select {
+    font-family: monospace, Arial, sans-serif;
     border-radius: 8px;
     padding: 12px 16px;
     font-size: 14px;

@@ -1,6 +1,6 @@
 body {
     margin: 0;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: monospace, Arial, sans-serif;
     background-color: #f9f9f9;
     color: #333;
     overscroll-behavior: none;
@@ -13,7 +13,7 @@ body {
 
 /* nav styles use Navbar.css */
 footer {
-    background-color: #f1f1f1;
+    background-color: #f1f1f1cc;
     text-align: center;
     padding: 0.5rem;
     margin-top: 2rem;
@@ -21,20 +21,29 @@ footer {
     color: #666;
 }
 
+footer a {
+    color: #1c54a2;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
 
 button {
+    font-family: monospace, Arial, sans-serif;
     position: relative;
     padding: 14px 30px;
     border: none;
     border-radius: 8px;
-    /* background: linear-gradient(135deg, #233144 40%, #4682B4 100%); */
     color: white;
     font-weight: 600;
     font-size: 16px;
     cursor: pointer;
-    /* clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%); */
     background: linear-gradient(135deg, #233144 40%, #4682B4 100%);
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 button:hover {
@@ -48,8 +57,10 @@ main {
     min-height: 80vh;
 }
 
-section h2 {
-    margin-top: 2rem;
+.main-feed h2 {
+    font-size: 2rem;
+    margin-left: 0.5rem;;
+    margin-top: 1rem;
     margin-bottom: 1rem;
 }
 

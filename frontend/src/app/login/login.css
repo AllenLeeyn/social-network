@@ -8,6 +8,7 @@
     min-height: 100vh;
     width: 100vw;
     transition: background 0.5s;
+    box-sizing: border-box;
 }
 
 /* Left panel: Welcome/Join messages */
@@ -81,6 +82,7 @@
     font-size: 1rem;
     background: #f3f4f6;
     transition: border 0.2s;
+    box-sizing: border-box;
 }
 
 .auth-form input:focus {
