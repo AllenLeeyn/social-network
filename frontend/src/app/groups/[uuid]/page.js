@@ -31,7 +31,7 @@ export default function GroupDetailPage() {
         fetch(`/frontend-api/groups/members/${uuid}`)
             .then(res => res.json())
             .then(data => {
-                console.log("Members data:", data.data)
+                // console.log("Members data:", data.data)
                 setMembers(data.data || []);
                 setLoadingMembers(false);
             });

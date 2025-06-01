@@ -46,7 +46,7 @@ export default function GroupDetail({ group, onBack }) {
     useEffect(() => {
         if (!group?.uuid) return;
         setLoadingEvents(true);
-        fetch(`/frontend-api/events/${group.uuid}`)
+        fetch(`/frontend-api/groups/events/${group.uuid}`)
             .then(res => res.json())
             .then(data => {
                 setGroupEvents(data.data || []);
@@ -83,10 +83,10 @@ export default function GroupDetail({ group, onBack }) {
 
     // RSVP handler for modal
     const handleRSVP = async (status) => {
+        console.log(selectedEvent)
         if (!selectedEvent) return;
         try {
-            // Example RSVP endpoint, adjust as needed
-            const res = await fetch('/frontend-api/groups/event/response', {
+            const res = await fetch('/frontend-api/groups/events/response', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -94,14 +94,22 @@ export default function GroupDetail({ group, onBack }) {
                     status,
                 }),
             });
+            let data = {};
+            try {
+                data = await res.json();
+            } catch (e) {
+                // If response is not JSON, data stays empty
+            }
             if (res.ok) {
                 setCurrentRSVP(status);
                 toast.success(`RSVP updated: ${status === "accepted" ? "Going" : "Not Going"}`);
                 refreshEvents();
             } else {
+                console.error("Backend error:", data);
                 toast.error('Failed to update RSVP.');
             }
         } catch (err) {
+            console.error("Network error:", err);
             toast.error('Network error.');
         }
     };
