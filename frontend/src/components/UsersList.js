@@ -8,43 +8,54 @@ import "../styles/globals.css";
 
 export default function UsersList( { activeConversation } ) {
 
-    const { userList, isConnected, setUserList } = useWebsocketContext();
-    const { setActiveChat } = useActiveChat();
+    const { userList, isConnected, setUserList, setMessages, sendAction } = useWebsocketContext();
+    const { activeChat, setActiveChat } = useActiveChat();
     const router = useRouter();
 
-    // Sorting: unread first, then online, then alphabetical
-    const sortedUsers = [...userList].sort((a, b) => {
-        // Unread messages first
-        if (a.unread && !b.unread) return -1;
-        if (!a.unread && b.unread) return 1;
-        // Online users next
-        if (a.online && !b.online) return -1;
-        if (!a.online && b.online) return 1;
-        // Alphabetical order
-        return a.name.localeCompare(b.name);
-    });
-
     const handleUserClick = (user) => {
-        setActiveChat({ id: user.id, name: user.name });
+        setActiveChat({ 
+            type: user.type,
+            uuid: user.uuid,
+            name: user.name,
+            receiverUUID: user.receiverUUID,
+            groupUUID: user.groupUUID,
+        });
+        
+        const isSameChat = 
+        activeChat?.uuid === user.uuid;
+
+        if (!isSameChat) {
+            setMessages([]);
+            sendAction({
+                action: "messageReq",
+                receiverUUID: user.receiverUUID,
+                groupUUID: user.groupUUID,
+                content: "-1"
+            });
+        }
         setUserList(prev => prev.map(u => u.id === user.id ? { ...u, unread: false } : u));
         console.log("User clicked:", user);
         router.push('/messages');
     }
 
+    const users = userList.filter(user => user.type === "user");
+    const groups = userList.filter(user => user.type === "group");
+    
     return (
         <div className='sidebar-section'>
             <h3>({isConnected ? '✅ Connected' : '❌ Disconnected'})</h3>
+            <h4>Users</h4>
             <ul className='users'>
-                {sortedUsers.map(user => (
+                {users.map(user => (
                     <li
-                        key={user.id}
+                        key={user.uuid}
                         role="button"
                         tabIndex={0}
                         className={[
                             'user-item',
                             user.online ? 'online' : '',
                             user.unread ? 'unread' : '',
-                            activeConversation?.id === user.id ? 'active' : ''
+                            activeConversation?.uuid === user.uuid ? 'active' : ''
                         ].filter(Boolean).join(' ')}
                         onClick={() => handleUserClick(user)}
                         onKeyDown={e => {
@@ -57,24 +68,29 @@ export default function UsersList( { activeConversation } ) {
                     </li>
                 ))}
             </ul>
+
+            <h4>Groups</h4>
+            <ul className='groups'>
+                {groups.map(group => (
+                    <li
+                        key={group.uuid}
+                        role="button"
+                        tabIndex={0}
+                        className={[
+                            'user-item',
+                            activeConversation?.uuid === group.uuid ? 'active' : ''
+                        ].filter(Boolean).join(' ')}
+                        onClick={() => handleUserClick(group)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') handleUserClick(group);
+                        }}
+                    >
+                        {group.name}
+                    </li>
+                ))}
+            </ul>
         </div>
     );
-    // return (
-    //     <div className='sidebar-section'>
-    //         <h3>({isConnected ? '✅ Connected' : '❌ Disconnected'})</h3>
-    //         <ul className='users'>
-    //             {userList.map(user => (
-    //                 <li 
-    //                     key={user.id}
-    //                     className={`user-item ${user.online ? 'online' : ''} ${user.unread ? 'unread' : ''} ${activeConversation?.id === user.id ? 'active' : ''}`}
-    //                     onClick={() => handleUserClick(user)}
-    //                 >
-    //                     {user.name}
-    //                 </li>
-    //             ))}
-    //         </ul>
-    //     </div>
-    // );
 }
 
 

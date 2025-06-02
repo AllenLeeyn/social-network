@@ -126,7 +126,7 @@ func SelectUserByField(fieldName string, fieldValue interface{}) (*User, error) 
 		&u.Status, &u.CreatedAt,
 		&u.UpdatedBy, &u.UpdatedAt)
 	if err != nil {
-		return nil, checkErrNoRows(err)
+		return nil, err
 	}
 	return &u, nil
 }

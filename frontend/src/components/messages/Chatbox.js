@@ -8,13 +8,15 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 export default function MessagesChatbox() {
 
     const { 
-        userList, 
-        messages, 
+        userList,
+        messages,
         sendAction, 
         isConnected, 
         isTyping, 
-        currentChatId, 
-        setCurrentChatId,
+        currentChatUUID, 
+        setCurrentChatUUID,
+        currentGroupUUID, 
+        setCurrentGroupUUID,
         isLoadingMore, 
         setIsLoadingMore,
         hasMore,
@@ -27,51 +29,37 @@ export default function MessagesChatbox() {
     const prevScrollHeight = useRef(0);
     const scrollThrottleRef = useRef(false);
 
-
-     // Get your own UUID from context or localStorage
-    const userUuid = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
+    // Get your own UUID from context or localStorage
+    const userUUID = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
 
     // Keep currentChatId in sync with activeChat
     useEffect(() => {
-        if (activeChat && activeChat.id !== currentChatId) {
-            setCurrentChatId(activeChat.id);
+        if (activeChat && activeChat.uuid !== currentChatUUID &&
+            activeChat.groupUUID != currentGroupUUID
+        ) {
+            setCurrentChatUUID(activeChat.uuid);
+            setCurrentGroupUUID(activeChat.groupUUID);
         }
-    }, [activeChat, currentChatId]);
-
-    // Filter messages for the active chat
-    const filteredMessages = useMemo(() => {
-        if (!activeChat) return [];
-        return messages.filter(m => 
-            (m.senderUUID === activeChat.id && m.receiverUUID === userUuid) || 
-            (m.senderUUID === userUuid && m.receiverUUID === activeChat.id)
-        );
-    }, [messages, activeChat, userUuid]);
-
-    useEffect(() => {
-        if (filteredMessages.length > 0 && messagesEndRef.current) {
-            // messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
-            setTimeout(() => {
-            const container = messagesContainerRef.current;
-            container.scrollTop = container.scrollHeight;
-            }, 0);
-        }
-    }, [activeChat, filteredMessages.length]);
+    }, [activeChat, currentChatUUID, currentGroupUUID]);
 
     const handleScroll = useCallback(() => {
-        if (scrollThrottleRef.current || !messagesContainerRef.current || isLoadingMore || !hasMore) return;
+        if (scrollThrottleRef.current || 
+            !messagesContainerRef.current || 
+            isLoadingMore || 
+            !hasMore) return;
 
-    const { scrollTop } = messagesContainerRef.current;
-        if (scrollTop < 100 && filteredMessages.length > 0) {
-            scrollThrottleRef.current = true;
-            setTimeout(() => {
-                scrollThrottleRef.current = false;
-            }, 300); 
+        const { scrollTop } = messagesContainerRef.current;
+            if (scrollTop < 100 && messages.length > 0) {
+                scrollThrottleRef.current = true;
+                setTimeout(() => {
+                    scrollThrottleRef.current = false;
+                }, 300); 
 
             setIsLoadingMore(true);
             prevScrollHeight.current = messagesContainerRef.current.scrollHeight;
             loadPreviousMessages();
         }
-    }, [isLoadingMore, hasMore, filteredMessages, activeChat?.id]);
+    }, [isLoadingMore, hasMore, messages, activeChat?.uuid]);
 
     useEffect(() => {
         const container = messagesContainerRef.current;
@@ -96,47 +84,42 @@ export default function MessagesChatbox() {
     // Handle typing and sending
     const handleInputChange = (e) => {
         setInputMessage(e.target.value);
-        if (activeChat && userUuid) {
+        if (activeChat && userUUID) {
             sendAction({ 
                 action: 'typing', 
-                senderUUID: userUuid,
-                receiverUUID: activeChat.id 
+                senderUUID: userUUID,
+                receiverUUID: activeChat.receiverUUID 
             });
         }
     };
 
     const handleSendMessage = (e) => {
         e.preventDefault();
-        if (!inputMessage.trim() || !activeChat || !userUuid || !activeChat.id) return;
-        console.log("Sending message", {
-        senderUUID: userUuid,
-        receiverUUID: activeChat?.id,
-        content: inputMessage,
-        });
+        if (!inputMessage.trim() || !activeChat || !userUUID || !activeChat.uuid) return;
+        console.log(activeChat.groupUUID); 
         sendAction({
             action: 'message',
-            senderUUID: userUuid,
-            receiverUUID: activeChat.id,
+            receiverUUID: activeChat.receiverUUID,
+            groupUUID: activeChat.groupUUID,
             content: inputMessage,
-            createdAt: new Date().toISOString() 
         });
         setInputMessage('');
     };
 
-
     const loadPreviousMessages = () => {
-    if (!filteredMessages.length) {
-        setIsLoadingMore(false);
-        return;
-    }
-    setIsLoadingMore(true);
-    console.log("Loading more, isLoadingMore:", isLoadingMore);
-    const oldestMsg = filteredMessages[0]; // assuming messages are oldest-to-newest
-        sendAction({
-            action: "messageReq",
-            receiverUUID: activeChat.id,
-            content: oldestMsg.ID.toString(), // send timestamp as cursor
-        });
+        if (!messages.length) {
+            setIsLoadingMore(false);
+            return;
+        }
+        setIsLoadingMore(true);
+        console.log("Loading more, isLoadingMore:", isLoadingMore);
+        const oldestMsg = messages[0]; // assuming messages are oldest-to-newest
+            sendAction({
+                action: "messageReq",
+                receiverUUID: activeChat.receiverUUID,
+                groupUUID: activeChat.groupUUID,
+                content: oldestMsg.ID.toString(), // send timestamp as cursor
+            });
     }; 
 
     // console.log("messages:", messages);
@@ -150,20 +133,19 @@ export default function MessagesChatbox() {
                 {!isConnected && <span style={{color: 'red', marginLeft: '1em'}}>Disconnected</span>}
             </h2>
             <div className='messages-list' ref={messagesContainerRef}>
-                {filteredMessages.length === 0 ? (
+                {messages.length === 0 ? (
                     <div className="no-messages">
                     {activeChat
                         ? "No messages yet.  Start the conversation!"
                         : "Select a user to view messages."}
                     </div>
                 ) : (
-                    filteredMessages.map((msg, index) => {
-                        const isSent = msg.senderUUID === userUuid;
-                        const sender = userList.find(u => u.id === msg.senderUUID) ;
+                    messages.map((msg, index) => {
+                        const isSent = msg.senderUUID === userUUID;
                         return (
-                            <div key={index} className={`message-item ${isSent ? 'sent' : 'received'}`}>
+                            <div key={msg.ID} className={`message-item ${isSent ? 'sent' : 'received'}`}>
                                 <div className="message-bubble">
-                                    <strong>{isSent ? "You" : (sender ? sender.name : msg.senderUUID)}</strong>
+                                    <strong>{isSent ? "You" : (msg.senderName || "unknown")}</strong>
                                     <div className="message-content">{msg.content}</div>
                                     <span className='timestamp'>{new Date(msg.createdAt).toLocaleTimeString()}</span>
                                 </div>

@@ -29,7 +29,16 @@ export async function proxyToBackend(req, backendUrl, method = "POST") {
     });
 
     const data = await response.json();
-    return new Response(JSON.stringify(data), { status: response.status });
+    const setCookieHeader = response.headers.get("set-cookie");
+    
+    return new Response(JSON.stringify(data), 
+    { status: response.status,
+      headers: {
+        "Content-Type": "application/json",
+        "Set-Cookie": setCookieHeader,
+        "Access-Control-Allow-Credentials": "true",
+      }
+     });
   } catch (error) {
     console.error("Proxy error:", error);
     return new Response(JSON.stringify({ message: "Internal Server Error" }), {

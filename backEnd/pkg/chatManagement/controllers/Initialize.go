@@ -17,6 +17,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type message = chatModel.Message
+type messageView = chatModel.MessageView
 type user = userModel.User
 
 type ChatController struct {

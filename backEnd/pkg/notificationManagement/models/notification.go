@@ -76,7 +76,7 @@ func InsertNotificationForEvent(n *Notification, groupID, userID int) error {
 			)
 			SELECT 
 				members.follower_id, ?,
-				'group', 'group_event',
+				'groups', 'group_event',
 				?, ?, 
 				'new_event'
 			FROM following members
