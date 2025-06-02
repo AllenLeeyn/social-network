@@ -7,9 +7,11 @@ CREATE TABLE notifications (
     target_type             TEXT NOT NULL CHECK (target_type IN ('following', 'groups', 'group_event')),
     target_detailed_type    TEXT NOT NULL CHECK (target_detailed_type IN (
                                 'follow_request',
-                                'follow_request_accepted',
+                                'follow_request_responded',
                                 'group_invite',
+                                'group_invite_responded',
                                 'group_request',
+                                'group_request_responded',
                                 'group_event')),
     message                 TEXT NOT NULL,
     is_read                 INTEGER NOT NULL CHECK (is_read IN (0, 1)) DEFAULT 0,    

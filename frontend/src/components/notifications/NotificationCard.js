@@ -84,7 +84,7 @@ export default function NotificationCard({ notification }) {
                     <Link href={`/profile/${notification.to_user_uuid}`} className="link-btn">View</Link>
                 )}
                 {notification.target_detailed_type === 'group_event' && (
-                    <Link href={`/groups/${group.uuid}`} className="link-btn">View</Link>
+                    <Link href={`/groups/${notification.target_uuid}`} className="link-btn">View</Link>
                 )}
                 
             </div>
