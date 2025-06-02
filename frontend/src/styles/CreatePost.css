@@ -1,12 +1,20 @@
 form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 1rem;
+    font-family: monospace, sans-serif;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
+}
+
+.input-group h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #233144;
+    margin-bottom: 0.5rem;
 }
 
 .input-group label {
@@ -27,7 +35,7 @@ form {
 
 .input-group input[type="text"]:focus,
 .input-group textarea:focus {
-    border-color: #5b6dcd;
+    border-color: #233144;
     outline: none;
     background: #fff;
 }
@@ -35,6 +43,28 @@ form {
 .input-group textarea {
     min-height: 120px;
     resize: vertical;
+}
+
+.input-group input[type="file"] {
+    width: 100%;
+    font-family: "Inter", Arial, sans-serif;
+    font-size: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fafbfc;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.input-group input[type="file"]::file-selector-button {
+    font-family: "Inter", Arial, sans-serif;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fafbfc;
+    font-size: 1rem;
+    box-sizing: border-box;
 }
 
 .checkbox-group {
@@ -50,7 +80,7 @@ form {
 }
 
 .checkbox-item input[type="checkbox"] {
-    accent-color: #5b6dcd;
+    accent-color: #233144;
 }
 
 .follower-group {
@@ -68,7 +98,7 @@ form {
 }
 
 .new-post {
-    background: #5b6dcd;
+    background: linear-gradient(135deg, #233144 40%, #4682B4 100%);
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -82,9 +112,53 @@ form {
 
 .new-post:hover,
 .new-post:focus {
-    background: #3b4db7;
     outline: none;
+    transform: scale(1.05);
+
 }
+
+/* select {
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    background-color: white;
+} */
+
+/* select option:checked{
+    background-color: #233144;
+    color: white;
+}
+
+select option {
+    background-color: white !important;
+    color: #333 !important;
+} */
+select {
+    font-family: monospace, Arial, sans-serif;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    background-color: white;
+    border: 1px solid #d1d5db;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+select option:not(:checked) {
+    background-color: white !important;
+    color: #333 !important;
+}
+
+select:focus {
+    border-color: #233144;
+    background: #fff;
+}
+
 
 @media (max-width: 600px) {
     .checkbox-group {

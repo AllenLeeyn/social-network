@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import '/src/styles/messages/DMList.css'
 
 export default function DirectMessagesList() {
-    const { userList, activeDM, setActiveDM } = useWebsocketContext();
+/*     const { userList, activeDM, setActiveDM } = useWebsocketContext();
     const { activeChat, setActiveChat } = useActiveChat();
 
     const activeChatUsers = useMemo(
@@ -47,5 +47,5 @@ export default function DirectMessagesList() {
                 <li className="no-active-chats">No active chats yet</li>
             )}
         </ul>
-    );
+    ); */
 }

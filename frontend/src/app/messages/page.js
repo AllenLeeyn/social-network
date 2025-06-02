@@ -13,15 +13,6 @@ export default function MessagePage() {
     return (
         <main>
             <div className='message-page-layout'>
-                {/* Left Sidebar */}
-                <aside className='sidebar left-sidebar'>
-                    <SidebarSection title='Direct'>
-                        <DirectMessagesList />
-                    </SidebarSection>
-                    <SidebarSection title='Group'>
-                        <GroupChatsList />
-                    </SidebarSection>
-                </aside>
                 {/* Main Chat Area */}
                 <section className='main-feed message-list-section'>
                     <MessagesChatbox />

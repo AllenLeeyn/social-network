@@ -7,6 +7,10 @@
   box-sizing: border-box;      /* Ensures padding doesn't affect width */
 }
 
+.group-card p {
+  font-size: 14px;                /* Remove default padding */
+}
+
 .group-card-link .group-card {
   transition: box-shadow 0.2s;
 }
