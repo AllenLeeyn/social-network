@@ -1,13 +1,13 @@
 // src/components/groups/GroupMembersList.js
 import React from "react";
 
-export default function GroupMembersList({ members }) {
-    if (!members || members.length === 0) {
-        return <div>No members yet.</div>;
-    }
+export default function GroupMembersList({ members = [], requests = [] }) {
     const accepted = members.filter(m => m.status === 'accepted');
     const invited = members.filter(m => m.status === 'invited');
-    const requested = members.filter(m => m.status === 'requested');
+
+    if (accepted.length === 0 && invited.length === 0 && requests.length === 0) {
+        return <div>No members yet.</div>;
+    }
 
     return (
         <div>
@@ -19,7 +19,7 @@ export default function GroupMembersList({ members }) {
             </ul>
             <h4>Pending Requests</h4>
             <ul>
-                {requested.map((member, idx) => (
+                {requests.map((member, idx) => (
                     <li key={member.follower_uuid || idx}>{member.follower_name}</li>
                 ))}
             </ul>
@@ -31,4 +31,4 @@ export default function GroupMembersList({ members }) {
             </ul>
         </div>
     );
-}   
+}

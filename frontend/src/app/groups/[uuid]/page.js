@@ -11,8 +11,10 @@ import '../groups.css'; // or './uuid.css' if you want special styling
 export default function GroupDetailPage() {
     const { uuid } = useParams();
     const [group, setGroup] = useState(null);
-    const [members, setMembers] = useState([]);
     const [loadingGroup, setLoadingGroup] = useState(true);
+
+    const [members, setMembers] = useState([]);
+    const [requests, setRequests] = useState([]);
     const [loadingMembers, setLoadingMembers] = useState(true);
 
     useEffect(() => {
@@ -28,13 +30,15 @@ export default function GroupDetailPage() {
     // Fetch group members (using your backend handler)
     useEffect(() => {
         setLoadingMembers(true);
-        fetch(`/frontend-api/groups/members/${uuid}`)
-            .then(res => res.json())
-            .then(data => {
-                // console.log("Members data:", data.data)
-                setMembers(data.data || []);
-                setLoadingMembers(false);
-            });
+        Promise.all([
+            fetch(`/frontend-api/groups/members/${uuid}`).then(res => res.json()),
+            fetch(`/frontend-api/group/member/requests/${uuid}`).then(res => res.json())
+        ]).then(([membersData, requestsData]) => {
+            console.log(requestsData)
+            setMembers(membersData.data || []);
+            setRequests(requestsData.data || []);
+            setLoadingMembers(false);
+        });
     }, [uuid]);
 
     if (loadingGroup) return <div>Loading...</div>;
@@ -58,7 +62,7 @@ export default function GroupDetailPage() {
                 <SidebarSection title="Members">
                     {loadingMembers
                         ? <div>Loading members...</div>
-                        : <GroupMembersList members={members} />
+                        : <GroupMembersList members={members} requests={requests} />
                     }
                 </SidebarSection>
             </aside>
