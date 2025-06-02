@@ -91,6 +91,7 @@ textarea:focus {
     background: #233144;
     color: white;
     justify-content: center;
+    font-weight: bold;
 }
 
 .main-feed,
@@ -136,7 +137,7 @@ textarea:focus {
 .connections li {
     margin: 3px;
     font-size: 14px;
-    list-style: none; /* removes bullets */
+    list-style: none;
 }
 
 
@@ -182,15 +183,15 @@ textarea:focus {
 
 .group-item,
 .connection-item {
-    text-align: center; /* Center text and inline content */
+    text-align: center; 
 }
 
 .categories-section ul,
 .users-section ul {
-    margin: 0 auto;       /* Center the list block */
+    margin: 0 auto;       
     padding: 0;
-    display: inline-block; /* Shrink-wrap the list width to content */
-    text-align: left;      /* Keep list items left-aligned */
+    display: inline-block; 
+    text-align: left;     
 }
 
 .user-item:hover,
@@ -206,14 +207,14 @@ textarea:focus {
     border-bottom: 2px solid white;
 }
 
-.category-item.active,
+/* .category-item.active,
 .group-item.active,
 .connection-item.active,
 .user-item.active {
-    background: #0070f3;
+    background: #0070f3 !important;
     color: white;
     font-weight: bold;
-}
+} */
 
 
 .user-item img {
