@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"social-network/pkg/middleware"
@@ -90,7 +91,8 @@ func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	notificationModel.InsertNotificationForEvent(&notificationModel.Notification{
-		FromUserId: userID, TargetId: eventID, TargetUUID: eventUUID,
+		FromUserId: userID, TargetId: e.GroupID, TargetUUID: e.GroupUUID,
+		Message: `{"event_id":"` + strconv.Itoa(eventID) + `","event_uuid":"` + eventUUID + `"}`,
 	}, e.GroupID, userID)
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "event created",
