@@ -8,11 +8,12 @@ import (
 )
 
 type NotificationFromUser struct {
-	ID        int    `json:"id"`
-	UUID      string `json:"uuid"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	NickName  string `json:"nick_name"`
+	ID           int    `json:"id"`
+	UUID         string `json:"uuid"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	NickName     string `json:"nick_name"`
+	ProfileImage string `json:"profile_image,omitempty"` // Optional field for profile image
 }
 
 // Post struct represents the user data model
@@ -152,7 +153,7 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 			end as notification_message
 			, n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name,
+			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name, from_user.profile_image as from_user_profile_image,
 			to_user.uuid as to_user_uuid
 		FROM notifications n
 			INNER JOIN users to_user
@@ -180,7 +181,7 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 			&notification.TargetId, &notification.TargetUUIDForm, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
-			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
+			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName, &fromUser.ProfileImage,
 			&notification.ToUserUUID,
 		)
 		if err != nil {
@@ -213,7 +214,7 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 			end as notification_message, 
 			n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name,
+			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name, from_user.profile_image as from_user_profile_image,
 			to_user.uuid as to_user_uuid
 		FROM notifications n
 			INNER JOIN users to_user
@@ -241,7 +242,7 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 			&notification.TargetId, &notification.TargetUUIDForm, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
-			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
+			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName, &fromUser.ProfileImage,
 			&notification.ToUserUUID,
 		)
 		if err != nil {

@@ -35,9 +35,9 @@ export default function NotificationCard({ notification }) {
         <div className="notification-content">
             {notification.from_user && (
                 <div className="notification-user">
-                    {notification.from_user.avatar ? (
+                    {notification.from_user.profile_image ? (
                         <Image
-                            src={notification.from_user.avatar}
+                            src={`/frontend-api/image/${notification.from_user.profile_image}`}
                             alt={notification.from_user.nick_name}
                             width={50}
                             height={50}
