@@ -105,7 +105,7 @@ export default function NotificationCard({ notification }) {
                             )
                             
                         )}
-                        {(['follow_request_responded', 'group_request_responded', 'group_event'].includes(notification.target_detailed_type)) && (
+                        {(['follow_request_responded', 'group_request_responded', 'group_invite_responded', 'group_event'].includes(notification.target_detailed_type)) && (
                             <a
                                 href="#"
                                 className="link-btn"
