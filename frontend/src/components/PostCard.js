@@ -78,7 +78,7 @@ export default function PostCard({ post }) {
         )}
         </div>
         <div className="user-details">
-          <Link href={`/user/${post.user.uuid}`} className="user-name">
+          <Link href={`/profile/${post.user.uuid}`} className="user-name">
             {post.user.nick_name}
           </Link>
           <div className="timestamp">{TimeAgo(post.created_at)}</div>

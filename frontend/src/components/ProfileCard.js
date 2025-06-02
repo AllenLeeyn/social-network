@@ -2,50 +2,64 @@
 
 import { useEffect, useState } from "react";
 
-export default function ProfileCard() {
+export default function ProfileCard({ uuid, setPrivateProfile }) {
   const [user, setUser] = useState(null);
   const [followers, setFollowers] = useState([]);
   const [followings, setFollowings] = useState([]);
+  const [isPrivateProfile, setIsPrivateProfile] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch("/frontend-api/profile", {
-          credentials: "include", // if cookies/session are used
+        // Use the uuid prop if provided, otherwise fetch current user
+        const url = uuid
+          ? `/frontend-api/profile?uuid=${uuid}`
+          : "/frontend-api/profile";
+        const res = await fetch(url, {
+          credentials: "include",
         });
+        if (res.status === 403) {
+          // Profile is private, but try to get minimal info if possible
+          const data = await res.json();
+          setUser(data.data || {}); // backend should return at least nick_name, profile_image, etc.
+          setPrivateProfile && setPrivateProfile(true);
+          return;
+        }
         if (!res.ok) {
           throw new Error("Failed to fetch user data");
         }
         const data = await res.json();
         setUser(data.data);
-
-        const followRes = await fetch("/frontend-api/followers", {
-          credentials: "include",
-        });
-        if (!followRes.ok) throw new Error("Failed to fetch followers");
-        const followJson = await followRes.json();
-        const followData = Array.isArray(followJson.data)
-          ? followJson.data
-          : [];
-
-        const followersList = followData.filter(
-          (entry) => entry.leader_uuid === data.data.uuid
-        );
-        const followingList = followData.filter(
-          (entry) => entry.follower_uuid === data.data.uuid
-        );
-
-        setFollowers(followersList);
-        setFollowings(followingList);
+        setPrivateProfile && setPrivateProfile(false);
       } catch (err) {
         console.error(err);
       }
     }
-
     fetchProfile();
-  }, []);
+  }, [uuid]);
 
   if (!user) return <div>Loading profile...</div>;
+
+  if (isPrivateProfile) {
+    return (
+      <div className="profile-header">
+        <img
+          src={`/frontend-api/image/${user.profile_image}`}
+          alt={user.nick_name}
+          className="profile-avatar"
+        />
+        <div className="profile-info">
+          <h2>{user.nick_name}</h2>
+          <p>
+            <strong>
+              {user.first_name} {user.last_name}
+            </strong>
+          </p>
+          <p>This profile is private.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-header">

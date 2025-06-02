@@ -1,22 +1,28 @@
 'use client';
-import { useState } from 'react';
-import '../styles/SidebarSection.css'; 
 
-export default function SidebarSection({ title, children, defaultOpen = true }) {
-    const [open, setOpen] = useState(defaultOpen);
-    return (
-        <section className="sidebar-section">
+import { Accordion, AccordionItem } from '@heroui/react';
+import '../styles/SidebarSection.css';
 
-        <h2
-            className="sidebar-section-title"
-            onClick={() => setOpen(o => !o)}
-            style={{ cursor: 'pointer' }}
-            tabIndex={0}
-            aria-expanded={open}
+export default function SidebarSection({ title, children, defaultOpen = true, id }) {
+  // Generate a fallback key/id if not provided
+  const sectionId = id || title?.toLowerCase().replace(/\s+/g, '-');
+
+  return (
+    <section className="sidebar-section">
+      <Accordion
+        variant="shadow"
+        defaultExpandedKeys={defaultOpen ? [sectionId] : []}
+        className="sidebar-accordion"
+      >
+        <AccordionItem
+          key={sectionId}
+          aria-label={title}
+          title={title}
+          className="sidebar-section-title"
         >
-            <span className="sidebar-arrow">{open ? '▼' : '►'} {title}</span>
-        </h2>
-        {open && children}
-        </section>
-    );
+          {children}
+        </AccordionItem>
+      </Accordion>
+    </section>
+  );
 }
