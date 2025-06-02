@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from "next/link";
 import Image from "next/image";
+import DOMPurify from 'dompurify';
 import { FaUserCircle } from "react-icons/fa";
 import { TimeAgo } from '../../utils/TimeAgo';
 import { useNotifications } from '../../contexts/NotificationsContext';
@@ -62,7 +63,7 @@ export default function NotificationCard({ notification }) {
                 )}
 
                 <div>
-                    <div className="notification-message">{notification.message}</div>
+                    <div className="notification-message" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(notification.message) }}></div>
                     <div className="notification-timestamp">
                         {TimeAgo(notification.created_at)}
                     </div>

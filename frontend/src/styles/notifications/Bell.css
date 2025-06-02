@@ -77,3 +77,8 @@
   text-align: center;
   color: #777;
 }
+
+.notification-user{
+  width: 25%;
+  overflow:auto;
+}

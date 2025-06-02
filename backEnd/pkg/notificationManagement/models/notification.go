@@ -142,13 +142,13 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
         SELECT n.id as notification_id, n.to_user_id as notification_to_user_id, n.from_user_id as notification_from_user_id, 
 			n.target_id as notification_target_id, n.target_uuid as notification_target_uuid, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
 			case
-				when n.target_detailed_type = 'follow_request' then 'You have a follow request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
-				when n.target_detailed_type = 'follow_request_responded' then 'Your follow request to ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been ' || n.message
-				when n.target_detailed_type = 'group_invite' then 'You have been invited to group ' || (SELECT title FROM groups WHERE id = n.target_id)
-				when n.target_detailed_type = 'group_invite_responded' then 'Your group invitation to group ' || (SELECT title FROM groups WHERE id = n.target_id) || ' has been ' || n.message
-				when n.target_detailed_type = 'group_request' then 'You have a group joining request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
-				when n.target_detailed_type = 'group_request_responded' then 'Your group joining request to group ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been ' || n.message
-				when n.target_detailed_type = 'group_event' then 'You have been invited to event ' || (SELECT title FROM group_events WHERE id = n.target_id)
+				when n.target_detailed_type = 'follow_request' then 'You have a follow request from <b>' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || '</b>'
+				when n.target_detailed_type = 'follow_request_responded' then 'Your follow request to <b>' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || '</b> has been ' || n.message
+				when n.target_detailed_type = 'group_invite' then 'You have been invited to group <b>' || (SELECT title FROM groups WHERE id = n.target_id) || '</b>'
+				when n.target_detailed_type = 'group_invite_responded' then 'Your group invitation to group <b>' || (SELECT title FROM groups WHERE id = n.target_id) || '</b> has been ' || n.message
+				when n.target_detailed_type = 'group_request' then 'You have a group joining request from <b>' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || '</b>'
+				when n.target_detailed_type = 'group_request_responded' then 'Your group joining request to group <b>' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || '</b> has been ' || n.message
+				when n.target_detailed_type = 'group_event' then 'You have been invited to event <b>' || (SELECT title FROM group_events WHERE id = n.target_id) || '</b>'
 				else ''
 			end as notification_message
 			, n.is_read as notification_is_read, n.data as notification_data,
