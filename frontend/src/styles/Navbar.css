@@ -1,10 +1,15 @@
 .navbar {
 display: flex;
+position: fixed;
+width: 98%;
 align-items: center;
+z-index: 1000;
 justify-content: space-between;
 background: #222;
 padding: 0 2rem;
 height: 60px;
+transition: all 0.3s ease;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .nav-link {
@@ -55,7 +60,7 @@ letter-spacing: 1px;
 display: flex;
 flex: 1;
 justify-content: center;
-gap: 1.5rem;
+gap: 1.5rem; 
 }
 
 .right-links {
