@@ -27,20 +27,20 @@ export default function ProfileCard() {
     return (
         <div className="profile-header">
                 <img
-                    src={currentUser.avatar}
-                    alt={currentUser.username}
+                    src={user.avatar}
+                    alt={user.username}
                     className="profile-avatar"
                 />
                 <div className="profile-info">
-                    <h2>{currentUser.username}</h2>
+                    <h2>{user.username}</h2>
                     <p>
-                    <strong>{currentUser.fullName}</strong>
+                    <strong>{user.fullName}</strong>
                     </p>
-                    <p>{currentUser.email}</p>
+                    <p>{user.email}</p>
                     <p>
-                    <span>Date of Birth:</span> {currentUser.dateOfBirth}
+                    <span>Date of Birth:</span> {user.dateOfBirth}
                     </p>
-                    <p className="bio">{currentUser.bio}</p>
+                    <p className="bio">{user.bio}</p>
                     <div className="connection-buttons">
                     <button onClick={() => setShowFollowers(true)}>
                         Followers ({sampleFollowers.length})
