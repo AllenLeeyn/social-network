@@ -23,12 +23,6 @@ export default function GroupMembersList({ members = [], requests = [] }) {
                     <li key={member.follower_uuid || idx}>{member.follower_name}</li>
                 ))}
             </ul>
-            <h4>Invited</h4>
-            <ul>
-                {invited.map((member, idx) => (
-                    <li key={member.follower_uuid || idx}>{member.follower_name}</li>
-                ))}
-            </ul>
         </div>
     );
 }
