@@ -150,3 +150,20 @@ export const myActivity = [
   { id: 1, name: "My Posts" },
   { id: 2, name: "My Group Posts" },
 ];
+
+export const myPosts = [
+    {
+        id: 1,
+        title: "My First Post",
+        content: "This is the content of my first post.",
+        author: "Allen Lee",
+        timestamp: "2025-05-27T10:00:00Z",
+    },
+    {
+        id: 2,
+        title: "Second Thoughts",
+        content: "Another day, another idea.",
+        author: "Allen Lee",
+        timestamp: "2025-05-26T14:30:00Z",
+    },
+];
