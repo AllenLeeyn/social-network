@@ -43,6 +43,7 @@ border-radius: 2px;
 display: flex;
 align-items: center;
 gap: 0.75rem;
+text-decoration: none;
 }
 
 .logo-img {

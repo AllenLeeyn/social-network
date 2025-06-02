@@ -50,16 +50,18 @@ export default function Navbar() {
 
     return (
     <div className="navbar">
-        <div className="logo-title">
-        <Image
-            src="/logo.png"
-            alt="Site Logo"
-            width={35}
-            height={35}
-            className="logo-img"
-        />
-        <span className="site-title">grit:Hub</span>
-        </div>
+        <Link href="/" className="logo-title">
+            <div className="logo-title">
+            <Image
+                src="/logo.png"
+                alt="Site Logo"
+                width={35}
+                height={35}
+                className="logo-img"
+            />
+            <span className="site-title">grit:Hub</span>
+            </div>
+        </Link>
 
         <div className="center-links">
         <Link href="/" className={`nav-link ${pathname === '/' ? 'active' : ''}`}>
