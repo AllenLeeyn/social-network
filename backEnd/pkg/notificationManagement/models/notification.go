@@ -8,11 +8,12 @@ import (
 )
 
 type NotificationFromUser struct {
-	ID        int    `json:"id"`
-	UUID      string `json:"uuid"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	NickName  string `json:"nick_name"`
+	ID           int    `json:"id"`
+	UUID         string `json:"uuid"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	NickName     string `json:"nick_name"`
+	ProfileImage string `json:"profile_image,omitempty"` // Optional field for profile image
 }
 
 // Post struct represents the user data model
@@ -141,16 +142,18 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
         SELECT n.id as notification_id, n.to_user_id as notification_to_user_id, n.from_user_id as notification_from_user_id, 
 			n.target_id as notification_target_id, n.target_uuid as notification_target_uuid, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
 			case
-				when n.target_detailed_type = 'follow_request' then 'You have a follow request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
-				when n.target_detailed_type = 'follow_request_accepted' then 'Your follow request to ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been accepted'
-				when n.target_detailed_type = 'group_invite' then 'You have been invited to group ' || (SELECT title FROM groups WHERE id = n.target_id)
-				when n.target_detailed_type = 'group_request' then 'You have a group joining request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
-				when n.target_detailed_type = 'group_event' then 'You have been invited to event' || (SELECT title FROM group_events WHERE id = n.target_id)
+				when n.target_detailed_type = 'follow_request' then 'You have a follow request from <b>' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || '</b>'
+				when n.target_detailed_type = 'follow_request_responded' then 'Your follow request to <b>' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || '</b> has been ' || n.message
+				when n.target_detailed_type = 'group_invite' then 'You have been invited to group <b>' || (SELECT title FROM groups WHERE id = n.target_id) || '</b>'
+				when n.target_detailed_type = 'group_invite_responded' then 'Your group invitation to group <b>' || (SELECT title FROM groups WHERE id = n.target_id) || '</b> has been ' || n.message
+				when n.target_detailed_type = 'group_request' then 'You have a group joining request from <b>' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || '</b>'
+				when n.target_detailed_type = 'group_request_responded' then 'Your group joining request to group <b>' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || '</b> has been ' || n.message
+				when n.target_detailed_type = 'group_event' then 'You have been invited to event <b>' || (SELECT title FROM group_events WHERE id = n.target_id) || '</b>'
 				else ''
 			end as notification_message
 			, n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name,
+			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name, from_user.profile_image as from_user_profile_image,
 			to_user.uuid as to_user_uuid
 		FROM notifications n
 			INNER JOIN users to_user
@@ -178,7 +181,7 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 			&notification.TargetId, &notification.TargetUUIDForm, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
-			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
+			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName, &fromUser.ProfileImage,
 			&notification.ToUserUUID,
 		)
 		if err != nil {
@@ -211,7 +214,7 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 			end as notification_message, 
 			n.is_read as notification_is_read, n.data as notification_data,
 			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name,
+			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name, from_user.profile_image as from_user_profile_image,
 			to_user.uuid as to_user_uuid
 		FROM notifications n
 			INNER JOIN users to_user
@@ -239,7 +242,7 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 			&notification.TargetId, &notification.TargetUUIDForm, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
-			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
+			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName, &fromUser.ProfileImage,
 			&notification.ToUserUUID,
 		)
 		if err != nil {

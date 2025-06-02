@@ -70,10 +70,10 @@ export default function Navbar() {
         <Link href="/messages" className="nav-link">
             <FaMessage />
         </Link>
-        <Link href="/notifications" className="nav-link">
+        {/*<Link href="/notifications" className="nav-link">
             <FaBell />
-        </Link>
-        {/* <NotificationBell notifications={notifications} /> */}
+        </Link>*/}
+        <NotificationBell notifications={notifications} />
       </div>
       <div className="right-links">
         {profileImage ? (

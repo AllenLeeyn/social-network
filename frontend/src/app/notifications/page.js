@@ -29,7 +29,7 @@ export default function NotificationPage() {
     const filteredNotifications = useMemo(() => {
         if (!notifications) return [];
         if (selectedFilter === 'all') return notifications;
-        if (selectedFilter === 'unread') return notifications.filter(n => !n.isRead);
+        if (selectedFilter === 'unread') return notifications.filter(n => !n.is_read);
         return notifications.filter(n => n.target_detailed_type === selectedFilter);
     }, [notifications, selectedFilter]);
 
