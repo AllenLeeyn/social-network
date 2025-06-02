@@ -16,6 +16,7 @@ export default function NotificationCard({ notification }) {
     const router = useRouter();
 
     const acceptRejectActions = ['follow_request', 'group_invite', 'group_request'];
+    const viewActions = ['follow_request_responded', 'group_request_responded', 'group_invite_responded', 'group_event'];
 
     const handleNotificationRespond = async (status) => {
         try {
@@ -105,7 +106,7 @@ export default function NotificationCard({ notification }) {
                             )
                             
                         )}
-                        {(['follow_request_responded', 'group_request_responded', 'group_invite_responded', 'group_event'].includes(notification.target_detailed_type)) && (
+                        {(viewActions.includes(notification.target_detailed_type)) && (
                             <a
                                 href="#"
                                 className="link-btn"
