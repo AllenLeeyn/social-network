@@ -18,6 +18,20 @@ export default function GroupDetailPage() {
     const [requests, setRequests] = useState([]);
     const [loadingMembers, setLoadingMembers] = useState(true);
 
+
+    // Helper to refresh members and requests
+    function refreshMembersAndRequests() {
+        setLoadingMembers(true);
+        Promise.all([
+            fetch(`/frontend-api/groups/members/${uuid}`).then(res => res.json()),
+            fetch(`/frontend-api/group/member/requests/${uuid}`).then(res => res.json())
+        ]).then(([membersData, requestsData]) => {
+            setMembers(membersData.data || []);
+            setRequests(requestsData.data || []);
+            setLoadingMembers(false);
+        });
+    }
+
     useEffect(() => {
         setLoadingGroup(true);
         fetch(`/frontend-api/groups/${uuid}`)
@@ -28,63 +42,79 @@ export default function GroupDetailPage() {
         });
     }, [uuid]);
 
-    // Fetch group members (using your backend handler)
     useEffect(() => {
-        setLoadingMembers(true);
-        Promise.all([
-            fetch(`/frontend-api/groups/members/${uuid}`).then(res => res.json()),
-            fetch(`/frontend-api/group/member/requests/${uuid}`).then(res => res.json())
-        ]).then(([membersData, requestsData]) => {
-            console.log(requestsData)
-            setMembers(membersData.data || []);
-            setRequests(requestsData.data || []);
-            setLoadingMembers(false);
-        });
+        refreshMembersAndRequests();
     }, [uuid]);
+
 
     if (loadingGroup) return <div>Loading...</div>;
     if (!group) return <div>Group not found.</div>;
 
-    function handleInviteUser() {
-    // You can open a modal, show a toast, or implement your invite logic here
-    alert("Invite User clicked!");
-    // Or setShowInviteModal(true) if you want to open a modal
-    }
-
-    async function handleRequestJoin(group) {
-        try {
-            const response = await fetch('/frontend-api/groups/join', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ group_uuid: group.uuid }),
-            });
-
-            // Check for HTTP errors
-            if (!response.ok) {
-                // Try to parse error message from server, fallback to status text
-                let errorMsg = `Request failed (${response.status})`;
-                try {
-                    const errorData = await response.json();
-                    errorMsg = errorData.error || errorMsg;
-                } catch {
-                    // ignore JSON parse errors
-                }
-                toast.error(errorMsg);
-            }
-
-            const data = await response.json();
-            if (data.success) {
-                toast.success('Request sent!');
-                // Optionally update group status in state here
+    // Add this function definition:
+    function handleRequestJoin() {
+        fetch(`/frontend-api/groups/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ group_uuid: uuid }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.data) {
+                setGroup(data.data);
             } else {
-                toast.error(data.error || 'Request failed.');
+                setGroup(prev => ({ ...prev, status: 'requested' }));
             }
-        } catch (error) {
-            // Handles network errors, timeouts, etc.
-            toast.error('Network error. Please try again.');
-        }
+            toast.success('Request Sent!');
+            refreshMembersAndRequests();
+        })
+        .catch(() => {
+            toast.error('Failed to send join request.');
+        });
     }
 
+    function handleApproveRequest(follower_uuid) {
+        fetch(`/frontend-api/group/member/response`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                group_uuid: uuid,
+                follower_uuid,
+                status: 'accepted'
+            }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            toast.success('Request approved!');
+            refreshMembersAndRequests();
+        })
+        .catch(() => {
+            toast.error('Failed to approve request.');
+        });
+    }
+
+    function handleDenyRequest(follower_uuid) {
+        fetch(`/frontend-api/group/member/response`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                group_uuid: uuid,
+                follower_uuid,
+                status: 'declined'
+            }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            toast.info('Request denied.');
+            refreshMembersAndRequests();
+        })
+        .catch(() => {
+            toast.error('Failed to deny request.');
+        });
+    }
+
+
+    function handleInviteUser() {
+    }
 
     return (
         <div className="groups-page-layout">
@@ -98,7 +128,13 @@ export default function GroupDetailPage() {
                 <SidebarSection title="Members">
                     {loadingMembers
                         ? <div>Loading members...</div>
-                        : <GroupMembersList members={members} requests={requests} />
+                        : <GroupMembersList 
+                            members={members} 
+                            requests={requests} 
+                            groupUuid={uuid}
+                            onApproveRequest={handleApproveRequest}
+                            onDenyRequest={handleDenyRequest}
+                        />
                     }
                 </SidebarSection>
             </aside>

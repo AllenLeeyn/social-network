@@ -5,13 +5,13 @@ import { fetchMyPosts } from "../../lib/apiPosts";
 import "./profile.css";
 import SidebarSection from "../../components/SidebarSection";
 import PostCard from "../../components/PostCard";
-import {
-  myPosts,
-  myActivity,
-  sampleGroups,
-  sampleFollowers,
-  sampleFollowing,
-} from "../../data/mockData";
+// import {
+//   myPosts,
+//   myActivity,
+//   sampleGroups,
+//   sampleFollowers,
+//   sampleFollowing,
+// } from "../../data/mockData";
 
 export default function ProfilePage() {
   const [showFollowers, setShowFollowers] = useState(false);

@@ -16,7 +16,7 @@ import { formatDate } from '../../utils/formatDate';
 import "../../styles/groups/GroupDetail.css"; 
 
 
-export default function GroupDetail({ group, onBack }) {
+export default function GroupDetail({ group, onBack, onRequestJoin }) {
         
     if (!group) return null;
 
@@ -37,9 +37,20 @@ export default function GroupDetail({ group, onBack }) {
     const isMember = group.status === "accepted";
 
     const refreshEvents = () => {
-        fetch(`/frontend-api/events/${group.uuid}`)
-            .then(res => res.json())
-            .then(data => setGroupEvents(data.data || []));
+        fetch(`/frontend-api/groups/events/${group.uuid}`)
+            .then(res => {
+            if (!res.ok) {
+                return res.text().then(text => {
+                throw new Error(`HTTP error! Status: ${res.status}. Response: ${text}`);
+                });
+            }
+            return res.json();
+        })
+        .then(data => setGroupEvents(data.data || []))
+        .catch(err => {
+            console.error("Failed to refresh events:", err);
+            toast.error("Failed to load events");
+        });
     };
 
 
@@ -92,7 +103,7 @@ export default function GroupDetail({ group, onBack }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     event_uuid: selectedEvent.uuid,
-                    status,
+                    response: status,
                 }),
             });
             let data = {};
@@ -123,7 +134,7 @@ export default function GroupDetail({ group, onBack }) {
                 isMember={isMember}
                 onShowPostModal={() => setShowPostModal(true)}
                 onShowEventModal={() => setShowEventModal(true)}
-                onRequestJoin={() => onRequestJoin}
+                onRequestJoin={onRequestJoin}
             />
             <div className="group-detail">
                 {onBack && (

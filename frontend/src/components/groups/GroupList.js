@@ -37,6 +37,15 @@ export default function GroupList({ filter, onSelectGroup }) {
         .then(res => res.json())
         .then(data => {
         if (data.success) {
+
+            setGroups(prevGroups =>
+                prevGroups.map(g =>
+                    g.uuid === group.uuid
+                        ? { ...g, status: 'requested' }
+                        : g
+                )
+            );
+            
             toast.success('Request sent!');
         } else {
             toast.error(data.error || 'Request failed.');
