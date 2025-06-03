@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 
 	middleware "social-network/pkg/middleware"
@@ -147,6 +148,7 @@ func ViewUsersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewUserHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("ViewUserHandler called")
 	tgtUUID, statusCode, err := GetTgtUUID(r, "api/user")
 	if err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)

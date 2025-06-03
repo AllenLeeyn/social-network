@@ -87,11 +87,7 @@ func (cc *ChatController) queueStatusToFollowings(status string, userUUID string
 		if tgt == userUUID {
 			tgt = f.LeaderUUID
 		}
-		cc.msgQueue <- message{
-			SenderID:     -1,
-			ReceiverUUID: tgt,
-			Content:      status,
-		}
+		cc.queuePublicMessage(status, tgt)
 	}
 }
 
@@ -194,7 +190,7 @@ func (cc *ChatController) processMessageRequest(msgData *message, cl *client) er
 }
 
 func (cc *ChatController) processMessageAcknowledgement(msgData *message, cl *client) error {
-	messages, err := chatModel.SelectUnreadMessages(msgData.ReceiverUUID, cl.UserUUID)
+	messages, err := chatModel.SelectUnreadMessages(msgData.SenderUUID, cl.UserUUID)
 	if err != nil {
 		return fmt.Errorf("error getting messages: %v", err)
 	}

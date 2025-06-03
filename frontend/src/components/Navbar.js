@@ -5,10 +5,12 @@ import "../styles/Navbar.css";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { FaUserGroup } from "react-icons/fa6";
+import { FaArrowRightFromBracket } from "react-icons/fa6";
 import { FaMessage } from "react-icons/fa6";
 import { FaBell } from "react-icons/fa6";
 import NotificationBell from './notifications/NotificationBell';
@@ -20,7 +22,7 @@ export default function Navbar() {
   // Logout handler
     const { handleLogout } = useAuth();
     const router = useRouter();
-
+    const pathname = usePathname();
     const [userName, setUserName] = useState("");
     const [profileImage, setProfileImage] = useState("");
 
@@ -49,55 +51,57 @@ export default function Navbar() {
 
     return (
     <div className="navbar">
-        <div className="logo-title">
-        <Image
-            src="/logo.png"
-            alt="Site Logo"
-            width={35}
-            height={35}
-            className="logo-img"
-        />
-        <span className="site-title">grit:Hub</span>
-        </div>
+        <Link href="/" className="logo-title">
+            <div className="logo-title">
+            <Image
+                src="/logo.png"
+                alt="Site Logo"
+                width={35}
+                height={35}
+                className="logo-img"
+            />
+            <span className="site-title">grit:Hub</span>
+            </div>
+        </Link>
 
         <div className="center-links">
-        <Link href="/" className="nav-link">
-            <FaHouse />
+        <Link href="/" className={`nav-link ${pathname === '/' ? 'active' : ''}`}>
+            <FaHouse /> Home
         </Link>
-        <Link href="/groups" className="nav-link">
-            <FaUserGroup />
+        <Link href="/groups" className={`nav-link ${pathname === '/groups' ? 'active' : ''}`}>
+            <FaUserGroup /> Groups
         </Link>
-        <Link href="/messages" className="nav-link">
-            <FaMessage />
+        <Link href="/messages" className={`nav-link ${pathname === '/messages' ? 'active' : ''}`}>
+            <FaMessage /> Messages
         </Link>
-        <Link href="/notifications" className="nav-link">
+        {/*<Link href="/notifications" className="nav-link">
             <FaBell />
-        </Link>
-        {/* <NotificationBell notifications={notifications} /> */}
-      </div>
-      <div className="right-links">
+        </Link>*/}
+        <NotificationBell notifications={notifications} />
+        </div>
+        <div className="right-links">
         {profileImage ? (
-          <Image
+            <Image
             src={profileImage}
             alt="Profile Image"
             width={30}
             height={30}
             style={{ borderRadius: "50%" }}
-          />
+        />
         ) : (
-          <FaUserCircle
+            <FaUserCircle
             size={30}
             color="#aaa"
             style={{ verticalAlign: "middle" }}
-          />
+        />
         )}
-        <Link href="/profile" className="nav-link">
-          {userName || "Profile"}
+        <Link href="/profile" className={`nav-link ${pathname === '/profile' ? 'active' : ''}`}>
+            {userName || "Profile"}
         </Link>
         <a href="/" className="nav-link" onClick={onLogoutClick}>
-          Logout
+            <FaArrowRightFromBracket />
         </a>
-      </div>
+        </div>
     </div>
-  );
+    );
 }
