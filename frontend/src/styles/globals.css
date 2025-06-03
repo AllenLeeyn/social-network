@@ -1,14 +1,9 @@
 body {
     margin: 0;
     font-family: monospace, Arial, sans-serif;
-    background-color: #f9f9f9;
     color: #333;
     overscroll-behavior: none;
     scroll-behavior: smooth;
-    background-image: url('/bgimage.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
 }
 
 /* ------- nav styles use Navbar.css ------- */
