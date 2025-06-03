@@ -23,7 +23,7 @@ export async function fetchMyPosts() {
 }
 
 export async function fetchPostById(id) {
-  const response = await fetch(`${API_URL}/post?id=${id}`, {
+  const response = await fetch(`${API_URL}/post/${id}`, {
     method: "GET",
     credentials: "include",
   });
