@@ -13,95 +13,111 @@ import { FaUserGroup } from "react-icons/fa6";
 import { FaArrowRightFromBracket } from "react-icons/fa6";
 import { FaMessage } from "react-icons/fa6";
 import { FaBell } from "react-icons/fa6";
-import NotificationBell from './notifications/NotificationBell';
+import { FaUsers } from "react-icons/fa6";
+import NotificationBell from "./notifications/NotificationBell";
 import { useNotifications } from "../contexts/NotificationsContext";
 
-import '../styles/notifications/Bell.css'
+import "../styles/notifications/Bell.css";
 
 export default function Navbar() {
   // Logout handler
-    const { handleLogout } = useAuth();
-    const router = useRouter();
-    const pathname = usePathname();
-    const [userName, setUserName] = useState("");
-    const [profileImage, setProfileImage] = useState("");
+  const { handleLogout } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [userName, setUserName] = useState("");
+  const [profileImage, setProfileImage] = useState("");
 
-    useEffect(() => {
+  useEffect(() => {
     const storedUserName = localStorage.getItem("user-nick_name");
     if (storedUserName) {
-        setUserName(storedUserName);
+      setUserName(storedUserName);
     }
 
     const storedProfileImage =
-        localStorage.getItem("user-profile_image") || null;
+      localStorage.getItem("user-profile_image") || null;
     const imageUrl = storedProfileImage
-        ? `/frontend-api/image/${storedProfileImage}`
-        : null;
+      ? `/frontend-api/image/${storedProfileImage}`
+      : null;
     setProfileImage(imageUrl);
-    }, []);
+  }, []);
 
-    const { notifications } = useNotifications();
+  const { notifications } = useNotifications();
 
-    const onLogoutClick = async (e) => {
+  const onLogoutClick = async (e) => {
     e.preventDefault();
     toast.success("logging out..");
     await handleLogout();
     router.push("/login");
-};
+  };
 
-    return (
+  return (
     <div className="navbar">
-        <Link href="/" className="logo-title">
-            <div className="logo-title">
-            <Image
-                src="/logo.png"
-                alt="Site Logo"
-                width={35}
-                height={35}
-                className="logo-img"
-            />
-            <span className="site-title">grit:Hub</span>
-            </div>
-        </Link>
-
-        <div className="center-links">
-        <Link href="/" className={`nav-link ${pathname === '/' ? 'active' : ''}`}>
-            <FaHouse /> Home
-        </Link>
-        <Link href="/groups" className={`nav-link ${pathname === '/groups' ? 'active' : ''}`}>
-            <FaUserGroup /> Groups
-        </Link>
-        <Link href="/messages" className={`nav-link ${pathname === '/messages' ? 'active' : ''}`}>
-            <FaMessage /> Messages
-        </Link>
-        {/*<Link href="/notifications" className="nav-link">
-            <FaBell />
-        </Link>*/}
-        <NotificationBell notifications={notifications} />
+      <Link href="/" className="logo-title">
+        <div className="logo-title">
+          <Image
+            src="/logo.png"
+            alt="Site Logo"
+            width={35}
+            height={35}
+            className="logo-img"
+          />
+          <span className="site-title">grit:Hub</span>
         </div>
-        <div className="right-links">
+      </Link>
+
+      <div className="center-links">
+        <Link
+          href="/"
+          className={`nav-link ${pathname === "/" ? "active" : ""}`}
+        >
+          <FaHouse /> Home
+        </Link>
+        <Link
+          href="/groups"
+          className={`nav-link ${pathname === "/groups" ? "active" : ""}`}
+        >
+          <FaUserGroup /> Groups
+        </Link>
+        <Link
+          href="/users"
+          className={`nav-link ${pathname === "/users" ? "active" : ""}`}
+        >
+          <FaUsers /> Users
+        </Link>
+        <Link
+          href="/messages"
+          className={`nav-link ${pathname === "/messages" ? "active" : ""}`}
+        >
+          <FaMessage /> Messages
+        </Link>
+        <NotificationBell notifications={notifications} />
+      </div>
+      <div className="right-links">
         {profileImage ? (
-            <Image
+          <Image
             src={profileImage}
             alt="Profile Image"
             width={30}
             height={30}
             style={{ borderRadius: "50%" }}
-        />
+          />
         ) : (
-            <FaUserCircle
+          <FaUserCircle
             size={30}
             color="#aaa"
             style={{ verticalAlign: "middle" }}
-        />
+          />
         )}
-        <Link href="/profile" className={`nav-link ${pathname === '/profile' ? 'active' : ''}`}>
-            {userName || "Profile"}
+        <Link
+          href="/profile"
+          className={`nav-link ${pathname === "/profile" ? "active" : ""}`}
+        >
+          {userName || "Profile"}
         </Link>
         <a href="/" className="nav-link" onClick={onLogoutClick}>
-            <FaArrowRightFromBracket />
+          <FaArrowRightFromBracket />
         </a>
-        </div>
+      </div>
     </div>
-    );
+  );
 }
