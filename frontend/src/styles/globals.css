@@ -1,4 +1,8 @@
 body {
+    min-height: 100vh;   /* fallback for older browsers */
+    min-height: 100dvh;  /* modern browsers */
+    display: flex;
+    flex-direction: column;
     margin: 0;
     font-family: monospace, Arial, sans-serif;
     background-color: #f9f9f9;
@@ -9,6 +13,16 @@ body {
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    /* margin: 0;
+    font-family: monospace, Arial, sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    overscroll-behavior: none;
+    scroll-behavior: smooth;
+    background-image: url('/bgimage.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; */
 }
 
 /* ------- nav styles use Navbar.css ------- */
@@ -59,6 +73,7 @@ button:hover {
 
 
 main {
+    flex: 1 0 auto;
     padding: 1rem;
     min-height: 80vh;
 }
