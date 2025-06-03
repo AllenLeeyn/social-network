@@ -11,7 +11,10 @@ body {
     background-attachment: fixed;
 }
 
-/* nav styles use Navbar.css */
+/* ------- nav styles use Navbar.css ------- */
+
+/* ----------- Footer styles------------ */
+
 footer {
     background-color: #f1f1f1cc;
     text-align: center;
@@ -29,6 +32,8 @@ footer a {
 footer a:hover {
     text-decoration: underline;
 }
+
+/* ----------- Button styles------------ */
 
 button {
     font-family: monospace, Arial, sans-serif;
@@ -51,6 +56,8 @@ button:hover {
 
 }
 
+
+
 main {
     padding: 1rem;
     min-height: 80vh;
@@ -60,18 +67,17 @@ main {
     font-size: 2rem;
     margin-left: 0.5rem;;
     margin-top: 1rem;
-    margin-bottom: 1rem;
 }
 
 input:focus,
 textarea:focus {
     border-color: #233144;
     outline: none;
+    resize: none;
 }
 
-/* ------------------------------ */
 
-/* Layout */
+/* ------------ Layout --------------*/
 .homepage-layout {
     display: flex;
     gap: 1rem;
@@ -105,7 +111,7 @@ textarea:focus {
     background: #fff;
 }
 
-/* ------------------------------ */
+/* ------------ Sidebars styles ------------------ */
 
 
 /* Sidebar lists */
@@ -245,7 +251,7 @@ textarea:focus {
     margin-left: 5px;
 }
 
-/* Reponsive */
+/* ------------- Reponsive -------------- */
 @media (max-width: 1150px) {
     .homepage-sections {
         max-width: 1000px;

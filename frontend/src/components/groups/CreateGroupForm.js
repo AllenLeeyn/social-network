@@ -35,7 +35,7 @@ export default function CreateGroupForm({ onSuccess }) {
         <form onSubmit={handleSubmit}>
             <div className="form-group">
                 <label>
-                Group Title
+                <h4>Group Title</h4>
                 <input
                     type="text"
                     value={title}
@@ -46,7 +46,7 @@ export default function CreateGroupForm({ onSuccess }) {
             </div>
             <div className="form-group">
                 <label>
-                Group Description
+                <h4>Group Description</h4>
                 <textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
@@ -54,9 +54,11 @@ export default function CreateGroupForm({ onSuccess }) {
                 />
                 </label>
             </div>
-            <button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create'}
-            </button>
+            <div className="form-actions">
+                <button type="submit" disabled={loading}>
+                    {loading ? 'Creating...' : 'Create'}
+                </button>
+            </div>
         </form>
         );
 }

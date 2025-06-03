@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import '../../styles/groups/CreateGroupForm.css'
+
 
 export default function CreatePostForm({ groupId, onSubmit, onClose }) {
     const [title, setTitle] = useState("");
@@ -12,10 +14,11 @@ export default function CreatePostForm({ groupId, onSubmit, onClose }) {
     };
 
     return (
+
         <form className="create-post-form" onSubmit={handleSubmit}>
-        <h3>Create Post</h3>
+        <h3>Create Group Post</h3>
         <label>
-            Title:
+            <h4>Title</h4>
             <input
             type="text"
             value={title}
@@ -24,7 +27,7 @@ export default function CreatePostForm({ groupId, onSubmit, onClose }) {
             />
         </label>
         <label>
-            Content:
+            <h4>Content</h4>
             <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
