@@ -39,26 +39,32 @@ export function WebSocketProvider( { children } ) {
                 const onlineFollowings = data.onlineFollowings ?? [];
                 const unreadMsgFollowings = data.unreadMsgFollowings ?? [];
 
-                setUserList([
-                    ...followingsName.map((name, index) => ({
-                        type: "user",
-                        name,
-                        uuid: followingsUUID[index],
-                        groupUUID: '00000000-0000-0000-0000-000000000000',
-                        online: onlineFollowings.includes(followingsUUID[index]),
-                        unread: unreadMsgFollowings?.includes(followingsUUID[index]) || false,
-                        receiverUUID: followingsUUID[index],
-                    })),
-                    ...data.groupList?.map(group => ({
-                        type: 'group',
-                        name: group.title,
-                        uuid: group.uuid,
-                        groupUUID: group.uuid,
-                        online: true,
-                        unread: false,
-                        receiverUUID: group.creator_uuid,
-                    }))
-                ]);
+                const usersAndGroups = [
+                ...followingsName.map((name, index) => ({
+                    type: "user",
+                    name,
+                    uuid: followingsUUID[index],
+                    groupUUID: '00000000-0000-0000-0000-000000000000',
+                    online: onlineFollowings.includes(followingsUUID[index]),
+                    unread: unreadMsgFollowings?.includes(followingsUUID[index]) || false,
+                    receiverUUID: followingsUUID[index],
+                })),
+                ...(data.groupList?.map(group => ({
+                    type: 'group',
+                    name: group.title,
+                    uuid: group.uuid,
+                    groupUUID: group.uuid,
+                    online: true,
+                    unread: false,
+                    receiverUUID: group.creator_uuid,
+                })) || [])
+                ];
+
+                const uniqueUserList = Array.from(
+                new Map(usersAndGroups.map(item => [item.uuid, item])).values()
+                );
+
+                setUserList(uniqueUserList);
                 break;
 
             case 'online':
@@ -70,7 +76,14 @@ export function WebSocketProvider( { children } ) {
                             );
                         }
                         // Add new user to the list
-                        return [...prev, { id: data.id, name: data.name || 'New User', online: true, unread: false }];
+                        return [...prev, { 
+                            type: "user",
+                            name: data.name || 'New User',
+                            uuid: data.uuid, 
+                            groupUUID: '00000000-0000-0000-0000-000000000000',
+                            online: true,
+                            unread: false,
+                            receiverUUID: data.uuid }];
                     });
                 break;
 
@@ -155,23 +168,6 @@ export function WebSocketProvider( { children } ) {
     useEffect(() => {
         setIsTyping(false);
     }, [currentChatUUID]);
-
-    useEffect(() => {
-        if (currentChatUUID && userUUID) {
-            sendAction({
-                action: "messageReq",
-                receiverUUID: currentChatUUID,
-                groupUUID: currentGroupUUID,
-                content: "-1"
-            });
-            sendAction({
-                action: 'messageAck',
-                receiverUUID: currentChatUUID,
-                senderUUID: userUUID
-            });
-        }
-    }, [currentChatUUID, userUUID, sendAction]);
-
 
     return (
         <WebSocketContext.Provider value={{ 
