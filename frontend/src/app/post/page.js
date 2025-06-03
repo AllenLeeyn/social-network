@@ -5,19 +5,15 @@ import SidebarSection from "../../components/SidebarSection";
 import CommentsSection from "../../components/CommentSection";
 import "./post.css";
 import "../../styles/PostList.css";
-import {
-  sampleCategories,
-  sampleUsers,
-  sampleGroups,
-  sampleConnections,
-} from "../../data/mockData";
 import { usePosts } from "../../hooks/usePosts";
-import { fetchPostById, submitPostFeedback } from "../../lib/apiPosts";
+import { fetchPostById } from "../../lib/apiPosts";
 import CategoriesList from "../../components/CategoriesList";
 import ConnectionList from "../../components/ConnectionList";
-import { fetchFollowees } from "../../lib/apiAuth";
+import { fetchFollowees, fetchGroups } from "../../lib/apiAuth";
 import { toast } from 'react-toastify';
 import PostCard from '../../components/PostCard';
+import UsersList from "../../components/UsersList";
+import GroupList from "../../components/GroupList";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -31,6 +27,10 @@ export default function PostPage() {
   const [connectionsLoading, setConnectionsLoading] = useState(true);
   const [connectionsError, setConnectionsError] = useState(null);
 
+  const [groups, setGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const [groupsError, setGroupsError] = useState(null);
+  
   // Fetch categories (and optionally users, etc.)
   const {
     categories,
@@ -68,6 +68,21 @@ export default function PostPage() {
     loadConnections();
   }, []);
 
+  useEffect(() => {
+    async function loadGroups() {
+      try {
+        setGroupsLoading(true);
+        const data = await fetchGroups();
+        setGroups(data || []);
+      } catch (err) {
+        setGroupsError(err.message);
+      } finally {
+        setGroupsLoading(false);
+      }
+    }
+    loadGroups();
+  }, []);
+
   const refreshComments = async () => {
     try {
       const postData = await fetchPostById(id);
@@ -96,13 +111,11 @@ export default function PostPage() {
             />
           </SidebarSection>
           <SidebarSection title="Groups">
-            <ul className="groups">
-              {sampleGroups.map((group) => (
-                <li key={group.id} className="group-item">
-                  <strong>{group.name}</strong>
-                </li>
-              ))}
-            </ul>
+            <GroupList
+              groups={groups}
+              loading={groupsLoading}
+              error={groupsError}
+            />
           </SidebarSection>
           <SidebarSection title="Connections">
             <ConnectionList
@@ -131,24 +144,11 @@ export default function PostPage() {
           />
         </section>
 
+
         {/* Right Sidebar */}
         <aside className="sidebar right-sidebar">
           <SidebarSection title="Active Users">
-            <ul className="users">
-              {sampleUsers.map((user) => (
-                <li
-                  key={user.id}
-                  className={`user-item${user.online ? " online" : ""}${
-                    user.unread ? " unread" : ""
-                  }`}
-                >
-                  <img src={user.avatar} alt={user.username} />
-                  <span>
-                    {user.fullName} ({user.username})
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <UsersList />
           </SidebarSection>
         </aside>
       </div>

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	middleware "social-network/pkg/middleware"
@@ -41,11 +40,7 @@ func (cc *ChatController) WebSocketUpgrade(w http.ResponseWriter, r *http.Reques
 	}
 	cc.clients[u.UUID] = cl
 
-	if time.Since(u.CreatedAt) < time.Minute {
-		cc.clientQueue <- action{"join", cl}
-	} else {
-		cc.clientQueue <- action{"online", cl}
-	}
+	cc.clientQueue <- action{"online", cl}
 	go cc.handleConnection(cl)
 }
 
@@ -74,7 +69,7 @@ func (cc *ChatController) handleConnection(cl *client) {
 		case "typing":
 			cc.processTypingEvent(&msgData, cl)
 		case "userListReq":
-        	cc.sendClientList(cl, cl.UserUUID)
+			cc.sendClientList(cl, cl.UserUUID)
 		}
 
 		if err != nil {

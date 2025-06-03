@@ -11,6 +11,17 @@ export async function fetchPosts() {
   return response.json();
 }
 
+export async function fetchMyPosts() {
+  const response = await fetch(`${API_URL}/myCreatedPosts`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch posts");
+  }
+  return response.json();
+}
+
 export async function fetchPostById(id) {
   const response = await fetch(`${API_URL}/post?id=${id}`, {
     method: "GET",

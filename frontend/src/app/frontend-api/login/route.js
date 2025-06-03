@@ -19,7 +19,6 @@ export async function POST(req) {
       { status: response.status });
     }
 
-    // Forward cookies from backend to client
     const cookies = response.headers.get("set-cookie");
     if (cookies) {
       return new Response(await response.text(), {

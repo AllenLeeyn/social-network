@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import { TimeAgo } from '../utils/TimeAgo';
 import { toast } from 'react-toastify';
+import DynamicImage from './DynamicImage';
 import { submitCommentFeedback } from "../lib/apiPosts";
 import { FaUserCircle } from 'react-icons/fa';
 import Image from 'next/image';
@@ -56,6 +57,15 @@ export default function CommentCard({ comment }) {
   return (
     <div>
       <pre>{comment.content}</pre>
+      {comment.attached_image && (
+        <div className="post-images">
+            <DynamicImage
+              key={comment.attached_image}
+              src={`/frontend-api/image/${comment.attached_image}`}
+              alt={`comment attachment`}
+            />
+        </div>
+      )}
 
       <div className="user-info">
         <div className="user-avatar">
