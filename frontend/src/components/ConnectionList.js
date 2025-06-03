@@ -19,21 +19,15 @@ export default function ConnectionList({ connections, loading, error }) {
 
   return (
     <ul className="connections">
-      {connections.map((conn) => {
-        const isLeader = conn.leader_name === currentUser;
-        const nameToShow = isLeader ? conn.follower_name : conn.leader_name;
-        const uuidToLink = isLeader ? conn.follower_uuid : conn.leader_uuid;
-
-        return (
-        <li key={uuidToLink} className="connection-item">
-          <span>
-            <strong>
-              {nameToShow}
-            </strong>
-          </span>
-        </li>
-      )
-      })}
+      {connections
+        .filter(conn => conn.follower_name === currentUser)
+        .map(conn => (
+          <li key={conn.leader_uuid} className="connection-item">
+            <span>
+              <strong>{conn.leader_name}</strong>
+            </span>
+          </li>
+        ))}
     </ul>
   );
 }

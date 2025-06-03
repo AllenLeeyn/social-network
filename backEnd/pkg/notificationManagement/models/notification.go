@@ -79,15 +79,14 @@ func InsertNotificationForEvent(n *Notification, groupID, userID int) error {
 			SELECT 
 				members.follower_id, ?,
 				'groups', 'group_event',
-				?, ?, 
-				'new_event'
+				?, ?, ?
 			FROM following members
 			WHERE members.group_id = ? AND members.follower_id != ?
 				AND members.status = 'accepted';`
 
 	_, err := sqlDB.Exec(qry,
 		n.FromUserId,
-		n.TargetId, n.TargetUUID, groupID, userID)
+		n.TargetId, n.TargetUUID, n.Message, groupID, userID)
 	return err
 }
 

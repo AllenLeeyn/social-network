@@ -14,9 +14,8 @@ CREATE TABLE notifications (
                                 'group_request_responded',
                                 'group_event')),
     message                 TEXT NOT NULL,
-    is_read                 INTEGER NOT NULL CHECK (is_read IN (0, 1)) DEFAULT 0,    
-    data                    TEXT CHECK (json_valid(data)), -- optional extra data, such as button text, URLs
-
+    is_read                 INTEGER NOT NULL CHECK (is_read IN (0, 1)) DEFAULT 0,
+    data                    TEXT CHECK (json_valid(data)),
     status                  TEXT NOT NULL CHECK (status IN ('enable', 'delete')) DEFAULT 'enable',
     created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by              INTEGER,

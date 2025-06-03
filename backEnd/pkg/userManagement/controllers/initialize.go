@@ -121,7 +121,7 @@ func GetTgtUUID(r *http.Request, basePath string) (string, int, error) {
 	if err != nil {
 		return "", http.StatusNotFound, fmt.Errorf("page not found")
 	}
-	if tgtUUID == "" {
+	if tgtUUID == "" || tgtUUID == userUUID {
 		tgtUUID = userUUID
 
 	} else {

@@ -206,7 +206,7 @@ func SelectUnreadMessages(senderUUID, receiverUUID string) (*[]Message, error) {
 			  AND m.read_at IS NULL
 			  AND m.status = 'enable'`
 
-	rows, err := sqlDB.Query(qry, senderUUID, senderUUID)
+	rows, err := sqlDB.Query(qry, senderUUID, receiverUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func SelectUnreadMessages(senderUUID, receiverUUID string) (*[]Message, error) {
 		messages = append(messages, m)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, checkErrNoRows(err)
+		return nil, err
 	}
 	return &messages, nil
 }
