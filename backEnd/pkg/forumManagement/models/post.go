@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	groupManagementModels "social-network/pkg/groupManagement/models"
 	userManagementModels "social-network/pkg/userManagement/models"
 	"social-network/pkg/utils"
 	"sort"
@@ -26,9 +27,10 @@ type Post struct {
 	UpdatedAt    *time.Time `json:"updated_at"`
 	UpdatedBy    *int       `json:"updated_by"`
 
-	IsLikedByUser    bool                      `json:"liked"`
-	IsDislikedByUser bool                      `json:"disliked"`
-	User             userManagementModels.User `json:"user"` // Embedded user data
+	IsLikedByUser    bool                        `json:"liked"`
+	IsDislikedByUser bool                        `json:"disliked"`
+	User             userManagementModels.User   `json:"user"`  // Embedded user data
+	Group            groupManagementModels.Group `json:"group"` // Embedded group data
 
 	CategoryIds               []int                  `json:"category_ids"`                 // List of category ids related to the post
 	SelectedAudienceUserUUIDS []string               `json:"selected_audience_user_uuids"` // List of selected audience user ids related to the post
@@ -210,10 +212,12 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 	// Query the records
 	// todo check: update left join groups to inner join groups
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id,
 			CASE 
@@ -227,12 +231,12 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 		FROM posts p
 			INNER JOIN users u
 				ON p.user_id = u.id
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
 				AND pc.status = 'enable'
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			LEFT JOIN categories c
 				ON pc.category_id = c.id
 			LEFT JOIN post_files pf
@@ -274,16 +278,17 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 		var post Post
 		var user userManagementModels.User
 		var category Category
+		var group groupManagementModels.Group
 		var postFile PostFile
 		var PostSelectedAudience PostSelectedAudience
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
-			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
 			&post.IsLikedByUser, &post.IsDislikedByUser,
@@ -296,6 +301,7 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 		existingPost, found := postMap[post.ID]
 		if !found {
 			post.User = user
+			post.Group = group
 			post.Categories = []Category{}
 			post.PostFiles = []PostFile{}
 			// post.PostSelectedAudiences = []PostSelectedAudience{}
@@ -361,18 +367,20 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id
 		FROM posts p
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			INNER JOIN post_categories filterd_pc
 				ON p.id = filterd_pc.post_id
 				AND filterd_pc.status = 'enable'
@@ -421,15 +429,17 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
 		var post Post
 		var user userManagementModels.User
 		var category Category
+		var group groupManagementModels.Group
 		var postFile PostFile
 		var PostSelectedAudience PostSelectedAudience
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
 		)
@@ -441,6 +451,7 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
 		existingPost, found := postMap[post.ID]
 		if !found {
 			post.User = user
+			post.Group = group
 			post.Categories = []Category{}
 			post.PostFiles = []PostFile{}
 			// post.PostSelectedAudiences = []PostSelectedAudience{}
@@ -508,18 +519,20 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
 			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id
 		FROM posts p
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
 				AND pc.status = 'enable'
@@ -565,15 +578,17 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 		var post Post
 		var user userManagementModels.User
 		var category Category
+		var group groupManagementModels.Group
 		var postFile PostFile
 		var PostSelectedAudience PostSelectedAudience
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
 			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
 		)
@@ -585,6 +600,7 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 		existingPost, found := postMap[post.ID]
 		if !found {
 			post.User = user
+			post.Group = group
 			post.Categories = []Category{}
 			post.PostFiles = []PostFile{}
 			// post.PostSelectedAudiences = []PostSelectedAudience{}
@@ -650,10 +666,12 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
 func ReadPostsByUserId(userId int) ([]Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
-			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id,
 			CASE 
@@ -665,12 +683,12 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
 				AND u.id = ?
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
 				AND pc.status = 'enable'
@@ -709,16 +727,18 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
 		var post Post
 		var user userManagementModels.User
 		var category Category
+		var group groupManagementModels.Group
 		var postFile PostFile
 		var PostSelectedAudience PostSelectedAudience
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
 			&post.IsLikedByUser, &post.IsDislikedByUser,
@@ -731,6 +751,7 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
 		existingPost, found := postMap[post.ID]
 		if !found {
 			post.User = user
+			post.Group = group
 			post.Categories = []Category{}
 			post.PostFiles = []PostFile{}
 			// post.PostSelectedAudiences = []PostSelectedAudience{}
@@ -796,10 +817,12 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
 func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
-			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id,
 			CASE 
@@ -811,14 +834,14 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			INNER JOIN post_feedback pfeedback
 				ON pfeedback.parent_id = p.id
 				AND pfeedback.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			INNER JOIN users liked_user
 				ON pfeedback.user_id = liked_user.id
 				AND liked_user.id = ?
@@ -860,16 +883,18 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 		var post Post
 		var user userManagementModels.User
 		var category Category
+		var group groupManagementModels.Group
 		var postFile PostFile
 		var PostSelectedAudience PostSelectedAudience
 
 		// Scan the post and user data
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
 			&post.IsLikedByUser, &post.IsDislikedByUser,
@@ -882,6 +907,7 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 		existingPost, found := postMap[post.ID]
 		if !found {
 			post.User = user
+			post.Group = group
 			post.Categories = []Category{}
 			post.PostFiles = []PostFile{}
 			// post.PostSelectedAudiences = []PostSelectedAudience{}
@@ -947,10 +973,12 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
 func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
-			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id,
 			CASE 
@@ -962,12 +990,12 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
 				AND p.id = ?
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
 				AND pc.status = 'enable'
@@ -1010,15 +1038,17 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 	// Scan the records
 	for rows.Next() {
 		var category Category
+		var group groupManagementModels.Group
 		var postFile PostFile
 		var PostSelectedAudience PostSelectedAudience
 
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
 			&post.IsLikedByUser, &post.IsDislikedByUser,
@@ -1030,6 +1060,7 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 		// Assign user to post
 		if post.UserId == 0 { // If this is the first time we're encountering the post
 			post.User = user
+			post.Group = group
 		}
 
 		// Ensure unique categories
@@ -1086,10 +1117,12 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
 func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 	// Query the records
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
-			u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id,
 			CASE 
@@ -1101,12 +1134,12 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
                 ELSE 0
             END AS is_disliked_by_user
 		FROM posts p
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
 				AND p.uuid = ?
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
 				AND pc.status = 'enable'
@@ -1149,6 +1182,7 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 	post.PostFiles = []PostFile{}
 	// post.PostSelectedAudiences = []PostSelectedAudience{}
 	var user userManagementModels.User
+	var group groupManagementModels.Group
 
 	// Scan the records
 	for rows.Next() {
@@ -1157,11 +1191,12 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 		var PostSelectedAudience PostSelectedAudience
 
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&post.UserId, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
 			&post.IsLikedByUser, &post.IsDislikedByUser,
@@ -1214,6 +1249,7 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 	}
 
 	post.User = user
+	post.Group = group
 
 	// Check for any errors during row iteration
 	if err := rows.Err(); err != nil {
@@ -1226,19 +1262,21 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
 func ReadPostByUserID(postId int, userID int) (Post, error) {
 	// Updated query to join comments with posts
 	rows, selectError := sqlDB.Query(`
-        SELECT p.id as post_id, p.uuid as post_uuid, p.title as post_title, p.content as post_content, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
 			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
-			p.user_id as post_user_id, u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
 			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
 			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
 			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id
 		FROM posts p
-            LEFT JOIN groups g
-                ON p.group_id = g.id
-                AND g.status = 'enable'
 			INNER JOIN users u
 				ON p.user_id = u.id
 				AND p.id = ?
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
 			LEFT JOIN post_categories pc
 				ON p.id = pc.post_id
 				AND pc.status = 'enable'
@@ -1277,6 +1315,7 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
 
 	var post Post
 	var user userManagementModels.User
+	var group groupManagementModels.Group
 
 	// Scan the records
 	for rows.Next() {
@@ -1285,11 +1324,12 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
 		var PostSelectedAudience PostSelectedAudience
 		var Type string
 		err := rows.Scan(
-			&post.ID, &post.UUID, &post.Title, &post.Content, &post.Type, &post.Status,
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
 			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy, &post.UserId,
 			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
-			&user.ID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
 			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
 			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
 			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
 			&Type,
@@ -1344,6 +1384,7 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
 	}
 
 	post.User = user
+	post.Group = group
 
 	// Check for any errors during row iteration
 	if err := rows.Err(); err != nil {
@@ -1351,4 +1392,320 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
 	}
 
 	return post, nil
+}
+
+func ReadPostsSubmittedByUserUUID(userUUID string, audienceUserId int) ([]Post, error) {
+	fmt.Println(userUUID)
+	fmt.Println(audienceUserId)
+
+	rows, selectError := sqlDB.Query(`
+        SELECT 
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
+			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
+			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id,
+			CASE 
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = 1 AND user_id = ?) THEN 1
+                ELSE 0
+            END AS is_liked_by_user,
+            CASE 
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = -1 AND user_id = ?) THEN 1
+                ELSE 0
+            END AS is_disliked_by_user
+		FROM posts p
+			INNER JOIN users u
+				ON p.user_id = u.id
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
+			LEFT JOIN post_categories pc
+				ON p.id = pc.post_id
+				AND pc.status = 'enable'
+			LEFT JOIN categories c
+				ON pc.category_id = c.id
+			LEFT JOIN post_files pf
+				ON p.id = pf.post_id
+				AND pf.status = 'enable'
+            LEFT JOIN post_selected_audience psa
+                ON p.id = psa.post_id
+                AND psa.status = 'enable'
+            LEFT JOIN following follow_user
+                ON follow_user.leader_id = p.user_id
+				AND p.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
+            LEFT JOIN following follow_group
+                ON follow_group.group_id = p.group_id
+				AND p.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
+		WHERE p.status != 'delete'
+			AND u.status != 'delete'
+			AND p.type = 'user'
+			AND u.uuid = ?
+            AND (
+			p.visibility = 'public'
+            OR (p.visibility = 'selected' AND psa.user_id = ?)
+            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
+            )
+		ORDER BY p.id desc;
+    `, audienceUserId, audienceUserId, userUUID, audienceUserId, audienceUserId, audienceUserId)
+	if selectError != nil {
+		return nil, selectError
+	}
+	defer rows.Close()
+
+	var posts []Post
+	// Map to track posts by their ID to avoid duplicates
+	postMap := make(map[int]*Post)
+
+	for rows.Next() {
+		var post Post
+		var user userManagementModels.User
+		var category Category
+		var group groupManagementModels.Group
+		var postFile PostFile
+		var PostSelectedAudience PostSelectedAudience
+
+		// Scan the post and user data
+		err := rows.Scan(
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
+			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
+			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
+			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
+			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
+			&post.IsLikedByUser, &post.IsDislikedByUser,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		// Check if the post already exists in the map
+		existingPost, found := postMap[post.ID]
+		if !found {
+			post.User = user
+			post.Group = group
+			post.Categories = []Category{}
+			post.PostFiles = []PostFile{}
+			// post.PostSelectedAudiences = []PostSelectedAudience{}
+			postMap[post.ID] = &post
+			existingPost = &post
+		}
+
+		// Ensure unique categories
+		isCategoryAdded := false
+		for _, c := range existingPost.Categories {
+			if c.ID == category.ID {
+				isCategoryAdded = true
+				break
+			}
+		}
+		if !isCategoryAdded {
+			existingPost.Categories = append(existingPost.Categories, category)
+		}
+
+		// Ensure unique post files
+		isFileAdded := false
+		for _, f := range existingPost.PostFiles {
+			if f.ID == postFile.ID {
+				isFileAdded = true
+				break
+			}
+		}
+		if !isFileAdded && postFile.ID != 0 {
+			existingPost.PostFiles = append(existingPost.PostFiles, postFile)
+		}
+
+		// Ensure unique post audiences
+		isPostSelectedAudienceAdded := false
+		for _, selectedAudience := range existingPost.PostSelectedAudiences {
+			if selectedAudience.PostId == PostSelectedAudience.PostId && selectedAudience.UserId == PostSelectedAudience.UserId {
+				isPostSelectedAudienceAdded = true
+				break
+			}
+		}
+		// Check if PostSelectedAudience.PostId is not null and valid
+		if !isPostSelectedAudienceAdded && PostSelectedAudience.PostId.Valid && PostSelectedAudience.UserId.Valid {
+			existingPost.PostSelectedAudiences = append(existingPost.PostSelectedAudiences, PostSelectedAudience)
+		}
+	}
+
+	// Check for any errors during row iteration
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %v", err)
+	}
+
+	// Convert the map of posts into a slice
+	for _, post := range postMap {
+		posts = append(posts, *post)
+	}
+
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].ID > posts[j].ID
+	})
+
+	return posts, nil
+}
+
+func ReadPostsSubmittedByGroupUUID(groupUUID string, audienceUserId int) ([]Post, error) {
+	rows, selectError := sqlDB.Query(`
+        SELECT
+			p.id as post_id, p.uuid as post_uuid, p.group_id as post_group_id, p.title as post_title, p.content as post_content, p.visibility as post_visibility, p.type as post_type, p.status as post_status, p.created_at as post_created_at, p.updated_at as post_updated_at, p.updated_by as post_updated_by,
+			p.like_count as post_like_count, p.dislike_count as post_dislike_count, p.comment_count as post_comment_count,
+			u.uuid as user_uuid, u.first_name as user_first_name, u.last_name as user_last_name, u.nick_name as user_nick_name, u.email as user_email, IFNULL(u.profile_image, '') as profile_image,
+			c.id as category_id, c.name as category_name,
+			g.id as group_id, g.uuid as group_uuid, g.title as group_title,
+			IFNULL(pf.id, 0) as post_file_id, pf.file_uploaded_name, pf.file_real_name,
+			psa.post_id as post_selected_audience_post_id, psa.user_id as post_selected_audience_user_id,
+			CASE 
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = 1 AND user_id = ?) THEN 1
+                ELSE 0
+            END AS is_liked_by_user,
+            CASE 
+                WHEN EXISTS (SELECT 1 FROM post_feedback WHERE parent_id = p.id AND status != 'delete' AND rating = -1 AND user_id = ?) THEN 1
+                ELSE 0
+            END AS is_disliked_by_user
+		FROM posts p
+			INNER JOIN users u
+				ON p.user_id = u.id
+            INNER JOIN groups g
+                ON p.group_id = g.id
+                AND g.status = 'enable'
+			LEFT JOIN post_categories pc
+				ON p.id = pc.post_id
+				AND pc.status = 'enable'
+			LEFT JOIN categories c
+				ON pc.category_id = c.id
+			LEFT JOIN post_files pf
+				ON p.id = pf.post_id
+				AND pf.status = 'enable'
+            LEFT JOIN post_selected_audience psa
+                ON p.id = psa.post_id
+                AND psa.status = 'enable'
+            LEFT JOIN following follow_user
+                ON follow_user.leader_id = p.user_id
+				AND p.type = 'user'
+				AND follow_user.type = 'user'
+                AND follow_user.status = 'accepted'
+            LEFT JOIN following follow_group
+                ON follow_group.group_id = p.group_id
+				AND p.type = 'group'
+				AND follow_user.type = 'group'
+                AND follow_group.status = 'accepted'
+		WHERE p.status != 'delete'
+			AND u.status != 'delete'
+			AND p.type = 'group'
+			AND g.uuid = ?
+            AND (
+			p.user_id = ?
+            OR p.visibility = 'public'
+            OR (p.visibility = 'selected' AND psa.user_id = ?)
+            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
+            )
+		ORDER BY p.id desc;
+    `, audienceUserId, audienceUserId, groupUUID, audienceUserId, audienceUserId, audienceUserId, audienceUserId)
+	if selectError != nil {
+		return nil, selectError
+	}
+	defer rows.Close()
+
+	var posts []Post
+	// Map to track posts by their ID to avoid duplicates
+	postMap := make(map[int]*Post)
+
+	for rows.Next() {
+		var post Post
+		var user userManagementModels.User
+		var category Category
+		var group groupManagementModels.Group
+		var postFile PostFile
+		var PostSelectedAudience PostSelectedAudience
+
+		// Scan the post and user data
+		err := rows.Scan(
+			&post.ID, &post.UUID, &post.GroupId, &post.Title, &post.Content, &post.Visibility, &post.Type, &post.Status,
+			&post.CreatedAt, &post.UpdatedAt, &post.UpdatedBy,
+			&post.LikeCount, &post.DisikeCount, &post.CommentCount,
+			&user.UUID, &user.FirstName, &user.LastName, &user.NickName, &user.Email, &user.ProfileImage,
+			&category.ID, &category.Name,
+			&group.ID, &group.UUID, &group.Title,
+			&postFile.ID, &postFile.FileUploadedName, &postFile.FileRealName,
+			&PostSelectedAudience.PostId, &PostSelectedAudience.UserId,
+			&post.IsLikedByUser, &post.IsDislikedByUser,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		// Check if the post already exists in the map
+		existingPost, found := postMap[post.ID]
+		if !found {
+			post.User = user
+			post.Group = group
+			post.Categories = []Category{}
+			post.PostFiles = []PostFile{}
+			// post.PostSelectedAudiences = []PostSelectedAudience{}
+			postMap[post.ID] = &post
+			existingPost = &post
+		}
+
+		// Ensure unique categories
+		isCategoryAdded := false
+		for _, c := range existingPost.Categories {
+			if c.ID == category.ID {
+				isCategoryAdded = true
+				break
+			}
+		}
+		if !isCategoryAdded {
+			existingPost.Categories = append(existingPost.Categories, category)
+		}
+
+		// Ensure unique post files
+		isFileAdded := false
+		for _, f := range existingPost.PostFiles {
+			if f.ID == postFile.ID {
+				isFileAdded = true
+				break
+			}
+		}
+		if !isFileAdded && postFile.ID != 0 {
+			existingPost.PostFiles = append(existingPost.PostFiles, postFile)
+		}
+
+		// Ensure unique post audiences
+		isPostSelectedAudienceAdded := false
+		for _, selectedAudience := range existingPost.PostSelectedAudiences {
+			if selectedAudience.PostId == PostSelectedAudience.PostId && selectedAudience.UserId == PostSelectedAudience.UserId {
+				isPostSelectedAudienceAdded = true
+				break
+			}
+		}
+		// Check if PostSelectedAudience.PostId is not null and valid
+		if !isPostSelectedAudienceAdded && PostSelectedAudience.PostId.Valid && PostSelectedAudience.UserId.Valid {
+			existingPost.PostSelectedAudiences = append(existingPost.PostSelectedAudiences, PostSelectedAudience)
+		}
+	}
+
+	// Check for any errors during row iteration
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %v", err)
+	}
+
+	// Convert the map of posts into a slice
+	for _, post := range postMap {
+		posts = append(posts, *post)
+	}
+
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].ID > posts[j].ID
+	})
+
+	return posts, nil
 }
