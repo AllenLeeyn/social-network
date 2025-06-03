@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export async function GET(_req, { params }) {
-  const { filename } = params;
+export async function GET(_req, context) {
+  const { filename } = await context.params;
 
   const backendUrl = `${baseURL}/uploads/${filename}`;
 

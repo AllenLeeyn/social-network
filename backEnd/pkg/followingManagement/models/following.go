@@ -50,6 +50,21 @@ func IsFollower(userID int, tgtUUID string) bool {
 	return err == nil
 }
 
+func IsLeader(userID int, tgtUUID string) bool {
+	qry := `SELECT 1
+			FROM following f
+			JOIN users u ON u.id = f.follower_id
+			WHERE u.uuid = ? 
+				AND f.leader_id = ? 
+				AND f.group_id = 0 
+				AND f.status = 'accepted'
+			LIMIT 1;`
+
+	var exists int
+	err := sqlDB.QueryRow(qry, tgtUUID, userID).Scan(&exists)
+	return err == nil
+}
+
 func SelectIDsFromUUIDs(f *Following) error {
 	if f.LeaderID == 0 && f.GroupUUID == "" {
 		leaderID, err := userModel.SelectUserIDByUUID(f.LeaderUUID)

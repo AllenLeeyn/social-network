@@ -84,7 +84,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	generateSession(w, r, user.ID)
 
-	utils.ReturnJsonSuccess(w, "Registered successfully", userModel.UserView{
+	utils.ReturnJsonSuccess(w, "login successfully", userModel.UserView{
 		UUID:         user.UUID,
 		NickName:     user.NickName,
 		ProfileImage: user.ProfileImage,

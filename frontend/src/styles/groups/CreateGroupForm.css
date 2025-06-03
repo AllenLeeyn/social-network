@@ -3,13 +3,16 @@
 }
 
 .form-group label {
-    display: block;
+    /* display: block; */
     font-weight: 500;
     margin-bottom: 0.5rem;
 }
 
 .form-group input,
 .form-group textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fafbfc;
     width: 100%;
     padding: 0.5rem;
     box-sizing: border-box;

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import { TimeAgo } from '../utils/TimeAgo';
 import { toast } from 'react-toastify';
+import DynamicImage from './DynamicImage';
 import { submitCommentFeedback } from "../lib/apiPosts";
 import { FaUserCircle } from 'react-icons/fa';
 import Image from 'next/image';
@@ -24,43 +25,47 @@ export default function CommentCard({ comment }) {
   };
 
   const handleLike = () => {
+      handleCommentFeedback(1)
     if (liked) {
       setLiked(false);
-      handleCommentFeedback(0)
       setLikeCount((c) => c - 1);
     } else {
       setLiked(true);
-      handleCommentFeedback(1)
       setLikeCount((c) => c + 1);
       if (disliked) {
         setDisliked(false);
         setDislikeCount((c) => c - 1);
       }
-      // optionally call API to like
     }
   };
 
   const handleDislike = () => {
+      handleCommentFeedback(-1)
     if (disliked) {
       setDisliked(false);
-      handleCommentFeedback(0)
       setDislikeCount((c) => c - 1);
-      // optionally call API to undo dislike
     } else {
       setDisliked(true);
-      handleCommentFeedback(-1)
       setDislikeCount((c) => c + 1);
       if (liked) {
         setLiked(false);
         setLikeCount((c) => c - 1);
       }
-      // optionally call API to dislike
     }
   };
 
   return (
     <div>
       <pre>{comment.content}</pre>
+      {comment.attached_image && (
+        <div className="post-images">
+            <DynamicImage
+              key={comment.attached_image}
+              src={`/frontend-api/image/${comment.attached_image}`}
+              alt={`comment attachment`}
+            />
+        </div>
+      )}
 
       <div className="user-info">
         <div className="user-avatar">

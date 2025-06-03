@@ -12,6 +12,7 @@ import { FaHouse } from "react-icons/fa6";
 import { FaUserGroup } from "react-icons/fa6";
 import { FaArrowRightFromBracket } from "react-icons/fa6";
 import { FaMessage } from "react-icons/fa6";
+import { FaBell } from "react-icons/fa6";
 import NotificationBell from './notifications/NotificationBell';
 import { useNotifications } from "../contexts/NotificationsContext";
 
@@ -74,7 +75,7 @@ export default function Navbar() {
             <FaMessage /> Messages
         </Link>
         {/*<Link href="/notifications" className="nav-link">
-            Notifications
+            <FaBell />
         </Link>*/}
         <NotificationBell notifications={notifications} />
         </div>

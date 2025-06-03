@@ -8,7 +8,8 @@ CREATE TABLE comments_new (
     user_id         INTEGER NOT NULL,
     post_id         INTEGER NOT NULL,
     parent_id       INTEGER,
-    content         TEXT NOT NULL DEFAULT '',
+    content         TEXT NOT NULL DEFAULT '',   
+    attached_image  TEXT DEFAULT "",
     like_count      INTEGER NOT NULL DEFAULT 0,
     dislike_count   INTEGER NOT NULL DEFAULT 0,
 

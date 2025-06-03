@@ -5,6 +5,7 @@ import "../styles/CreatePost.css";
 import { createPost, fetchCategories } from "../lib/apiPosts";
 import { toast } from 'react-toastify';
 import { handleImage } from "../lib/handleImage"; 
+import { fetchFollowees } from "../lib/apiAuth";
 
 export default function CreatePost({ onClose }) {
   const [title, setTitle] = useState("");
@@ -13,21 +14,37 @@ export default function CreatePost({ onClose }) {
   const [categories, setCategories] = useState([]);
   const [postVisibility, setVisibility] = useState("");
   const [postImages, setImages] = useState(null);
+  const [followers, setFollowers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function loadCategories() {
+    async function loadData() {
       try {
-        const data = await fetchCategories();
-        setCategories(data.data); // Adjust if your API returns a different shape
+        const categoriesData = await fetchCategories();
+        setCategories(categoriesData.data);
+
+        let nickname = null
+        if (typeof window !== 'undefined') {
+          nickname = localStorage.getItem('user-nick_name');
+        }
+
+        const followerData = await fetchFollowees();
+        const filteredFollowers = (followerData || []).filter(
+          (follower) => follower.follower_name !== nickname
+        );
+        setFollowers(filteredFollowers || []);
+
       } catch (err) {
-        setError(err.message);
+        setError(err)
+        toast.error(err.message);
       } finally {
         setLoading(false);
       }
     }
-    loadCategories();
+    loadData();
   }, []);
 
   function handleCategoryChange(e) {
@@ -35,6 +52,15 @@ export default function CreatePost({ onClose }) {
     setSelectedCategories((prev) =>
       prev.includes(value)
         ? prev.filter((cat) => cat !== value)
+        : [...prev, value]
+    );
+  }
+
+  function handleUserSelect(e) {
+    const value = e.target.value;
+    setSelectedUsers((prev) =>
+      prev.includes(value)
+        ? prev.filter((id) => id !== value)
         : [...prev, value]
     );
   }
@@ -63,7 +89,8 @@ export default function CreatePost({ onClose }) {
     const postData = { title, content, 
       category_ids: categoryIds, 
       file_attachments: imageUUIDs, 
-      visibility: postVisibility};
+      visibility: postVisibility,
+      selected_audience_user_uuids: selectedUsers};
     try {
       const data = await createPost(postData);
       if (data) {
@@ -83,7 +110,6 @@ export default function CreatePost({ onClose }) {
   return (
     <form onSubmit={handleSubmit}>
       {/* Title input */}
-      <label htmlFor="title">Title</label>
       <div className="input-group">
         <input
           type="text"
@@ -95,7 +121,6 @@ export default function CreatePost({ onClose }) {
         />
       </div>
       {/* content textarea */}
-      <label htmlFor="content">content</label>
       <div className="input-group">
         <textarea
           name="content"
@@ -111,10 +136,34 @@ export default function CreatePost({ onClose }) {
         onChange={(e) => setVisibility(e.target.value)}
         required
       >
+        <option value="">Select visibility</option>
         <option value="public">Public</option>
         <option value="private">Private</option>
         <option value="selected">Select users</option>
       </select>
+      {postVisibility === "selected" && (
+        <div className="input-group">
+          {followers.length === 0 ? (
+            <p>No followers found.</p>
+          ) : (
+            <ul className="follower-group">
+              {followers.map((f) => (
+                <li key={f.follower_uuid} className="follower-item">
+                  <input
+                    type="checkbox"
+                    id={`user-${f.follower_uuid}`}
+                    value={f.follower_uuid}
+                    checked={selectedUsers.includes(f.follower_uuid)}
+                    onChange={handleUserSelect}
+                  />
+                  <label htmlFor={`user-${f.follower_uuid}`}>{f.follower_name}</label>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {/* Categories checkboxes */}
       <div className="input-group">
         <h4>Click to select categories</h4>

@@ -68,8 +68,10 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 		f.CreatedBy = userID
 	}
 
+	tgtDetailType := "follow_request"
 	if userModel.IsPublic(f.LeaderUUID) {
 		f.Status, message = "accepted", "request accepted"
+		tgtDetailType = "follow_request_responded"
 	}
 
 	if err := operation(f); err != nil {
@@ -78,7 +80,7 @@ func FollowingRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	notificationModel.InsertNotification(&notificationModel.Notification{
 		ToUserId: f.LeaderID, FromUserId: f.FollowerID,
-		TargetType: "follow", TargetDetailedType: "follow_request",
+		TargetType: "following", TargetDetailedType: tgtDetailType,
 		TargetId: f.FollowerID, TargetUUID: f.FollowerUUID,
 		Message: f.Status,
 	})
@@ -106,7 +108,7 @@ func FollowingResponseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	notificationModel.InsertNotification(&notificationModel.Notification{
 		ToUserId: f.FollowerID, FromUserId: f.LeaderID,
-		TargetType: "follow", TargetDetailedType: "follow_request",
+		TargetType: "following", TargetDetailedType: "follow_request_responded",
 		TargetId: f.LeaderID, TargetUUID: f.LeaderUUID,
 		Message: f.Status,
 	})
@@ -142,7 +144,7 @@ func UnfollowHandler(w http.ResponseWriter, r *http.Request) {
 			&notificationModel.Notification{
 				ToUserId: f.LeaderID, FromUserId: f.FollowerID,
 				Message: "inactive", UpdatedBy: &userID,
-			}, "follow", followingStatus)
+			}, "following", followingStatus)
 	}
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, message, nil)

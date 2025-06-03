@@ -2,7 +2,7 @@
 // src/components/groups/GroupInvitationList.js
 
 import React, { useState } from "react";
-import { mockInvitations } from "../../data/mockData";
+// import { mockInvitations } from "../../data/mockData";
 
 // Props:
 // - currentUser: string (the logged-in user)
@@ -10,7 +10,7 @@ import { mockInvitations } from "../../data/mockData";
 export default function GroupInvitationList({ currentUser = "frank" }) {
     // Filter invitations for the current user and pending status
     const [invitations, setInvitations] = useState(
-        mockInvitations.filter(inv => inv.toUser === currentUser && inv.status === "pending")
+        //mockInvitations.filter(inv => inv.toUser === currentUser && inv.status === "pending")
     );
 
     // Handler for accepting/declining

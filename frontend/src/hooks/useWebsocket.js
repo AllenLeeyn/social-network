@@ -25,7 +25,6 @@ export function useWebsocket(
         // clear pending reconn
         clearTimeout(reconnectTimeout.current);
 
-
         // Close old connection if it exists and is not already closed
         if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
             ws.current.close();
@@ -47,8 +46,6 @@ export function useWebsocket(
         attempts.current += 1; // track conn attempts
         // setting new ws conn
         ws.current = new WebSocket(url);
-
-
 
         // conn established handler
         ws.current.onopen = () => {

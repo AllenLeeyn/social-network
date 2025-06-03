@@ -15,17 +15,17 @@ type PostSelectedAudience struct {
 	UpdatedBy int           `json:"updated_by"`
 }
 
-func InsertPostSelectedAudience(postId int, selectedAudienceUserIds []int, userId int, tx *sql.Tx) error {
-	if len(selectedAudienceUserIds) > 0 {
+func InsertPostSelectedAudience(postId int, selectedAudienceUserUUIDS []string, userId int, tx *sql.Tx) error {
+	if len(selectedAudienceUserUUIDS) > 0 {
 		query := `INSERT INTO post_selected_audience (post_id, user_id, created_by) VALUES `
-		values := make([]any, 0, len(selectedAudienceUserIds)*3)
+		values := make([]any, 0, len(selectedAudienceUserUUIDS)*3)
 
-		for i, categoryID := range selectedAudienceUserIds {
+		for i, uuid := range selectedAudienceUserUUIDS {
 			if i > 0 {
 				query += ", "
 			}
-			query += "(?, ?, ?)"
-			values = append(values, postId, categoryID, userId)
+			query += `(?, (SELECT id FROM users WHERE uuid = ?), ?)`
+			values = append(values, postId, uuid, userId)
 		}
 		query += `ON CONFLICT(post_id, user_id) DO UPDATE SET
 					status = 'enable',
