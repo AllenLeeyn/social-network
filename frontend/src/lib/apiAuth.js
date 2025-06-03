@@ -66,3 +66,23 @@ export async function fetchGroups() {
   const result = await response.json();
   return result.data;
 }
+
+export async function fetchUsers() {
+  try {
+    const response = await fetch("/frontend-api/users", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+}
