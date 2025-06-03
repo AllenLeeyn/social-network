@@ -9,6 +9,7 @@ import CreatePostForm from "./[uuid]/posts/CreatePostForm";
 import CreateEventForm from "./[uuid]/events/CreateEventForm";
 import GroupHeader from "./[uuid]/GroupHeader";
 import EventCard from "./[uuid]/events/EventCard";
+import PostCard from '../PostCard'
 
 import { formatDate } from '../../utils/formatDate';
 
@@ -122,8 +123,7 @@ export default function GroupDetail({ group, onBack }) {
                 isMember={isMember}
                 onShowPostModal={() => setShowPostModal(true)}
                 onShowEventModal={() => setShowEventModal(true)}
-                onRequestJoin={() => {/* handle join logic */}}
-                onInviteUser={() => {/* handle invite logic */}}
+                onRequestJoin={() => onRequestJoin}
             />
             <div className="group-detail">
                 {onBack && (
@@ -131,9 +131,12 @@ export default function GroupDetail({ group, onBack }) {
                         ← Back to Groups
                     </button>
                 )}
+                <section className="member-section">
+                    <strong>Members:</strong>
+                </section>
 
                 {/* Events Section */}
-                <section>
+                <section className="event-section">
                     <strong>Upcoming Events:</strong>
                     {loadingEvents ? (
                         <div>Loading events...</div>
@@ -156,6 +159,12 @@ export default function GroupDetail({ group, onBack }) {
                             ))}
                         </ul>
                     )}
+                </section>
+                <section className="post-section">
+                    <strong>Posts:</strong>
+                    {/* <PostCard>
+
+                    </PostCard> */}
                 </section>
 
                 {/* Modals */}

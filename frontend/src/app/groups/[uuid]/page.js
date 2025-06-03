@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import GroupDetail from '../../../components/groups/GroupDetail';
 import SidebarSection from '../../../components/SidebarSection';
 import UsersList from '../../../components/UsersList';
@@ -50,6 +51,41 @@ export default function GroupDetailPage() {
     // Or setShowInviteModal(true) if you want to open a modal
     }
 
+    async function handleRequestJoin(group) {
+        try {
+            const response = await fetch('/frontend-api/groups/join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ group_uuid: group.uuid }),
+            });
+
+            // Check for HTTP errors
+            if (!response.ok) {
+                // Try to parse error message from server, fallback to status text
+                let errorMsg = `Request failed (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    errorMsg = errorData.error || errorMsg;
+                } catch {
+                    // ignore JSON parse errors
+                }
+                toast.error(errorMsg);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                toast.success('Request sent!');
+                // Optionally update group status in state here
+            } else {
+                toast.error(data.error || 'Request failed.');
+            }
+        } catch (error) {
+            // Handles network errors, timeouts, etc.
+            toast.error('Network error. Please try again.');
+        }
+    }
+
+
     return (
         <div className="groups-page-layout">
             {/* Left Sidebar */}
@@ -69,7 +105,7 @@ export default function GroupDetailPage() {
 
             {/* Main Content */}
             <section className="main-feed group-section">
-                <GroupDetail group={group} />
+                <GroupDetail group={group} onRequestJoin={handleRequestJoin} />
             </section>
 
             {/* Right Sidebar */}
