@@ -2,13 +2,12 @@
 
 import { useWebsocketContext } from '../../contexts/WebSocketContext';
 import { useActiveChat } from '../../contexts/ActiveChatContext';
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 
 export default function MessagesChatbox() {
 
-    const { 
-        userList,
+    const {
         messages,
         sendAction, 
         isConnected, 
@@ -120,11 +119,7 @@ export default function MessagesChatbox() {
                 groupUUID: activeChat.groupUUID,
                 content: oldestMsg.ID.toString(), // send timestamp as cursor
             });
-    }; 
-
-    // console.log("messages:", messages);
-    // console.log("activeChat.id:", activeChat?.id, "userUuid:", userUuid);
-    // console.log("filteredMessages:", filteredMessages);
+    };
 
     return (
         <div className='chat-component'>
@@ -140,7 +135,7 @@ export default function MessagesChatbox() {
                         : "Select a user to view messages."}
                     </div>
                 ) : (
-                    messages.map((msg, index) => {
+                    messages.map((msg) => {
                         const isSent = msg.senderUUID === userUUID;
                         return (
                             <div key={msg.ID} className={`message-item ${isSent ? 'sent' : 'received'}`}>

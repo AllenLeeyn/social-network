@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useCallback, useState, useEffect, useRef } from "react";
 import { useWebsocket } from "../hooks/useWebsocket";
+import { usePathname } from 'next/navigation';
+import { useActiveChat } from './ActiveChatContext'; 
 
 const WebSocketContext = createContext();
 
@@ -11,7 +13,8 @@ export function WebSocketProvider( { children } ) {
     const [currentGroupUUID, setCurrentGroupUUID] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
-    
+    const { activeChat } = useActiveChat();
+
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const isLoadingMoreRef = useRef(isLoadingMore);
     const [hasMore, setHasMore] = useState(true);
@@ -28,8 +31,15 @@ export function WebSocketProvider( { children } ) {
         currentChatUUIDRef.current = currentChatUUID;
     }, [currentChatUUID]);
 
-    // memoize the onMessage handler with useCallback
-    // if this doesnt change, it will pass and wont re-render; WS connection will always render when new data gets passed
+    const pathname = usePathname();
+    useEffect(() => {
+    if (pathname.startsWith('/messages')) {
+        currentChatUUIDRef.current = activeChat?.uuid || null;
+    } else {
+        currentChatUUIDRef.current = null;
+    }
+    }, [pathname, activeChat]);
+
     const onMessage = useCallback((data) => {
         console.log("WebSocket received:", data);
         switch (data.action) {

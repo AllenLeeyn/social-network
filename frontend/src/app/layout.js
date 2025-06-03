@@ -16,15 +16,15 @@ return (
         <body>
             <ToastContainer position="top-right" autoClose={1500} />
             <NotificationsProvider>
-                <WebSocketProvider>
-                    <ActiveChatProvider>
+                <ActiveChatProvider>
+                    <WebSocketProvider>
                         <Navbar />
                         <main>
                             {children}
                         </main>
                         <Footer />
-                    </ActiveChatProvider>
-                </WebSocketProvider>
+                    </WebSocketProvider>
+                </ActiveChatProvider>
             </NotificationsProvider>
         </body>
     </html>

@@ -12,7 +12,7 @@ export default function UsersList( { activeConversation } ) {
     const { userList, isConnected, setUserList, setMessages, sendAction } = useWebsocketContext();
     const { activeChat, setActiveChat } = useActiveChat();
     const router = useRouter();
-
+    
     const handleUserClick = (user) => {
         setActiveChat({ 
             type: user.type,
