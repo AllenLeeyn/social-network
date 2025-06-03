@@ -21,6 +21,7 @@ footer {
     padding: 0.5rem;
     font-size: 0.9rem;
     color: #666;
+    margin-top: auto;
 }
 
 footer a {
@@ -55,7 +56,6 @@ button:hover {
     /* clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%); */
 
 }
-
 
 
 main {
@@ -112,6 +112,14 @@ textarea:focus {
     padding: 1.5rem 1.2rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     background: #fff;
+}
+
+.main-post-section pre{
+    white-space: pre-wrap; 
+    word-break: break-word;
+    padding: 1em; 
+    line-height: 1.2rem; 
+    font-size: 14px;
 }
 
 /* ------------ Sidebars styles ------------------ */
@@ -215,15 +223,6 @@ textarea:focus {
     border-left: 6px solid white;
     border-bottom: 2px solid white;
 }
-
-/* .category-item.active,
-.group-item.active,
-.connection-item.active,
-.user-item.active {
-    background: #0070f3 !important;
-    color: white;
-    font-weight: bold;
-} */
 
 
 .user-item img {

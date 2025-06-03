@@ -1,6 +1,6 @@
 .comments-section {
     margin-top: 2rem;
-    background: #f7faff; /* Matches sidebar background for a subtle look */
+    background: #f1f2f4; 
     border-radius: 12px;
     padding: 1.2rem 1rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
@@ -10,6 +10,14 @@
     list-style: none;
     padding: 0;
     margin: 0 0 1rem 0;
+    border-radius: 6px;
+}
+
+.comments-list li {
+    /* margin-bottom: 0.5rem; */
+    border-bottom: 1px solid #d1d5db; /* or any color you like */
+    padding: 0.5rem;
+
 }
 
 .comment-item {
@@ -28,6 +36,7 @@ border-bottom: none;
     font-weight: bold;
     color: #0070f3;
     margin-bottom: 0.2rem;
+    margin-left: 0.2rem;
 }
 
 .comment-content {
@@ -56,11 +65,11 @@ font-family: inherit;
 }
 
 .comment-form textarea {
-resize: vertical;
+resize: none;
 min-height: 60px;
 }
 
-.comment-form button {
+/* .comment-form button {
 align-self: flex-end;
 background-color: #0070f3;
 color: white;
@@ -70,11 +79,12 @@ padding: 0.5rem 1.2rem;
 cursor: pointer;
 font-size: 1rem;
 transition: background 0.2s;
+box-sizing: border-box;
 }
 
 .comment-form button:hover {
 background-color: #005bb5;
-}
+} */
 
 @media (max-width: 600px) {
     .comments-section {
