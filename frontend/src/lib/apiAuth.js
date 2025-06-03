@@ -47,8 +47,12 @@ export async function logout() {
   }
 }
 
-export async function fetchFollowees() {
-  const response = await fetch("/frontend-api/followers/", {
+export async function fetchFollowees(uuid) {
+  const url = uuid
+    ? `/frontend-api/followers/${uuid}`
+    : "/frontend-api/followers";
+
+  const response = await fetch(url, {
     method: "GET",
     credentials: "include",
   });
@@ -57,8 +61,12 @@ export async function fetchFollowees() {
   return result.data;
 }
 
-export async function fetchGroups() {
-  const response = await fetch("/frontend-api/groups?joined=true", {
+export async function fetchGroups(uuid) {
+  const url = uuid
+    ? `/frontend-api/groups/${uuid}`
+    : `/frontend-api/groups?joined=true`;
+
+  const response = await fetch(url, {
     method: "GET",
     credentials: "include",
   });

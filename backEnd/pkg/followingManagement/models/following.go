@@ -95,6 +95,18 @@ func SelectStatus(f *Following) (string, error) {
 	return status, checkErrNoRows(err)
 }
 
+func SelectStatusByUUID(f *Following) (string, error) {
+	qry := `SELECT status
+			FROM following
+			WHERE follower_id = (SELECT id FROM users WHERE uuid = ?) 
+			AND leader_id = (SELECT id FROM users WHERE uuid = ?) 
+			AND group_id = ?`
+
+	var status string
+	err := sqlDB.QueryRow(qry, f.FollowerUUID, f.LeaderUUID, f.GroupID).Scan(&status)
+	return status, checkErrNoRows(err)
+}
+
 func SelectFollowings(tgtUUID, fStatus string) (*[]FollowingView, error) {
 	if fStatus != "accepted" && fStatus != "requested" {
 		return nil, fmt.Errorf("invalid status")
