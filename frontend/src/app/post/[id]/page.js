@@ -8,12 +8,10 @@ import "../../../styles/PostList.css";
 import { usePosts } from "../../../hooks/usePosts";
 import { fetchPostById } from "../../../lib/apiPosts";
 import CategoriesList from "../../../components/CategoriesList";
-import ConnectionList from "../../../components/ConnectionList";
 import { fetchFollowees, fetchGroups } from "../../../lib/apiAuth";
 import { toast } from "react-toastify";
 import PostCard from "../../../components/PostCard";
 import UsersList from "../../../components/UsersList";
-import GroupList from "../../../components/GroupList";
 
 export default function PostPage() {
   const params = useParams();
@@ -120,24 +118,8 @@ export default function PostPage() {
 
         {/* Right Sidebar */}
         <aside className="sidebar right-sidebar">
-          <SidebarSection title="Connections">
-            <ConnectionList
-              connections={connections}
-              loading={connectionsLoading}
-              error={connectionsError}
-            />
-          </SidebarSection>
-
           <SidebarSection title="Active Users">
             <UsersList />
-          </SidebarSection>
-
-          <SidebarSection title="Groups">
-            <GroupList
-              groups={groups}
-              loading={groupsLoading}
-              error={groupsError}
-            />
           </SidebarSection>
         </aside>
       </div>
