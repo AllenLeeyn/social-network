@@ -9,6 +9,7 @@ import (
 type Comment struct {
 	ID               int                       `json:"id"`
 	PostId           int                       `json:"post_id"`
+	PostUUID         string                    `json:"post_uuid"`
 	ParentId         int                       `json:"parent_id"`
 	Content          string                    `json:"content"`
 	AttachedImage    string                    `json:"attached_image"`
@@ -37,10 +38,12 @@ func InsertComment(comment *Comment) (int, error) {
 	insertQuery := `INSERT INTO comments (
 						post_id, parent_id, content, 
 						attached_image, user_id) 
-					VALUES (?, ?, ?, ?, ?);`
+					SELECT id, ?, ?, ?, ?
+					FROM posts
+					WHERE uuid = ?;`
 	result, insertErr := sqlDB.Exec(insertQuery,
-		comment.PostId, parentId, comment.Content,
-		comment.AttachedImage, comment.UserId)
+		parentId, comment.Content,
+		comment.AttachedImage, comment.UserId, comment.PostUUID)
 	if insertErr != nil {
 		// Check if the error is a SQLite constraint violation
 		return -1, insertErr

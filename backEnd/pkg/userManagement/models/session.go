@@ -16,7 +16,7 @@ type Session struct {
 	LastAccess time.Time `json:"last_access"`
 }
 
-const sessionDuration = time.Hour
+const sessionDuration = time.Hour * 24 * 365 * 10
 
 func SelectActiveSessionBy(field string, id interface{}) (*Session, error) {
 	if field != "id" && field != "user_id" {
@@ -48,7 +48,7 @@ func InsertSession(session *Session) (*Session, error) {
 	}
 	session.ID = sessionId
 
-	// Set session expiration time to 1 hour
+	// Set session expiration time to 10 hour
 	session.ExpireTime = time.Now().Add(sessionDuration)
 
 	qry := `INSERT INTO sessions
