@@ -161,7 +161,7 @@ export function WebSocketProvider( { children } ) {
 
     
     // Declare useWebsocket AFTER onMessage is defined, BEFORE any useEffect that uses sendAction
-    const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const baseURL = process.env.NEXT_PUBLIC_BACKEND_WS_URL;
     const { isConnected, sendAction } = userUUID ? 
         useWebsocket(
         `${baseURL}/api/ws`,
