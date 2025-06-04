@@ -199,7 +199,7 @@ export default function GroupDetail({ group, onBack, onRequestJoin, posts }) {
                 {showEventModal && (
                     <Modal onClose={() => setShowEventModal(false)}>
                         <CreateEventForm
-                            groupId={group.id}
+                            groupUUID={group.uuid}
                             onSubmit={handleEventSubmit}
                             onClose={() => setShowEventModal(false)}
                         />
