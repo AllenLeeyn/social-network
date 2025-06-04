@@ -7,6 +7,7 @@ import { WebSocketProvider } from '../contexts/WebSocketContext'
 import { ActiveChatProvider } from "../contexts/ActiveChatContext";
 import { NotificationsProvider } from '../contexts/NotificationsContext';
 import { ToastContainer } from 'react-toastify';
+import VantaBackground from '../components/VantaBackground';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function RootLayout({ children }) {
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
 return (
     <html lang="en">
         <body>
+            <VantaBackground/>
             <ToastContainer position="top-right" autoClose={1500} />
             <NotificationsProvider>
                 <ActiveChatProvider>
