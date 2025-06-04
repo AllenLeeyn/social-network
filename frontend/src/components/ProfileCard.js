@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { FaUserCircle } from 'react-icons/fa';
 import { useWebsocketContext } from '../contexts/WebSocketContext';
 import Image from 'next/image';
+import { formatDate } from "../utils/formatDate";
 
 export default function ProfileCard({ uuid, setPrivateProfile }) {
   const [user, setUser] = useState(null);
@@ -222,7 +223,7 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
         <p>{user.email || ""}</p>
         <p>{user.gender || ""}</p>
         <p>
-          <span>Date of Birth:</span> {user.birthday || "Not specified"}
+          <span>Date of Birth:</span> {new Date(user.birthday).toISOString().slice(0, 10) || "Not specified"}
         </p>
         <p>{user.about_me || "Nothing is written."}</p>
         {isOwnProfile ? (
