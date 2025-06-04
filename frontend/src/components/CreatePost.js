@@ -10,8 +10,10 @@ import { fetchFollowees } from "../lib/apiAuth";
 export default function CreatePost({ onClose }) {
   const [title, setTitle] = useState("");
   const [content, setcontent] = useState("");
+
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categories, setCategories] = useState([]);
+  
   const [postVisibility, setVisibility] = useState("");
   const [postImages, setImages] = useState(null);
   const [followers, setFollowers] = useState([]);

@@ -53,8 +53,12 @@ func InsertPost(post *Post, categoryIds []int, uploadedFiles map[string]string) 
 		return "", err
 	}
 
-	insertQuery := `INSERT INTO posts (uuid, title, type, content, user_id, group_id, visibility) VALUES (?, ?, ?, ?, ?, ?, ?);`
-	result, insertErr := tx.Exec(insertQuery, post.UUID, post.Title, post.Type, post.Content, post.UserId, post.GroupId, post.Visibility)
+	insertQuery := `INSERT INTO posts (
+						uuid, title, type, content, 
+						user_id, group_id, visibility) 
+					VALUES (?, ?, ?, ?, ?, ?, ?);`
+	result, insertErr := tx.Exec(insertQuery,
+		post.UUID, post.Title, post.Type, post.Content, post.UserId, post.GroupId, post.Visibility)
 	if insertErr != nil {
 		tx.Rollback()
 		return "", insertErr
@@ -253,15 +257,15 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
 			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
+            OR if(p.type = 'user', 
+			p.visibility = 'public' OR (p.visibility = 'selected' AND psa.user_id = ?) OR (p.visibility = 'private' AND follow_user.follower_id = ?),
+			(follow_group.follower_id = ?)
             )
 		ORDER BY p.id desc;
     `, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser)
@@ -1588,15 +1592,10 @@ func ReadPostsSubmittedByGroupUUID(groupUUID string, audienceUserId int) ([]Post
             LEFT JOIN post_selected_audience psa
                 ON p.id = psa.post_id
                 AND psa.status = 'enable'
-            LEFT JOIN following follow_user
-                ON follow_user.leader_id = p.user_id
-				AND p.type = 'user'
-				AND follow_user.type = 'user'
-                AND follow_user.status = 'accepted'
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
@@ -1604,10 +1603,7 @@ func ReadPostsSubmittedByGroupUUID(groupUUID string, audienceUserId int) ([]Post
 			AND g.uuid = ?
             AND (
 			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
+            OR follow_group.follower_id = ?)
 		ORDER BY p.id desc;
     `, audienceUserId, audienceUserId, groupUUID, audienceUserId, audienceUserId, audienceUserId, audienceUserId)
 	if selectError != nil {

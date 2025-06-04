@@ -34,7 +34,7 @@ export default function GroupDetailPage() {
 
     useEffect(() => {
         setLoadingGroup(true);
-        fetch(`/frontend-api/groups/${uuid}`)
+        fetch(`/frontend-api/group/${uuid}`)
         .then(res => res.json())
         .then(data => {
             setGroup(data.data); 

@@ -4,6 +4,7 @@ import (
 	// "forum/middlewares"
 
 	"errors"
+	"log"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -47,7 +48,7 @@ func isValidPostInfo(post *models.Post) error {
 	if post.Visibility == "" {
 		post.Visibility = "public"
 	}
-	if post.Visibility == "public" {
+	if post.Visibility == "public" && post.Type == "user" {
 		post.GroupId = 0
 	}
 	if post.Visibility != "public" && post.Visibility != "private" && post.Visibility != "selected" {
@@ -315,6 +316,8 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println(post.Type)
+	log.Println(post.GroupId)
 	if err := isValidPostInfo(post); err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return

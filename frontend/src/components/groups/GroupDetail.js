@@ -9,6 +9,7 @@ import CreatePostForm from "./[uuid]/posts/CreatePostForm";
 import CreateEventForm from "./[uuid]/events/CreateEventForm";
 import GroupHeader from "./[uuid]/GroupHeader";
 import EventCard from "./[uuid]/events/EventCard";
+import { createPost } from "../../lib/apiPosts";
 import PostCard from '../PostCard'
 
 import { formatDate } from '../../utils/formatDate';
@@ -17,7 +18,7 @@ import "../../styles/groups/GroupDetail.css";
 
 
 export default function GroupDetail({ group, onBack, onRequestJoin }) {
-        
+    console.log(group.id)
     if (!group) return null;
 
     // Modal state
@@ -67,8 +68,17 @@ export default function GroupDetail({ group, onBack, onRequestJoin }) {
             .catch(() => setLoadingEvents(false));
     }, [group?.uuid]);
 
-    const handlePostSubmit = (postData) => {
-        // TODO: Add post to group (API or state update)
+    const handlePostSubmit = async (postData) => {                
+        try {
+            const data = await createPost(postData);
+            if (data) {
+                window.location.href = `/post/${data.data}`;
+            } else {
+                toast.error(data.message || "Failed to create post");
+            }
+        } catch (err) {
+            toast.error(err.message || "Error creating post");
+        }
         toast.success(`Post created: ${postData.title}`);
         setShowPostModal(false);
     };
@@ -182,7 +192,7 @@ export default function GroupDetail({ group, onBack, onRequestJoin }) {
                 {showPostModal && (
                     <Modal onClose={() => setShowPostModal(false)}>
                         <CreatePostForm
-                            groupId={group.uuid}
+                            groupID={group.id}
                             onSubmit={handlePostSubmit}
                             onClose={() => setShowPostModal(false)}
                         />
@@ -191,7 +201,7 @@ export default function GroupDetail({ group, onBack, onRequestJoin }) {
                 {showEventModal && (
                     <Modal onClose={() => setShowEventModal(false)}>
                         <CreateEventForm
-                            groupId={group.uuid}
+                            groupId={group.id}
                             onSubmit={handleEventSubmit}
                             onClose={() => setShowEventModal(false)}
                         />
