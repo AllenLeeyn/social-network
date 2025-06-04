@@ -26,6 +26,8 @@ export default function GroupDetail(
         onApproveRequest,   
         onDenyRequest,
         onInviteUser,
+        handleAcceptInvite,
+        handleDeclineInvite,
     }) {
         
     if (!group) return null;
@@ -48,14 +50,16 @@ export default function GroupDetail(
 
     // const eventDate = "2025-06-09T15:04:05Z";
 
-    // checks for req. to join, pending, invited, accepted
+    // checks for req. to join: pending, invited, accepted
     const isMember = group.status === "accepted";
+    const isRequested = group.status === "requested";
+    const isInvited = group.status === "invited";
     const isPending = group.status === "requested" ||  group.status === "invited";
-    // const isInvited = group.status === "invited";
 
     // checks for the member info for modal Member Section
     const acceptedMembers = members.filter(m => m.status === 'accepted');
     const pendingRequests = requests.filter(r => r.status === 'requested' || r.status === 'invited');
+
 
     
     const currentUserUuid = localStorage.getItem('user-uuid');
@@ -185,13 +189,28 @@ export default function GroupDetail(
                     </div>
                     {/* You can add more member info if backend provides it */}
                     <div className="group-members-actions">
-                        {isMember ? (
-                            <button onClick={handleOpenMembersModal}>Invite User</button>
-                        ) : isPending ? (
-                            <button disabled>Pending</button>
-                        ) : (
-                            <button onClick={onRequestJoin}>Request to Join</button>
-                        )}
+                    {isMember ? (
+                        <button onClick={handleOpenMembersModal}>Invite User</button>
+                    ) : isRequested ? (
+                        <button disabled>Pending</button>
+                    ) : isInvited ? (
+                        <>
+                        <button
+                            onClick={() => handleAcceptInvite(currentUserUuid)}
+                            style={{ marginRight: '0.5rem' }}
+                        >
+                            Accept
+                        </button>
+                        <button
+                            onClick={() => handleDeclineInvite(currentUserUuid)}
+                            style={{ color: 'red' }}
+                        >
+                            Decline
+                        </button>
+                        </>
+                    ) : (
+                        <button onClick={onRequestJoin}>Request to Join</button>
+                    )}
                     </div>
                 </section>
 
@@ -269,18 +288,24 @@ export default function GroupDetail(
                                 pendingRequests.map(r => (
                                 <li key={r.follower_uuid || r.uuid || r.user_uuid}>
                                     {r.follower_name || r.name}
-                                    <button
-                                    style={{ marginLeft: '1rem' }}
-                                    onClick={() => onApproveRequest(r.follower_uuid || r.uuid || r.user_uuid)}
-                                    >
-                                    Approve
-                                    </button>
-                                    <button
-                                    style={{ marginLeft: '0.5rem', color: 'red' }}
-                                    onClick={() => onDenyRequest(r.follower_uuid || r.uuid || r.user_uuid)}
-                                    >
-                                    Deny
-                                    </button>
+                                    {r.status === "invited" ? (
+                                    <span style={{ marginLeft: '1rem', color: '#888' }}>Invited</span>
+                                    ) : (
+                                    <>
+                                        <button
+                                        style={{ marginLeft: '1rem' }}
+                                        onClick={() => onApproveRequest(r.follower_uuid || r.uuid || r.user_uuid)}
+                                        >
+                                        Approve
+                                        </button>
+                                        <button
+                                        style={{ marginLeft: '0.5rem', color: 'red' }}
+                                        onClick={() => onDenyRequest(r.follower_uuid || r.uuid || r.user_uuid)}
+                                        >
+                                        Deny
+                                        </button>
+                                    </>
+                                    )}
                                 </li>
                                 ))
                             ) : (

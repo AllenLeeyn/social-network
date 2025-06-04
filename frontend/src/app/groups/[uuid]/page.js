@@ -148,6 +148,47 @@ export default function GroupDetailPage() {
         });
     }
 
+    // handlers for accepting and declining as user who has been invited
+    function handleAcceptInvite(follower_uuid) {
+        fetch(`/frontend-api/group/member/response`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                group_uuid: uuid,
+                follower_uuid,
+                status: 'accepted'
+            }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            toast.success('Invite accepted!');
+            refreshMembersAndRequests();
+        })
+        .catch(() => {
+            toast.error('Failed to accept invite.');
+        });
+    }
+    function handleDeclineInvite(follower_uuid) {
+        fetch(`/frontend-api/group/member/response`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                group_uuid: uuid,
+                follower_uuid,
+                status: 'declined'
+            }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            toast.info('Invite declined.');
+            refreshMembersAndRequests();
+        })
+        .catch(() => {
+            toast.error('Failed to decline invite.');
+        });
+    }
+
+
 
     if (loadingGroup) return <div>Loading...</div>;
     if (!group) return <div>Group not found.</div>;
@@ -186,6 +227,8 @@ export default function GroupDetailPage() {
                     onApproveRequest={handleApproveRequest}
                     onDenyRequest={handleDenyRequest}
                     onInviteUser={handleInviteUser}
+                    handleAcceptInvite={handleAcceptInvite}
+                    handleDeclineInvite={handleDeclineInvite}
                 />
             </section>
 
