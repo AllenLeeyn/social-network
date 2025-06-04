@@ -10,9 +10,11 @@ import { submitFollowResponse } from "../../lib/apiFollow";
 import { submitGroupRequestOrInviteResponse } from "../../lib/apiGroups";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { useWebsocketContext } from '../../contexts/WebSocketContext';
 
 export default function NotificationCard({ notification }) {
   const { refreshNotifications } = useNotifications();
+  const { sendAction } = useWebsocketContext();
   const router = useRouter();
 
   const acceptRejectActions = [
@@ -45,6 +47,12 @@ export default function NotificationCard({ notification }) {
           follower_uuid: notification.from_user.uuid,
           group_uuid: notification.target_uuid,
           status,
+        });
+      }
+
+      if (status==="accepted") {
+        sendAction({
+            action: "userListReq",
         });
       }
 

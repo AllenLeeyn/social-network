@@ -225,6 +225,7 @@ func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
+	log.Println(uuid)
 
 	post, err := models.ReadPostByUUID(uuid, userID)
 	if err != nil {

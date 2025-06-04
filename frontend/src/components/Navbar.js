@@ -16,16 +16,41 @@ import { FaBell } from "react-icons/fa6";
 import { FaUsers } from "react-icons/fa6";
 import NotificationBell from "./notifications/NotificationBell";
 import { useNotifications } from "../contexts/NotificationsContext";
+import { fetchUsers } from "../lib/apiAuth";
 
 import "../styles/notifications/Bell.css";
 
 export default function Navbar() {
-  // Logout handler
   const { handleLogout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [userName, setUserName] = useState("");
   const [profileImage, setProfileImage] = useState("");
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    async function checkAuthentication() {
+      // Skip auth check for login page
+      if (pathname === "/login") {
+        setIsAuthChecked(true);
+        return;
+      }
+
+      try {
+        await fetchUsers(); // Use your existing API function
+        setIsAuthChecked(true);
+      } catch (error) {
+        console.error(
+          "Authentication check failed, redirecting to login:",
+          error
+        );
+        router.push("/login");
+      }
+    }
+
+    checkAuthentication();
+  }, [pathname, router]);
 
   useEffect(() => {
     const storedUserName = localStorage.getItem("user-nick_name");
@@ -49,6 +74,11 @@ export default function Navbar() {
     await handleLogout();
     router.push("/login");
   };
+
+  // Don't render navbar on login page or while checking auth
+  if (pathname === "/login" || !isAuthChecked) {
+    return null;
+  }
 
   return (
     <div className="navbar">

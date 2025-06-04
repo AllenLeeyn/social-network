@@ -8,7 +8,6 @@ import "../../../styles/PostList.css";
 import { usePosts } from "../../../hooks/usePosts";
 import { fetchPostById } from "../../../lib/apiPosts";
 import CategoriesList from "../../../components/CategoriesList";
-import { fetchFollowees, fetchGroups } from "../../../lib/apiAuth";
 import { toast } from "react-toastify";
 import PostCard from "../../../components/PostCard";
 import UsersList from "../../../components/UsersList";
@@ -21,15 +20,7 @@ export default function PostPage() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [connections, setConnections] = useState([]);
-  const [connectionsLoading, setConnectionsLoading] = useState(true);
-  const [connectionsError, setConnectionsError] = useState(null);
 
-  const [groups, setGroups] = useState([]);
-  const [groupsLoading, setGroupsLoading] = useState(true);
-  const [groupsError, setGroupsError] = useState(null);
-
-  // Fetch categories (and optionally users, etc.)
   const {
     categories,
     loading: categoriesLoading,
@@ -51,36 +42,6 @@ export default function PostPage() {
     }
     if (id) fetchData();
   }, [id]);
-
-  useEffect(() => {
-    async function loadConnections() {
-      try {
-        setConnectionsLoading(true);
-        const data = await fetchFollowees();
-        setConnections(data || []);
-      } catch (err) {
-        setConnectionsError(err.message);
-      } finally {
-        setConnectionsLoading(false);
-      }
-    }
-    loadConnections();
-  }, []);
-
-  useEffect(() => {
-    async function loadGroups() {
-      try {
-        setGroupsLoading(true);
-        const data = await fetchGroups();
-        setGroups(data || []);
-      } catch (err) {
-        setGroupsError(err.message);
-      } finally {
-        setGroupsLoading(false);
-      }
-    }
-    loadGroups();
-  }, []);
 
   const refreshComments = async () => {
     try {

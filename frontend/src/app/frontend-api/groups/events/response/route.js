@@ -1,5 +1,5 @@
-import { proxyToBackend } from '../../../proxyToBackend'
+import { proxyToBackend } from "../../../proxyToBackend";
 
 export async function POST(req) {
-    return proxyToBackend(req, '/api/group/event/response');
+  return proxyToBackend(req, "/api/group/event/response", "POST");
 }

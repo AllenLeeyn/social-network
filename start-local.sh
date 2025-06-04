@@ -14,6 +14,7 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 # Set env variable for frontend
 export NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+export NEXT_PUBLIC_BACKEND_WS_URL=ws://localhost:8080
 
 echo "Starting Go backend..."
 cd backEnd
@@ -27,6 +28,7 @@ npm install
 npm install react-toastify
 npm install react-icons
 npm install three
+npm install vanta
 npm run dev &
 
 FRONTEND_PID=$!
