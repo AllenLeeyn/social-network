@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getMinDateTime } from '../../utils/getMinDateTime'; // adjust path as needed
+import { getMinDateTime } from '../../../../utils/getMinDateTime'; // adjust path as needed
 
 export default function CreateEventForm({ groupId, onSubmit, onClose }) {
     const [title, setTitle] = useState("");

@@ -27,15 +27,32 @@ export default function GroupList({ filter, onSelectGroup }) {
         filteredGroups = groups.filter(g => g.status !== "accepted");
     }
 
-    // Handlers for group actions
-    function handleInvite(group) {
-        // TODO: Implement invite logic
-    toast.info(`Invite sent to group: ${group.title}`);
-    }
 
     function handleRequestJoin(group) {
-        // TODO: Implement request to join logic
-    toast.success(`Request to join "${group.title}" sent!`);
+        fetch('/frontend-api/groups/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ group_uuid: group.uuid }),
+        })
+        .then(res => res.json())
+        .then(data => {
+        if (data.success) {
+
+            setGroups(prevGroups =>
+                prevGroups.map(g =>
+                    g.uuid === group.uuid
+                        ? { ...g, status: 'requested' }
+                        : g
+                )
+            );
+            
+            toast.success('Request sent!');
+        } else {
+            toast.error(data.error || 'Request failed.');
+        }
+        })
+        .catch(() => toast.error('Network error.'));
+        toast.success(`Request to join "${group.title}" sent!`);
     }
 
 
@@ -47,7 +64,6 @@ export default function GroupList({ filter, onSelectGroup }) {
             <GroupCard
                 key={group.uuid}
                 group={group}
-                onInvite={handleInvite}
                 onRequestJoin={handleRequestJoin}
             />
         ))}
