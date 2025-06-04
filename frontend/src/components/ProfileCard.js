@@ -209,10 +209,10 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
             {user.first_name || ""} {user.last_name || ""}
           </strong>
         </p>
-        <p>{user.email || ""}</p>
-        <p>{user.gender || ""}</p>
+        <p><span>Email: </span>{user.email || ""}</p>
+        <p><span>Gender: </span>{user.gender || ""}</p>
         <p>
-        <span>Date of Birth:</span>{" "}
+        <span>Date of Birth: </span>{" "}
         {user.birthday
             ? new Date(user.birthday).toLocaleDateString("en-US", {
                 year: "numeric",
@@ -221,10 +221,10 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
             })
             : "Not specified"}
         </p>
-        <p>{user.about_me || "Nothing is written."}</p>
+        <p><span>Bio: </span>{user.about_me || "Nothing is written."}</p>
         {isOwnProfile ? (
           <label>
-            Visibility:
+            <span>Visibility: </span>
             <select
               value={user.visibility || "private"}
               onChange={(e) => handleVisibilityChange(e, user, setUser)}
