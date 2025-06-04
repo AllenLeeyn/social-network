@@ -1,13 +1,16 @@
 "use client";
-import React, { useState } from "react";
-import { useAuth } from "../../hooks/useAuth"; // Import the useAuth hook
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useRouter } from "next/navigation";
 import "./login.css";
 import { toast } from "react-toastify";
 import { handleImage } from "../../lib/handleImage";
+import { fetchUsers } from "../../lib/apiAuth";
 
 export default function AuthPage() {
-  const { handleLogin, handleSignup, error, loading } = useAuth(); // Use the hook for login and signup logic
-  const [mode, setMode] = useState("login"); // 'login' or 'register'
+  const { handleLogin, handleSignup, error, loading } = useAuth();
+  const [mode, setMode] = useState("login");
+  const router = useRouter();
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -27,11 +30,26 @@ export default function AuthPage() {
   const [registerVisibility, setVisibility] = useState("");
   const [formError, setFormError] = useState("");
 
+  // Check if user is already authenticated
+  useEffect(() => {
+    async function checkAuthentication() {
+      try {
+        await fetchUsers(); // Use the same function as Navbar
+        // If successful (200), user is already authenticated
+        router.push("/");
+      } catch (error) {
+        // If failed, user is not authenticated, stay on login page
+        console.log("User not authenticated, staying on login page");
+      }
+    }
+
+    checkAuthentication();
+  }, [router]);
+
   // Handle login submission
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      // await handleLogin(loginEmail, loginPassword); // Pass the credentials
       const response = await handleLogin(loginEmail, loginPassword);
       toast.success("Login successful! Redirecting...");
       setTimeout(() => {
@@ -259,25 +277,6 @@ export default function AuthPage() {
                     </label>
                   </div>
                 </div>
-                {/* <select
-                  value={registerGender}
-                  onChange={(e) => setGender(e.target.value)}
-                  required
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-
-                <select
-                  value={registerVisibility}
-                  onChange={(e) => setVisibility(e.target.value)}
-                  required
-                >
-                  <option value="">Select Visibility</option>
-                  <option value="public">Public</option>
-                  <option value="private">Private</option>
-                </select> */}
               </fieldset>
 
               <fieldset className="auth-form">
