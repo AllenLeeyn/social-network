@@ -254,6 +254,52 @@ func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post fetched successfully", data_obj_sender)
 }
 
+func ReadPostsSubmittedByUserUUIDHandler(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
+	audienceUserId, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	userUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/userPosts")
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
+		return
+	}
+
+	posts, err := models.ReadPostsSubmittedByUserUUID(userUUID, audienceUserId)
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	utils.ReturnJsonSuccess(w, "Posts fetched successfully", posts)
+}
+
+func ReadPostsSubmittedByGroupUUIDHandler(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
+	audienceUserId, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	groupUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/groupPosts")
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
+		return
+	}
+
+	posts, err := models.ReadPostsSubmittedByGroupUUID(groupUUID, audienceUserId)
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	utils.ReturnJsonSuccess(w, "Posts fetched successfully", posts)
+}
+
 func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
