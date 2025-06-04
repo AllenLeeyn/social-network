@@ -24,13 +24,11 @@ export default function GroupDetailPage() {
 
         async function loadGroupPost() {
             try {
-            const groupPostsData = await fetchGroupPosts(uuid); // need to add fetch by UUID
+            const groupPostsData = await fetchGroupPosts(uuid);
             setGrpPosts(groupPostsData.data);
 
             } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
+                toast.error(err.message);
             }
         }
         loadGroupPost();
