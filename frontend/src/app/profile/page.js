@@ -68,6 +68,7 @@ export default function ProfilePage() {
       <section className="main-post-section">
           <ProfileCard />
 
+          <div className="follow-lists-row">
           {/* Followers Modal */}
           <FollowingsList title="Followers" users={followers} 
           displayProperty={"follower_name"} linkProperty={"follower_uuid"}/>
@@ -75,6 +76,7 @@ export default function ProfilePage() {
           {/* Following Modal */}
           <FollowingsList title="Following" users={following}
           displayProperty={"leader_name"} linkProperty={"leader_uuid"}/>
+          </div>
 
           {/* Main Post Content */}
           <div className="user-posts-section">

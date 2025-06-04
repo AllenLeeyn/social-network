@@ -214,7 +214,11 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
         <p>
         <span>Date of Birth:</span>{" "}
         {user.birthday
-            ? new Date(user.birthday).toISOString().split("T")[0]
+            ? new Date(user.birthday).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })
             : "Not specified"}
         </p>
         <p>{user.about_me || "Nothing is written."}</p>

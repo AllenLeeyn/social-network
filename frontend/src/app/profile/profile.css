@@ -152,52 +152,57 @@
     margin-left: 5px;
 }
 
-.user-list-panel {
-  margin-bottom: 1.5rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
+.follow-lists-row {
+    display: flex;
+    gap: 2rem;
+    justify-content: flex-start;
+    align-items: stretch;
 }
 
-.toggle-btn {
-  width: 100%;
-  text-align: left;
-  padding: 0.75rem 1rem;
-  font-weight: 600;
-  background-color: #f8f9fa;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.2s ease;
+.user-list-panel {
+    flex: 1 1 0;
+    margin-bottom: 1.5rem;
+}
+
+.button .toggle-btn {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s ease;
 }
 
 .toggle-btn:hover {
-  background-color: #e9ecef;
+    filter: brightness(1.15); 
 }
 
 .panel-content {
-  padding: 1rem;
-  background-color: #fff;
-  animation: fadeIn 0.2s ease-in;
+    padding: 1rem;
+    background-color: #fff;
+    animation: fadeIn 0.2s ease-in;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .users {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .user-item + .user-item {
-  margin-top: 0.75rem;
+    margin-top: 0.75rem;
 }
 
 .radial-avatar {
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #ccc; /* Optional: adds a subtle border */
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ccc; /* Optional: adds a subtle border */
 }
