@@ -6,7 +6,7 @@ import { handleImage } from "../lib/handleImage";
 
 import "../styles/Comments.css";
 
-export default function CommentForm({ postId, onCommentSubmitted }) {
+export default function CommentForm({ postUUID, onCommentSubmitted }) {
   const [content, setContent] = useState("");
   const [postImage, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function CommentForm({ postId, onCommentSubmitted }) {
         }
       }
 
-      await submitComment({ post_id: Number(postId), content,
+      await submitComment({ post_uuid: postUUID, content,
         attached_image: imageUUID ? Object.values(imageUUID)[0] : null });
       setContent("");
       if (onCommentSubmitted) onCommentSubmitted();
