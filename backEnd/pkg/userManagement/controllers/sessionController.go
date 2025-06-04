@@ -41,8 +41,8 @@ func ExtendSession(w http.ResponseWriter, r *http.Request) error {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session-id",
 		Value:    sessionID,
-		Expires:  time.Now().Add(2 * time.Hour),
-		MaxAge:   7200,
+		Expires:  time.Now().Add(time.Hour * 24 * 365 * 10),
+		MaxAge:   315360000, // 10 years
 		Path:     "/",
 		HttpOnly: true,
 		//Secure:   false,
@@ -50,7 +50,7 @@ func ExtendSession(w http.ResponseWriter, r *http.Request) error {
 	})
 	return userModel.UpdateSession(&session{
 		IsActive:   true,
-		ExpireTime: time.Now().Add(2 * time.Hour),
+		ExpireTime: time.Now().Add(time.Hour * 24 * 365 * 10),
 		LastAccess: time.Now(),
 		ID:         sessionID,
 	})

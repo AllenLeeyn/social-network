@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -28,7 +27,7 @@ func isValidCommentId(comment *models.Comment) error {
 func isValidCommentInfo(comment *models.Comment) error {
 	isValid := false
 
-	if comment.PostId, isValid = utils.IsValidId(comment.PostId); !isValid {
+	if comment.PostUUID, isValid = utils.IsValidContent(comment.PostUUID, 1, 50); !isValid {
 		return errors.New("post id is required and must be numeric")
 	}
 	if comment.Content, isValid = utils.IsValidContent(comment.Content, 3, 1000); !isValid {
@@ -117,14 +116,11 @@ func SubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	comment := &models.Comment{}
 	comment.UserId = userID
 	if err := utils.ReadJSON(r, comment); err != nil {
-		fmt.Println("wrr, ",err)
 		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
 		return
 	}
 
 	if err := isValidCommentInfo(comment); err != nil {
-		fmt.Println(comment.PostId)
-		fmt.Println("wrr2, ",err)
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
 	}

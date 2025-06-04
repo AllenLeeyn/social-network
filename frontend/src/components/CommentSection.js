@@ -26,7 +26,7 @@ export default function CommentSection({
           </li>
         ))}
       </ul>
-      <CommentForm postId={postId} onCommentSubmitted={onCommentSubmitted} />
+      <CommentForm postUUID={postId} onCommentSubmitted={onCommentSubmitted} />
     </div>
   );
 }
