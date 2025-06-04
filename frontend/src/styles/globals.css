@@ -13,21 +13,21 @@ body {
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    /* margin: 0;
-    font-family: monospace, Arial, sans-serif;
-    background-color: #f9f9f9;
-    color: #333;
-    overscroll-behavior: none;
-    scroll-behavior: smooth;
-    background-image: url('/bgimage.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed; */
 }
 
 /* ------- nav styles use Navbar.css ------- */
 
 /* ----------- Footer styles------------ */
+/* footer {
+    background-color: rgb(241 241 241 / 70%);
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.9rem;
+    color: #666;
+    margin: 2rem;
+    border-radius: 15px;
+    backdrop-filter: blur(8px);
+} */
 
 footer {
     background-color: #f1f1f1cc;
@@ -48,6 +48,10 @@ footer a:hover {
     text-decoration: underline;
 }
 
+footer p {
+    padding-top: 0;
+    margin-top: 0;
+}
 /* ----------- Button styles------------ */
 
 button {
@@ -105,6 +109,20 @@ textarea:focus {
     align-items: flex-start;
 }
 
+/* .sidebar {
+    flex: 0 0 180px;
+    max-width: 200px;
+    min-width: 160px;
+    border-radius: 12px;
+    padding: 0.2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    background: rgb(35 49 68 / 40%);
+    color: white;
+    justify-content: center;
+    font-weight: bold;
+    backdrop-filter: blur(8px);
+    box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.5);
+} */
 .sidebar {
     flex: 0 0 180px;
     max-width: 200px;
@@ -120,7 +138,7 @@ textarea:focus {
 
 .main-feed,
 .main-post-section {
-    flex: 1 1 0;   /* Take up all remaining space */
+    flex: 1 1 0;  
     min-width: 320px;
     max-width: none;
     border-radius: 12px;
@@ -135,6 +153,18 @@ textarea:focus {
     padding: 1em; 
     line-height: 1.2rem; 
     font-size: 14px;
+}
+
+.main-post-section h2 a {
+    color: #233144;
+    text-decoration: none;
+    margin-top: 0.7rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.6rem;
+}
+
+.main-post-section h2 a:hover {
+    text-decoration: underline;
 }
 
 /* ------------ Sidebars styles ------------------ */

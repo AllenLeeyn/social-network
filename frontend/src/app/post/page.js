@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import SidebarSection from "../../components/SidebarSection";
 import CommentsSection from "../../components/CommentSection";
 import "./post.css";
+// import "../../styles/globals.css";
 import "../../styles/PostList.css";
 import { usePosts } from "../../hooks/usePosts";
 import { fetchPostById } from "../../lib/apiPosts";
