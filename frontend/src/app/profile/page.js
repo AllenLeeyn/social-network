@@ -69,11 +69,8 @@ export default function ProfilePage() {
           <ProfileCard />
 
           <div className="follow-lists-row">
-          {/* Followers Modal */}
           <FollowingsList title="Followers" users={followers} 
           displayProperty={"follower_name"} linkProperty={"follower_uuid"}/>
-
-          {/* Following Modal */}
           <FollowingsList title="Following" users={following}
           displayProperty={"leader_name"} linkProperty={"leader_uuid"}/>
           </div>
