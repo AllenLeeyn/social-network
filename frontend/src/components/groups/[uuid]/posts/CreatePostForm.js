@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { toast } from 'react-toastify';
 import { handleImage } from "../../../../lib/handleImage";
+import "../../../../styles/groups/CreateGroupForm.css";
+
 
 export default function CreatePostForm({ groupID, onSubmit, onClose }) {
     const [title, setTitle] = useState("");
