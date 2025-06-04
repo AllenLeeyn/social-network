@@ -212,7 +212,10 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
         <p>{user.email || ""}</p>
         <p>{user.gender || ""}</p>
         <p>
-          <span>Date of Birth:</span> {user.birthday || "Not specified"}
+        <span>Date of Birth:</span>{" "}
+        {user.birthday
+            ? new Date(user.birthday).toISOString().split("T")[0]
+            : "Not specified"}
         </p>
         <p>{user.about_me || "Nothing is written."}</p>
         {isOwnProfile ? (
