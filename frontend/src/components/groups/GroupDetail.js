@@ -9,20 +9,34 @@ import CreatePostForm from "./[uuid]/posts/CreatePostForm";
 import CreateEventForm from "./[uuid]/events/CreateEventForm";
 import GroupHeader from "./[uuid]/GroupHeader";
 import EventCard from "./[uuid]/events/EventCard";
-import PostCard from '../PostCard'
 
 import { formatDate } from '../../utils/formatDate';
 
 import "../../styles/groups/GroupDetail.css"; 
 
 
-export default function GroupDetail({ group, onBack, onRequestJoin }) {
+export default function GroupDetail(
+    {   group, 
+        members, 
+        requests,
+        allUsers,
+        loadingUsers,
+        onBack, 
+        onRequestJoin,
+        onApproveRequest,   
+        onDenyRequest,
+        onInviteUser,
+    }) {
         
     if (!group) return null;
 
     // Modal state
     const [showPostModal, setShowPostModal] = useState(false);
     const [showEventModal, setShowEventModal] = useState(false);
+    const [showMembersModal, setShowMembersModal] = useState(false);
+
+    const handleOpenMembersModal = () => setShowMembersModal(true);
+    const handleCloseMembersModal = () => setShowMembersModal(false);
 
     // Events state
     const [groupEvents, setGroupEvents] = useState([]);
@@ -34,7 +48,21 @@ export default function GroupDetail({ group, onBack, onRequestJoin }) {
 
     // const eventDate = "2025-06-09T15:04:05Z";
 
+    // checks for req. to join, pending, invited, accepted
     const isMember = group.status === "accepted";
+    const isPending = group.status === "requested" ||  group.status === "invited";
+    // const isInvited = group.status === "invited";
+
+    // checks for the member info for modal Member Section
+    const acceptedMembers = members.filter(m => m.status === 'accepted');
+    const pendingRequests = requests.filter(r => r.status === 'requested' || r.status === 'invited');
+
+    
+    const currentUserUuid = localStorage.getItem('user-uuid');
+
+    const memberUuids = new Set(members.map(m => m.follower_uuid || m.uuid));
+    const nonMembers = allUsers.filter(u => !memberUuids.has(u.uuid));
+    const filteredNonMembers = nonMembers.filter(u => u.uuid !== currentUserUuid);
 
     const refreshEvents = () => {
         fetch(`/frontend-api/groups/events/${group.uuid}`)
@@ -142,8 +170,29 @@ export default function GroupDetail({ group, onBack, onRequestJoin }) {
                         ← Back to Groups
                     </button>
                 )}
-                <section className="member-section">
-                    <strong>Members:</strong>
+                <section className="group-detail-members-section">
+                    <div
+                        className="group-members-label group-members-label--interactive"
+                        onClick={handleOpenMembersModal}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="Show members"
+                        onKeyDown={e => {
+                            if (e.key === "Enter" || e.key === " ") handleOpenMembersModal();
+                        }}
+                        >
+                        <strong>Members:</strong> {group.members_count}
+                    </div>
+                    {/* You can add more member info if backend provides it */}
+                    <div className="group-members-actions">
+                        {isMember ? (
+                            <button onClick={handleOpenMembersModal}>Invite User</button>
+                        ) : isPending ? (
+                            <button disabled>Pending</button>
+                        ) : (
+                            <button onClick={onRequestJoin}>Request to Join</button>
+                        )}
+                    </div>
                 </section>
 
                 {/* Events Section */}
@@ -197,6 +246,80 @@ export default function GroupDetail({ group, onBack, onRequestJoin }) {
                         />
                     </Modal>
                 )}
+                {/* THIS IS YOUR MEMBER DETAIL MODAL! */}
+                {showMembersModal && (
+                    <Modal title="Group Members" onClose={handleCloseMembersModal}>
+                        <section>
+                            <h3>Members</h3>
+                            <ul>
+                            {acceptedMembers.length > 0 ? (
+                                    acceptedMembers.map(m => (
+                                    <li key={m.follower_uuid || m.uuid}>{m.follower_name || m.name}</li>
+                                    ))
+                                ) : (
+                                    <li>No members</li>
+                                )}
+                            </ul>
+                        </section>
+                        {isMember && (
+                        <section>
+                            <h3>Pending Members</h3>
+                            <ul>
+                            {pendingRequests.length > 0 ? (
+                                pendingRequests.map(r => (
+                                <li key={r.follower_uuid || r.uuid || r.user_uuid}>
+                                    {r.follower_name || r.name}
+                                    <button
+                                    style={{ marginLeft: '1rem' }}
+                                    onClick={() => onApproveRequest(r.follower_uuid || r.uuid || r.user_uuid)}
+                                    >
+                                    Approve
+                                    </button>
+                                    <button
+                                    style={{ marginLeft: '0.5rem', color: 'red' }}
+                                    onClick={() => onDenyRequest(r.follower_uuid || r.uuid || r.user_uuid)}
+                                    >
+                                    Deny
+                                    </button>
+                                </li>
+                                ))
+                            ) : (
+                                <li>No pending members</li>
+                            )}
+                            </ul>
+                        </section>
+                        )}
+                        {isMember && (
+                        <section>
+                        <h3>Non-Members</h3>
+                        {loadingUsers ? (
+                            <div>Loading users...</div>
+                        ) : (
+                            <ul>
+                            {filteredNonMembers.length > 0 ? (
+                                [...filteredNonMembers]
+                                .sort((a, b) => a.nick_name.localeCompare(b.nick_name))
+                                .map(u => (
+                                    <li key={u.uuid}>
+                                    {u.nick_name}
+                                    <button
+                                        style={{ marginLeft: '1rem' }}
+                                        onClick={() => onInviteUser(u.uuid)}
+                                    >
+                                        Invite
+                                    </button>
+                                    </li>
+                                ))
+                            ) : (
+                                <li>Everyone is a member!</li>
+                            )}
+                            </ul>
+                        )}
+                        </section>
+                        )}
+                    </Modal>
+                )} 
+
                 {/* THIS IS YOUR EVENT DETAIL MODAL! */}
                 {selectedEvent && (
                     <Modal

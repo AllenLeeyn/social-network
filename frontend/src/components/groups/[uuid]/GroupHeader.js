@@ -7,12 +7,8 @@ export default function GroupHeader({
     isMember,
     onShowPostModal,
     onShowEventModal,
-    onRequestJoin,
 }) {
     if (!group) return null;
-
-
-    const isPending = group.status === "requested";
 
     return (
         <div className="group-detail-header">
@@ -24,11 +20,7 @@ export default function GroupHeader({
                 <button onClick={onShowPostModal}>Create Post</button>
                 <button onClick={onShowEventModal}>Create Event</button>
             </>
-            ) : isPending ? (
-                <button disabled>Pending</button>
-            ) : (
-                <button onClick={onRequestJoin}>Request to Join</button>
-            )}
+            ) : null}
         </div>
         </div>
     );

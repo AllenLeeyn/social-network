@@ -18,6 +18,10 @@ export default function GroupDetailPage() {
     const [requests, setRequests] = useState([]);
     const [loadingMembers, setLoadingMembers] = useState(true);
 
+    const [allUsers, setAllUsers] = useState([]);
+    const [loadingUsers, setLoadingUsers] = useState(true);
+
+
 
     // Helper to refresh members and requests
     function refreshMembersAndRequests() {
@@ -47,8 +51,16 @@ export default function GroupDetailPage() {
     }, [uuid]);
 
 
-    if (loadingGroup) return <div>Loading...</div>;
-    if (!group) return <div>Group not found.</div>;
+    // fetching all users for group detail comp
+    useEffect(() => {
+        setLoadingUsers(true);
+        fetch('/frontend-api/users')
+            .then(res => res.json())
+            .then(data => {
+                setAllUsers(data.data || []);
+                setLoadingUsers(false);
+            });
+    }, []);
 
     // Add this function definition:
     function handleRequestJoin() {
@@ -113,8 +125,33 @@ export default function GroupDetailPage() {
     }
 
 
-    function handleInviteUser() {
+    function handleInviteUser(follower_uuid) {
+        fetch('/frontend-api/group/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                follower_uuid,
+                group_uuid: uuid,
+            }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                toast.success('User invited!');
+                refreshMembersAndRequests();
+            } else {
+                toast.error(data.message || 'Failed to invite user.');
+            }
+        })
+        .catch(() => {
+            toast.error('Failed to invite user.');
+        });
     }
+
+
+    if (loadingGroup) return <div>Loading...</div>;
+    if (!group) return <div>Group not found.</div>;
+
 
     return (
         <div className="groups-page-layout">
@@ -129,11 +166,9 @@ export default function GroupDetailPage() {
                     {loadingMembers
                         ? <div>Loading members...</div>
                         : <GroupMembersList 
-                            members={members} 
+                            members={members.filter(m => m.status === 'accepted')} 
                             requests={requests} 
                             groupUuid={uuid}
-                            onApproveRequest={handleApproveRequest}
-                            onDenyRequest={handleDenyRequest}
                         />
                     }
                 </SidebarSection>
@@ -141,7 +176,17 @@ export default function GroupDetailPage() {
 
             {/* Main Content */}
             <section className="main-feed group-section">
-                <GroupDetail group={group} onRequestJoin={handleRequestJoin} />
+                <GroupDetail 
+                    group={group}
+                    members={members}
+                    requests={requests} 
+                    allUsers={allUsers}
+                    loadingUsers={loadingUsers}
+                    onRequestJoin={handleRequestJoin} 
+                    onApproveRequest={handleApproveRequest}
+                    onDenyRequest={handleDenyRequest}
+                    onInviteUser={handleInviteUser}
+                />
             </section>
 
             {/* Right Sidebar */}

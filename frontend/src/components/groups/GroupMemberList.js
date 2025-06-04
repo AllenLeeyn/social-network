@@ -24,26 +24,6 @@ export default function GroupMembersList({
                     </li>
                 ))}
             </ul>
-            {requests.length > 0 && <h4>Pending Requests</h4>}
-            <ul>
-                {requests.map((member, idx) => (
-                    <li key={member.follower_uuid || idx}>
-                        {member.follower_name}
-                        <button
-                            style={{ marginLeft: '1rem' }}
-                            onClick={() => onApproveRequest(member.follower_uuid)}
-                        >
-                            Approve
-                        </button>
-                        <button
-                            style={{ marginLeft: '0.5rem', color: 'red' }}
-                            onClick={() => onDenyRequest(member.follower_uuid)}
-                        >
-                            Deny
-                        </button>
-                    </li>
-                ))}
-            </ul>
         </div>
     );
 }
