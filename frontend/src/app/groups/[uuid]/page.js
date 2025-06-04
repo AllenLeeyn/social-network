@@ -7,10 +7,11 @@ import GroupDetail from '../../../components/groups/GroupDetail';
 import SidebarSection from '../../../components/SidebarSection';
 import UsersList from '../../../components/UsersList';
 import GroupMembersList from '../../../components/groups/GroupMemberList';
-import '../groups.css'; // or './uuid.css' if you want special styling
+import '../groups.css'; 
 
 export default function GroupDetailPage() {
     const { uuid } = useParams();
+
     const [group, setGroup] = useState(null);
     const [loadingGroup, setLoadingGroup] = useState(true);
 
@@ -21,7 +22,23 @@ export default function GroupDetailPage() {
     const [allUsers, setAllUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
 
+    const [isJoining, setIsJoining] = useState(false);
+    const [isInviting, setIsInviting] = useState(false);
+    const [loadingActions, setLoadingActions] = useState({});
 
+    function setActionLoading(uuid, value) {
+        setLoadingActions(prev => ({ ...prev, [uuid]: value }));
+    }
+
+    function refreshGroup() {
+        setLoadingGroup(true);
+        fetch(`/frontend-api/groups/${uuid}`)
+            .then(res => res.json())
+            .then(data => {
+                setGroup(data.data);
+                setLoadingGroup(false);
+            });
+    }
 
     // Helper to refresh members and requests
     function refreshMembersAndRequests() {
@@ -37,18 +54,22 @@ export default function GroupDetailPage() {
     }
 
     useEffect(() => {
-        setLoadingGroup(true);
-        fetch(`/frontend-api/groups/${uuid}`)
-        .then(res => res.json())
-        .then(data => {
-            setGroup(data.data); 
-            setLoadingGroup(false);
-        });
+        refreshGroup();
     }, [uuid]);
 
     useEffect(() => {
         refreshMembersAndRequests();
     }, [uuid]);
+
+    // useEffect(() => {
+    //     setLoadingGroup(true);
+    //     fetch(`/frontend-api/groups/${uuid}`)
+    //     .then(res => res.json())
+    //     .then(data => {
+    //         setAllUsers(data.data || []);
+    //         setLoadingUsers(false);
+    //     });
+    // }, [uuid]);
 
 
     // fetching all users for group detail comp
@@ -62,8 +83,9 @@ export default function GroupDetailPage() {
             });
     }, []);
 
-    // Add this function definition:
-    function handleRequestJoin() {
+function handleRequestJoin() {
+        if (isJoining) return;
+        setIsJoining(true);
         fetch(`/frontend-api/groups/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -78,61 +100,54 @@ export default function GroupDetailPage() {
             }
             toast.success('Request Sent!');
             refreshMembersAndRequests();
+            refreshGroup();
         })
-        .catch(() => {
-            toast.error('Failed to send join request.');
-        });
+        .catch(() => toast.error('Failed to send join request.'))
+        .finally(() => setIsJoining(false));
     }
 
     function handleApproveRequest(follower_uuid) {
+        if (loadingActions[follower_uuid]) return;
+        setActionLoading(follower_uuid, true);
         fetch(`/frontend-api/group/member/response`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                group_uuid: uuid,
-                follower_uuid,
-                status: 'accepted'
-            }),
+            body: JSON.stringify({ group_uuid: uuid, follower_uuid, status: 'accepted' }),
         })
         .then(res => res.json())
-        .then(data => {
+        .then(() => {
             toast.success('Request approved!');
             refreshMembersAndRequests();
         })
-        .catch(() => {
-            toast.error('Failed to approve request.');
-        });
+        .catch(() => toast.error('Failed to approve request.'))
+        .finally(() => setActionLoading(follower_uuid, false));
     }
 
     function handleDenyRequest(follower_uuid) {
+        if (loadingActions[follower_uuid]) return;
+        setActionLoading(follower_uuid, true);
         fetch(`/frontend-api/group/member/response`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                group_uuid: uuid,
-                follower_uuid,
-                status: 'declined'
-            }),
+            body: JSON.stringify({ group_uuid: uuid, follower_uuid, status: 'declined' }),
         })
         .then(res => res.json())
-        .then(data => {
+        .then(() => {
             toast.info('Request denied.');
             refreshMembersAndRequests();
         })
-        .catch(() => {
-            toast.error('Failed to deny request.');
-        });
+        .catch(() => toast.error('Failed to deny request.'))
+        .finally(() => setActionLoading(follower_uuid, false));
     }
 
-
     function handleInviteUser(follower_uuid) {
+        if (isInviting || loadingActions[follower_uuid]) return;
+        setActionLoading(follower_uuid, true);
+        setIsInviting(true);
         fetch('/frontend-api/group/invite', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                follower_uuid,
-                group_uuid: uuid,
-            }),
+            body: JSON.stringify({ follower_uuid, group_uuid: uuid }),
         })
         .then(res => res.json())
         .then(data => {
@@ -143,52 +158,48 @@ export default function GroupDetailPage() {
                 toast.error(data.message || 'Failed to invite user.');
             }
         })
-        .catch(() => {
-            toast.error('Failed to invite user.');
+        .catch(() => toast.error('Failed to invite user.'))
+        .finally(() => {
+            setActionLoading(follower_uuid, false);
+            setIsInviting(false);
         });
     }
 
     // handlers for accepting and declining as user who has been invited
     function handleAcceptInvite(follower_uuid) {
+        if (loadingActions[follower_uuid]) return;
+        setActionLoading(follower_uuid, true);
         fetch(`/frontend-api/group/member/response`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                group_uuid: uuid,
-                follower_uuid,
-                status: 'accepted'
-            }),
+            body: JSON.stringify({ group_uuid: uuid, follower_uuid, status: 'accepted' }),
         })
         .then(res => res.json())
-        .then(data => {
+        .then(() => {
             toast.success('Invite accepted!');
             refreshMembersAndRequests();
+            refreshGroup();
         })
-        .catch(() => {
-            toast.error('Failed to accept invite.');
-        });
+        .catch(() => toast.error('Failed to accept invite.'))
+        .finally(() => setActionLoading(follower_uuid, false));
     }
+
     function handleDeclineInvite(follower_uuid) {
+        if (loadingActions[follower_uuid]) return;
+        setActionLoading(follower_uuid, true);
         fetch(`/frontend-api/group/member/response`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                group_uuid: uuid,
-                follower_uuid,
-                status: 'declined'
-            }),
+            body: JSON.stringify({ group_uuid: uuid, follower_uuid, status: 'declined' }),
         })
         .then(res => res.json())
-        .then(data => {
+        .then(() => {
             toast.info('Invite declined.');
             refreshMembersAndRequests();
         })
-        .catch(() => {
-            toast.error('Failed to decline invite.');
-        });
+        .catch(() => toast.error('Failed to decline invite.'))
+        .finally(() => setActionLoading(follower_uuid, false));
     }
-
-
 
     if (loadingGroup) return <div>Loading...</div>;
     if (!group) return <div>Group not found.</div>;
@@ -196,12 +207,7 @@ export default function GroupDetailPage() {
 
     return (
         <div className="groups-page-layout">
-            {/* Left Sidebar */}
             <aside className="sidebar left-sidebar">
-                <SidebarSection title="Group Actions">
-                    <button onClick={handleInviteUser}>Invite User</button>
-                    {/* <button>Request to Join</button> */}
-                </SidebarSection>
                 {/* Members List in Sidebar */}
                 <SidebarSection title="Members">
                     {loadingMembers
@@ -229,6 +235,9 @@ export default function GroupDetailPage() {
                     onInviteUser={handleInviteUser}
                     handleAcceptInvite={handleAcceptInvite}
                     handleDeclineInvite={handleDeclineInvite}
+                    loadingActions={loadingActions}
+                    isJoining={isJoining}
+                    isInviting={isInviting}
                 />
             </section>
 

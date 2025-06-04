@@ -28,6 +28,9 @@ export default function GroupDetail(
         onInviteUser,
         handleAcceptInvite,
         handleDeclineInvite,
+        loadingActions = {},
+        isJoining = false,
+        isInviting = false,
     }) {
         
     if (!group) return null;
@@ -48,20 +51,15 @@ export default function GroupDetail(
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [currentRSVP, setCurrentRSVP] = useState(null);
 
-    // const eventDate = "2025-06-09T15:04:05Z";
-
-    // checks for req. to join: pending, invited, accepted
+    // status checks
     const isMember = group.status === "accepted";
     const isRequested = group.status === "requested";
     const isInvited = group.status === "invited";
-    const isPending = group.status === "requested" ||  group.status === "invited";
 
-    // checks for the member info for modal Member Section
+    // filter members and requests
     const acceptedMembers = members.filter(m => m.status === 'accepted');
     const pendingRequests = requests.filter(r => r.status === 'requested' || r.status === 'invited');
 
-
-    
     const currentUserUuid = localStorage.getItem('user-uuid');
 
     const memberUuids = new Set(members.map(m => m.follower_uuid || m.uuid));
@@ -73,7 +71,7 @@ export default function GroupDetail(
             .then(res => {
             if (!res.ok) {
                 return res.text().then(text => {
-                throw new Error(`HTTP error! Status: ${res.status}. Response: ${text}`);
+                    throw new Error(`HTTP error! Status: ${res.status}. Response: ${text}`);
                 });
             }
             return res.json();
@@ -84,7 +82,6 @@ export default function GroupDetail(
             toast.error("Failed to load events");
         });
     };
-
 
     // Fetch events for this group
     useEffect(() => {
@@ -141,9 +138,7 @@ export default function GroupDetail(
             let data = {};
             try {
                 data = await res.json();
-            } catch (e) {
-                // If response is not JSON, data stays empty
-            }
+            } catch { }
             if (res.ok) {
                 setCurrentRSVP(status);
                 toast.success(`RSVP updated: ${status === "accepted" ? "Going" : "Not Going"}`);
@@ -187,7 +182,6 @@ export default function GroupDetail(
                         >
                         <strong>Members:</strong> {group.members_count}
                     </div>
-                    {/* You can add more member info if backend provides it */}
                     <div className="group-members-actions">
                     {isMember ? (
                         <button onClick={handleOpenMembersModal}>Invite User</button>
@@ -195,21 +189,25 @@ export default function GroupDetail(
                         <button disabled>Pending</button>
                     ) : isInvited ? (
                         <>
-                        <button
-                            onClick={() => handleAcceptInvite(currentUserUuid)}
-                            style={{ marginRight: '0.5rem' }}
-                        >
-                            Accept
-                        </button>
-                        <button
-                            onClick={() => handleDeclineInvite(currentUserUuid)}
-                            style={{ color: 'red' }}
-                        >
-                            Decline
-                        </button>
+                            <button
+                                onClick={() => handleAcceptInvite(currentUserUuid)}
+                                style={{ marginRight: '0.5rem' }}
+                                disabled={!!loadingActions[currentUserUuid]}
+                            >
+                                Accept
+                            </button>
+                            <button
+                                onClick={() => handleDeclineInvite(currentUserUuid)}
+                                style={{ color: 'red' }}
+                                disabled={!!loadingActions[currentUserUuid]}
+                            >
+                                Decline
+                            </button>
                         </>
                     ) : (
-                        <button onClick={onRequestJoin}>Request to Join</button>
+                        <button onClick={onRequestJoin} disabled={isJoining}>
+                            {isJoining ? 'Pending...' : 'Request to Join'}
+                        </button>
                     )}
                     </div>
                 </section>
@@ -229,9 +227,8 @@ export default function GroupDetail(
                                         event={event}
                                         isMember={isMember}
                                         onClick={() => {
-                                            // OPEN THE MODAL with event details!
                                             setSelectedEvent(event);
-                                            setCurrentRSVP(event.status); // If you have RSVP info in event
+                                            setCurrentRSVP(event.status);
                                         }}
                                     />
                                 </li>
@@ -295,14 +292,16 @@ export default function GroupDetail(
                                         <button
                                         style={{ marginLeft: '1rem' }}
                                         onClick={() => onApproveRequest(r.follower_uuid || r.uuid || r.user_uuid)}
+                                        disabled={!!loadingActions[r.follower_uuid || r.uuid || r.user_uuid]}
                                         >
-                                        Approve
+                                        {loadingActions[r.follower_uuid || r.uuid || r.user_uuid] ? 'Approving...' : 'Approve'}
                                         </button>
                                         <button
                                         style={{ marginLeft: '0.5rem', color: 'red' }}
                                         onClick={() => onDenyRequest(r.follower_uuid || r.uuid || r.user_uuid)}
+                                        disabled={!!loadingActions[r.follower_uuid || r.uuid || r.user_uuid]}
                                         >
-                                        Deny
+                                        {loadingActions[r.follower_uuid || r.uuid || r.user_uuid] ? 'Denying...' : 'Deny'}
                                         </button>
                                     </>
                                     )}
@@ -315,32 +314,33 @@ export default function GroupDetail(
                         </section>
                         )}
                         {isMember && (
-                        <section>
-                        <h3>Non-Members</h3>
-                        {loadingUsers ? (
-                            <div>Loading users...</div>
-                        ) : (
-                            <ul>
-                            {filteredNonMembers.length > 0 ? (
-                                [...filteredNonMembers]
-                                .sort((a, b) => a.nick_name.localeCompare(b.nick_name))
-                                .map(u => (
-                                    <li key={u.uuid}>
-                                    {u.nick_name}
-                                    <button
-                                        style={{ marginLeft: '1rem' }}
-                                        onClick={() => onInviteUser(u.uuid)}
-                                    >
-                                        Invite
-                                    </button>
-                                    </li>
-                                ))
-                            ) : (
-                                <li>Everyone is a member!</li>
-                            )}
-                            </ul>
-                        )}
-                        </section>
+                            <section>
+                                <h3>Non-Members</h3>
+                                {loadingUsers ? (
+                                    <div>Loading users...</div>
+                                ) : (
+                                    <ul>
+                                    {filteredNonMembers.length > 0 ? (
+                                        [...filteredNonMembers]
+                                        .sort((a, b) => a.nick_name.localeCompare(b.nick_name))
+                                        .map(u => (
+                                            <li key={u.uuid}>
+                                                {u.nick_name}
+                                                <button
+                                                    style={{ marginLeft: '1rem' }}
+                                                    onClick={() => onInviteUser(u.uuid)}
+                                                    disabled={!!loadingActions[u.uuid]}
+                                                >
+                                                    {loadingActions[u.uuid] ? 'Inviting...' : 'Invite'}
+                                                </button>
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li>Everyone is a member!</li>
+                                    )}
+                                    </ul>
+                                )}
+                            </section>
                         )}
                     </Modal>
                 )} 
