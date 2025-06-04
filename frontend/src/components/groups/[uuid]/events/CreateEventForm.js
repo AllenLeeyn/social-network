@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { getMinDateTime } from '../../../../utils/getMinDateTime'; // adjust path as needed
 
-export default function CreateEventForm({ groupId, onSubmit, onClose }) {
+export default function CreateEventForm({ groupUUID, onSubmit, onClose }) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [dateTime, setDateTime] = useState("");
@@ -15,7 +15,7 @@ export default function CreateEventForm({ groupId, onSubmit, onClose }) {
         const start_time = new Date(dateTime).toISOString();
 
         onSubmit && onSubmit({ 
-            group_uuid: groupId, 
+            group_uuid: groupUUID, 
             title, 
             description,
             location,
