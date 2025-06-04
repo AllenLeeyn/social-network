@@ -10,8 +10,9 @@ export default function GroupFilterList({ filters, selectedFilter, onSelect }) {
             <li
             key={filter.key}
             className={
-                "group-filter-item" +
-                (filter.key === selectedFilter ? "active" : "")
+                filter.key === selectedFilter 
+                    ? "group-filter-item active"
+                    : "group-filter-item"
             }
             
             onClick={() => onSelect(filter.key)}

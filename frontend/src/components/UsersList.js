@@ -70,7 +70,7 @@ export default function UsersList( { activeConversation } ) {
                     >
                         {user.name}
                         {user.unread > 0 && <span className='unread-count'>{user.unread}</span>}
-                        {user.online && <span className="dot online" />}
+                        {/* {user.online && <span className="dot online" />} */}
                     </li>
                 ))}
             </ul>

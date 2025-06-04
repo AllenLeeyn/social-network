@@ -13,16 +13,6 @@ body {
 /* ------- nav styles use Navbar.css ------- */
 
 /* ----------- Footer styles------------ */
-/* footer {
-    background-color: rgb(241 241 241 / 70%);
-    text-align: center;
-    padding: 1.5rem;
-    font-size: 0.9rem;
-    color: #666;
-    margin: 2rem;
-    border-radius: 15px;
-    backdrop-filter: blur(8px);
-} */
 
 footer {
     background-color: #f1f1f1cc;
@@ -66,8 +56,6 @@ button {
 
 button:hover {
     transform: scale(1.05);
-    /* clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%); */
-
 }
 
 
@@ -104,23 +92,9 @@ textarea:focus {
     align-items: flex-start;
 }
 
-/* .sidebar {
-    flex: 0 0 180px;
-    max-width: 200px;
-    min-width: 160px;
-    border-radius: 12px;
-    padding: 0.2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    background: rgb(35 49 68 / 40%);
-    color: white;
-    justify-content: center;
-    font-weight: bold;
-    backdrop-filter: blur(8px);
-    box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.5);
-} */
 .sidebar {
     flex: 0 0 180px;
-    max-width: 200px;
+    max-width: 250px;
     min-width: 160px;
     border-radius: 12px;
     padding: 0.2rem;
@@ -129,37 +103,6 @@ textarea:focus {
     color: white;
     justify-content: center;
     font-weight: bold;
-}
-
-.main-feed,
-.main-post-section {
-    flex: 1 1 0;  
-    min-width: 320px;
-    max-width: none;
-    border-radius: 12px;
-    padding: 1.5rem 1.2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    background: #fff;
-}
-
-.main-post-section pre{
-    white-space: pre-wrap; 
-    word-break: break-word;
-    padding: 1em; 
-    line-height: 1.2rem; 
-    font-size: 14px;
-}
-
-.main-post-section h2 a {
-    color: #233144;
-    text-decoration: none;
-    margin-top: 0.7rem;
-    margin-bottom: 0.5rem;
-    font-size: 1.6rem;
-}
-
-.main-post-section h2 a:hover {
-    text-decoration: underline;
 }
 
 /* ------------ Sidebars styles ------------------ */
@@ -223,7 +166,7 @@ textarea:focus {
     text-decoration: none;
     display: flex;
     align-items: center;
-    justify-content: left;
+    justify-content: center;
     width: 110px;
     padding: 5px 15px;
     clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
@@ -236,7 +179,6 @@ textarea:focus {
     border-bottom: 2px solid transparent;
     transition: all 0.3s ease;
 }
-
 
 .group-item,
 .connection-item {
@@ -264,6 +206,12 @@ textarea:focus {
     border-bottom: 2px solid white;
 }
 
+.category-item.active {
+    background: #0070f3;
+    color: white;
+    font-weight: bold;
+}
+
 
 .user-item img {
     border-radius: 50%;
@@ -274,17 +222,34 @@ textarea:focus {
 }
 
 .user-item::before {
-    content: '';
+    /* content: ''; */
+    color: white;
     width: 10px;
     height: 10px;
     margin-right: 5px;
     border-radius: 50%;
     background-color: rgb(193, 189, 189);
     display: inline-block;
+    text-decoration: none;
 }
 
-.user-item.online::before {
-    background-color: rgba(5, 183, 5, 0.966);
+.user-item span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1c54a2;
+    text-decoration: none !important;
+}
+
+.user-item span:hover {
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    text-decoration: none;
+}
+
+.user-item.online {
+    background-color: rgba(19, 131, 19, 0.966);
+    color: white;
 }
 
 .user-item.unread::after {

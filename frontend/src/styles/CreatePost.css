@@ -20,7 +20,13 @@ form {
 .input-group label {
     font-weight: 500;
 }
-
+form input {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    font-family: inherit;
+}
 .input-group input[type="text"],
 .input-group textarea {
     width: 100%;

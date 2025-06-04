@@ -4,7 +4,6 @@ import React from 'react';
 import SidebarSection from '../../components/SidebarSection';
 import UsersList from '../../components/UsersList';
 import MessagesChatbox from '../../components/messages/Chatbox';
-import DirectMessagesList from '../../components/messages/DMList';
 import GroupChatsList from '../../components/messages/GroupChatList';
 import '../../styles/globals.css'
 import './messages.css';

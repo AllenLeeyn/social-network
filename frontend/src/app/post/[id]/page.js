@@ -99,16 +99,12 @@ export default function PostPage() {
   return (
     <main>
       <div className="post-page-layout">
-        {/* Left Sidebar */}
-        <aside className="sidebar left-sidebar">
-          <SidebarSection title="Categories">
-            <CategoriesList categories={categories} />
-          </SidebarSection>
-        </aside>
 
         {/* Main Content */}
         <section className="main-feed">
+          <div className="single-page">
           <PostCard post={post} />
+          </div>
           <CommentsSection
             comments={comments}
             postId={id}

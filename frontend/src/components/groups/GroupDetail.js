@@ -222,7 +222,7 @@ export default function GroupDetail({ group, onBack, onRequestJoin, posts }) {
                             <p><strong>Description:</strong> {selectedEvent.description}</p>
                             <p><strong>Attending:</strong> {selectedEvent.attend_count} going</p>
                             {isMember && (
-                                <div style={{ marginTop: "1rem" }}>
+                                <div className="RSVP-btn" style={{ marginTop: "1rem" }}>
                                     <button
                                         onClick={() => handleRSVP("accepted")}
                                         className={currentRSVP === "accepted" ? "active" : ""}

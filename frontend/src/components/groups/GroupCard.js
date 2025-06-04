@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import '../../styles/groups/GroupCard.css'
+import '../../styles/PostList.css'
 
 export default function GroupCard({ group, onRequestJoin }) {
 
