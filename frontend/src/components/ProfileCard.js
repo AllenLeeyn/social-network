@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { submitFollowRequest, submitUnfollowRequest } from "../lib/apiFollow";
 import { toast } from "react-toastify";
 import { FaUserCircle } from 'react-icons/fa';
+import { useWebsocketContext } from '../contexts/WebSocketContext';
 import Image from 'next/image';
 
 export default function ProfileCard({ uuid, setPrivateProfile }) {
@@ -12,6 +13,7 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
   const [followStatus, setFollowStatus] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { sendAction } = useWebsocketContext();
 
   useEffect(() => {
     async function fetchProfile() {
@@ -79,20 +81,28 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
         await submitUnfollowRequest({ leader_uuid: uuid });
         setFollowStatus("none");
         toast.success("Unfollowed successfully");
+        sendAction({ action: 'userListReq' });
+
       } else if (followStatus === "requested") {
         await submitUnfollowRequest({ leader_uuid: uuid });
         setFollowStatus("none");
         toast.success("Follow request cancelled");
+
       } else {
         await submitFollowRequest({ leader_uuid: uuid });
-        // For private profiles, always set to "requested"
-        setFollowStatus(
+        const newStatus =
           isPrivateProfile
             ? "requested"
             : user?.visibility === "public"
             ? "accepted"
-            : "requested"
-        );
+            : "requested";
+
+        setFollowStatus(newStatus);
+
+        if (newStatus === "accepted") {
+          sendAction({ action: 'userListReq' });
+        }
+
         toast.success(
           isPrivateProfile || user?.visibility !== "public"
             ? "Follow request sent"

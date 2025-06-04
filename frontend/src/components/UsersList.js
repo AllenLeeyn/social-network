@@ -21,24 +21,19 @@ export default function UsersList( { activeConversation } ) {
             receiverUUID: user.receiverUUID,
             groupUUID: user.groupUUID,
         });
-        
-        const isSameChat = 
-        activeChat?.uuid === user.uuid;
 
-        if (!isSameChat) {
-            setMessages([]);
-            sendAction({
-                action: "messageReq",
-                receiverUUID: user.receiverUUID,
-                groupUUID: user.groupUUID,
-                content: "-1"
-            });
-            sendAction({
-                action: 'messageAck',
-                receiverUUID: userUUID,
-                senderUUID: user.receiverUUID
-            });
-        }
+        setMessages([]);
+        sendAction({
+            action: "messageReq",
+            receiverUUID: user.receiverUUID,
+            groupUUID: user.groupUUID,
+            content: "-1"
+        });
+        sendAction({
+            action: 'messageAck',
+            receiverUUID: userUUID,
+            senderUUID: user.receiverUUID
+        });
         setUserList(prev => prev.map(u => u.uuid === user.uuid ? { ...u, unread: false } : u));
         console.log("User clicked:", user);
         router.push('/messages');

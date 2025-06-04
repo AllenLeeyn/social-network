@@ -21,15 +21,7 @@ export default function PostPage() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [connections, setConnections] = useState([]);
-  const [connectionsLoading, setConnectionsLoading] = useState(true);
-  const [connectionsError, setConnectionsError] = useState(null);
 
-  const [groups, setGroups] = useState([]);
-  const [groupsLoading, setGroupsLoading] = useState(true);
-  const [groupsError, setGroupsError] = useState(null);
-
-  // Fetch categories (and optionally users, etc.)
   const {
     categories,
     loading: categoriesLoading,

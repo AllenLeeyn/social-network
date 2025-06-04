@@ -131,6 +131,7 @@ export function WebSocketProvider( { children } ) {
                     setMessages(prev => [...prev, data]);
                 }
 
+                if (data.groupUUID !== '00000000-0000-0000-0000-000000000000') return;
                 if (data.senderUUID !== currentChatUUIDRef.current) {
                     setUserList(prev =>{
                         const index = prev.findIndex(user => 
