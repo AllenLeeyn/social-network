@@ -150,19 +150,24 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 			IFNULL(
 				CASE
 					WHEN n.target_detailed_type = 'follow_request' THEN
-					'You have a follow request from <b>' || target_user.nick_name || '</b>'
+						'You have a follow request from <b>' || target_user.nick_name || '</b>'
 					WHEN n.target_detailed_type = 'follow_request_responded' THEN
-					'Your follow request to <b>' || target_user.nick_name || '</b> has been ' || n.message
+						CASE
+							WHEN n.message = 'You have a new follower' THEN
+								'You have a new follower: <b>' || target_user.nick_name || '</b>'
+							ELSE
+								'Your follow request to <b>' || target_user.nick_name || '</b> has been ' || n.message
+						END
 					WHEN n.target_detailed_type = 'group_invite' THEN
-					'You have been invited to group <b>' || target_group.title || '</b>'
+						'You have been invited to group <b>' || target_group.title || '</b>'
 					WHEN n.target_detailed_type = 'group_invite_responded' THEN
-					'Your group invitation to group <b>' || target_group.title || '</b> has been ' || n.message
+						'Your group invitation to group <b>' || target_group.title || '</b> has been ' || n.message
 					WHEN n.target_detailed_type = 'group_request' THEN
-					'You have a group joining request from <b>' || from_user.nick_name || '</b> to group <b>' || target_group.title || '</b>'
+						'You have a group joining request from <b>' || from_user.nick_name || '</b> to group <b>' || target_group.title || '</b>'
 					WHEN n.target_detailed_type = 'group_request_responded' THEN
-					'Your group joining request to group <b>' || target_group.title || '</b> has been ' || n.message
+						'Your group joining request to group <b>' || target_group.title || '</b> has been ' || n.message
 					WHEN n.target_detailed_type = 'group_event' THEN
-					'Event <b>' || n.message || '</b>' || ' has been created in group <b>' || target_group.title || '</b>'
+						'Event <b>' || n.message || '</b>' || ' has been created in group <b>' || target_group.title || '</b>'
 					ELSE ''
 				END,
 				''
@@ -250,19 +255,24 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 			IFNULL(
 				CASE
 					WHEN n.target_detailed_type = 'follow_request' THEN
-					'You have a follow request from <b>' || target_user.nick_name || '</b>'
+						'You have a follow request from <b>' || target_user.nick_name || '</b>'
 					WHEN n.target_detailed_type = 'follow_request_responded' THEN
-					'Your follow request to <b>' || target_user.nick_name || '</b> has been ' || n.message
+						CASE
+							WHEN n.message = 'You have a new follower' THEN
+								n.message || ': <b>' || target_user.nick_name || '</b>'
+							ELSE
+								'Your follow request to <b>' || target_user.nick_name || '</b> has been ' || n.message
+						END
 					WHEN n.target_detailed_type = 'group_invite' THEN
-					'You have been invited to group <b>' || target_group.title || '</b>'
+						'You have been invited to group <b>' || target_group.title || '</b>'
 					WHEN n.target_detailed_type = 'group_invite_responded' THEN
-					'Your group invitation to group <b>' || target_group.title || '</b> has been ' || n.message
+						'Your group invitation to group <b>' || target_group.title || '</b> has been ' || n.message
 					WHEN n.target_detailed_type = 'group_request' THEN
-					'You have a group joining request from <b>' || from_user.nick_name || '</b> to group <b>' || target_group.title || '</b>'
+						'You have a group joining request from <b>' || from_user.nick_name || '</b> to group <b>' || target_group.title || '</b>'
 					WHEN n.target_detailed_type = 'group_request_responded' THEN
-					'Your group joining request to group <b>' || target_group.title || '</b> has been ' || n.message
+						'Your group joining request to group <b>' || target_group.title || '</b> has been ' || n.message
 					WHEN n.target_detailed_type = 'group_event' THEN
-					'Event <b>' || n.message || '</b>' || ' has been created in group <b>' || target_group.title || '</b>'
+						'Event <b>' || n.message || '</b>' || ' has been created in group <b>' || target_group.title || '</b>'
 					ELSE ''
 				END,
 				''
