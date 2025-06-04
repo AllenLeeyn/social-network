@@ -29,6 +29,7 @@ export default function AuthPage() {
   const [registerGender, setGender] = useState("");
   const [registerVisibility, setVisibility] = useState("");
   const [formError, setFormError] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -58,6 +59,15 @@ export default function AuthPage() {
     } catch (err) {
       console.error("Login failed:", err.message);
     }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setAvatar(e.target.files[0]);
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
   };
 
   // Handle registration submission
@@ -290,8 +300,15 @@ export default function AuthPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setAvatar(e.target.files[0])}
+                  onChange={handleFileChange}
                 />
+                {previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt="Avatar Preview"
+                    style={{ width: 100, height: 100, objectFit: "cover", marginTop: 10 }}
+                  />
+                )}
                 <textarea
                   placeholder="About Me - Optional"
                   value={registerAboutMe}
