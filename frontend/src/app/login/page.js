@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth"; // Import the useAuth hook
 import "./login.css";
-import { toast } from 'react-toastify';
-import { handleImage } from "../../lib/handleImage"; 
+import { toast } from "react-toastify";
+import { handleImage } from "../../lib/handleImage";
 
 export default function AuthPage() {
   const { handleLogin, handleSignup, error, loading } = useAuth(); // Use the hook for login and signup logic
@@ -26,7 +26,6 @@ export default function AuthPage() {
   const [registerGender, setGender] = useState("");
   const [registerVisibility, setVisibility] = useState("");
   const [formError, setFormError] = useState("");
-
 
   // Handle login submission
   const handleLoginSubmit = async (e) => {
@@ -73,13 +72,13 @@ export default function AuthPage() {
       birthday: new Date(registerDateOfBirth).toISOString(),
       about_me: registerAboutMe,
       gender: registerGender,
-      visibility: registerVisibility, 
+      visibility: registerVisibility,
       profile_image: imageUUID ? Object.values(imageUUID)[0] : null,
     };
 
     try {
       await handleSignup(userData);
-      toast.success("Signup successful! Redirecting...")
+      toast.success("Signup successful! Redirecting...");
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
@@ -196,6 +195,7 @@ export default function AuthPage() {
                   type="date"
                   value={registerDateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]}
                   required
                 />
                 {/* Gender Radio Group */}
@@ -278,7 +278,6 @@ export default function AuthPage() {
                   <option value="public">Public</option>
                   <option value="private">Private</option>
                 </select> */}
-
               </fieldset>
 
               <fieldset className="auth-form">
@@ -315,29 +314,29 @@ export default function AuthPage() {
 
 // function smoothToggleAuthForm() {
 //     if (isToggling) return;
-    
+
 //     isToggling = true;
 //     const container = document.querySelector('.auth-form-container');
-    
+
 //     // Fade out
 //     container.style.transition = 'all 1.5s cubic-bezier(0.23, 1, 0.32, 1)';
 //     container.style.opacity = '0';
 //     container.style.transform = 'translateY(-35px) scale(0.94)';
 //     container.style.filter = 'blur(1px)';
-    
+
 //     setTimeout(() => {
 //         // Your form switching logic here
 //         // updateFormContent(); // Call your existing function
-        
+
 //         // Fade in
 //         container.style.opacity = '1';
 //         container.style.transform = 'translateY(0) scale(1)';
 //         container.style.filter = 'blur(0px)';
-        
+
 //         setTimeout(() => {
 //             isToggling = false;
 //         }, 1800);
-        
+
 //     }, 1500);
 // }
 
