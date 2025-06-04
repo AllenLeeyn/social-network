@@ -41,7 +41,7 @@ export default function CommentForm({ postId, onCommentSubmitted }) {
 
   return (
     <form className="comment-form" onSubmit={handleSubmit}>
-      <h2>Feel free to comment!</h2>
+      <h3>Feel free to comment!</h3>
       <textarea
         placeholder="Add a comment..."
         value={content}
