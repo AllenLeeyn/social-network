@@ -49,6 +49,7 @@ type userProfile struct {
 	ProfileImage string    `json:"profile_image"`
 	AboutMe      string    `json:"about_me"`
 	Visibility   string    `json:"visibility"`
+	Status       string    `json:"status"`
 }
 
 func SelectUsers() (*[]UserView, error) {

@@ -22,6 +22,28 @@ export async function fetchMyPosts() {
   return response.json();
 }
 
+export async function fetchUserPosts(uuid) {
+  const response = await fetch(`${API_URL}/userPosts/${uuid}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch posts");
+  }
+  return response.json();
+}
+
+export async function fetchGroupPosts(uuid) {
+  const response = await fetch(`${API_URL}/groupPosts/${uuid}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch posts");
+  }
+  return response.json();
+}
+
 export async function fetchPostById(id) {
   const response = await fetch(`${API_URL}/post/${id}`, {
     method: "GET",

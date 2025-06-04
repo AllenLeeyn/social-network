@@ -116,6 +116,10 @@ export default function PostCard({ post }) {
       </div>
 
       <small className="category-tags">
+        {post.group?.title && (
+          <span className="category-badge">group: {post.group.title}</span>
+        )}
+
         {post.categories.map((cat) => (
           <span key={cat.id || cat.name} className="category-badge">
             {cat.name}

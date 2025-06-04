@@ -171,6 +171,16 @@ func SetupRoutes(cc *chatContollers.ChatController) {
 		middleware.CheckHttpRequest("user", http.MethodGet,
 			forumControllers.ReadPostHandler))
 
+	// router.HandleFunc("/userPosts/{uuid}", forumControllers.ReadPostsSubmittedByUserUUIDHandler).Methods("GET")
+	http.HandleFunc("/api/userPosts/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.ReadPostsSubmittedByUserUUIDHandler))
+
+	// router.HandleFunc("/groupPosts/{uuid}", forumControllers.ReadPostsSubmittedByGroupUUIDHandler).Methods("GET")
+	http.HandleFunc("/api/groupPosts/",
+		middleware.CheckHttpRequest("user", http.MethodGet,
+			forumControllers.ReadPostsSubmittedByGroupUUIDHandler))
+
 	// router.HandleFunc("/posts/{categoryName}", forumControllers.ReadPostsByCategory).Methods("GET")
 	http.HandleFunc("/api/posts/",
 		middleware.CheckHttpRequest("user", http.MethodGet,

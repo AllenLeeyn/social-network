@@ -3,14 +3,27 @@
 import Link from 'next/link';
 import '../../styles/groups/GroupCard.css'
 
-export default function GroupCard({ group, onInvite, onRequestJoin }) {
+export default function GroupCard({ group, onRequestJoin }) {
 
     // Helper to prevent navigation when button is clicked
     const handleButtonClick = (e, handler) => {
         e.preventDefault();
         e.stopPropagation();
-        handler(group);
+        onRequestJoin(group);
     };
+
+    let actionTaken = null;
+    if (group.status === "invited") {
+        actionTaken = <span className="group-card-invited">Invited</span>;
+    } else if (group.status === "requested") {
+        actionTaken = <span className="group-card-pending">Pending</span>;
+    } else if (group.status === "") {
+        actionTaken = (
+            <button onClick={handleButtonClick}>
+                Request to Join
+            </button>
+        );
+    }
 
     return (
         <Link href={`/groups/${group.uuid}`} className="group-card-link" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -19,12 +32,7 @@ export default function GroupCard({ group, onInvite, onRequestJoin }) {
             <p>{group.description}</p>
             <p>Members: {group.members_count}</p>
             <p>Creator: {group.creator_name}</p>
-            {/* Conditional Button */}
-            {group.status === "accepted" ? (
-                    <button onClick={e => handleButtonClick(e, onInvite)}>Invite</button>
-                ) : (
-                    <button onClick={e => handleButtonClick(e, onRequestJoin)}>Request to Join</button>
-                )}
+            {actionTaken}
             </div>
         </Link>
     );

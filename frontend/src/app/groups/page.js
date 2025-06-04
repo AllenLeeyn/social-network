@@ -23,6 +23,7 @@ export default function GroupsPage() {
   const [selectedFilter, setSelectedFilter] = useState('my_groups');
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [groupsRefreshKey, setGroupsRefreshKey] = useState(0);
 
 
   const handleSelectGroup = (group) => {
@@ -58,7 +59,7 @@ export default function GroupsPage() {
           </button>
         </div>
           {selectedFilter === 'my_groups' && (
-            <GroupList onSelectGroup={handleSelectGroup} />
+            <GroupList key={groupsRefreshKey} onSelectGroup={handleSelectGroup} />
           )}
           {selectedFilter === 'discover' && (
             <GroupList discover onSelectGroup={handleSelectGroup} />
@@ -72,7 +73,12 @@ export default function GroupsPage() {
 
           {isCreateModalOpen && (
             <Modal title="Create Group" onClose={() => setCreateModalOpen(false)}>
-              <CreateGroupForm onSuccess={() => setCreateModalOpen(false)} />
+              <CreateGroupForm 
+                onSuccess={() => {
+                  setCreateModalOpen(false)
+                  setGroupsRefreshKey(k => k+1);
+                }} 
+              />
             </Modal>
           )}
         </section>
