@@ -1,23 +1,26 @@
 body {
+    min-height: 100vh;   /* fallback for older browsers */
+    min-height: 100dvh;  /* modern browsers */
+    display: flex;
+    flex-direction: column;
     margin: 0;
     font-family: monospace, Arial, sans-serif;
-    background-color: #f9f9f9;
     color: #333;
     overscroll-behavior: none;
     scroll-behavior: smooth;
-    background-image: url('/bgimage.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
 }
 
-/* nav styles use Navbar.css */
+/* ------- nav styles use Navbar.css ------- */
+
+/* ----------- Footer styles------------ */
+
 footer {
     background-color: #f1f1f1cc;
     text-align: center;
     padding: 0.5rem;
     font-size: 0.9rem;
     color: #666;
+    margin-top: auto;
 }
 
 footer a {
@@ -29,6 +32,8 @@ footer a {
 footer a:hover {
     text-decoration: underline;
 }
+
+/* ----------- Button styles------------ */
 
 button {
     font-family: monospace, Arial, sans-serif;
@@ -51,7 +56,9 @@ button:hover {
 
 }
 
+
 main {
+    flex: 1 0 auto;
     padding: 1rem;
     min-height: 80vh;
 }
@@ -60,23 +67,25 @@ main {
     font-size: 2rem;
     margin-left: 0.5rem;;
     margin-top: 1rem;
-    margin-bottom: 1rem;
 }
 
 input:focus,
 textarea:focus {
     border-color: #233144;
     outline: none;
+    resize: none;
 }
 
-/* ------------------------------ */
 
-/* Layout */
+/* ------------ Layout --------------*/
 .homepage-layout {
+    
     display: flex;
     gap: 1rem;
     max-width: 1100px;
-    margin: 0 auto;
+    margin-top: 70px;
+    margin-left: auto;
+    margin-right: auto;
     width: 100%;
     align-items: flex-start;
 }
@@ -105,7 +114,15 @@ textarea:focus {
     background: #fff;
 }
 
-/* ------------------------------ */
+.main-post-section pre{
+    white-space: pre-wrap; 
+    word-break: break-word;
+    padding: 1em; 
+    line-height: 1.2rem; 
+    font-size: 14px;
+}
+
+/* ------------ Sidebars styles ------------------ */
 
 
 /* Sidebar lists */
@@ -207,15 +224,6 @@ textarea:focus {
     border-bottom: 2px solid white;
 }
 
-/* .category-item.active,
-.group-item.active,
-.connection-item.active,
-.user-item.active {
-    background: #0070f3 !important;
-    color: white;
-    font-weight: bold;
-} */
-
 
 .user-item img {
     border-radius: 50%;
@@ -245,7 +253,7 @@ textarea:focus {
     margin-left: 5px;
 }
 
-/* Reponsive */
+/* ------------- Reponsive -------------- */
 @media (max-width: 1150px) {
     .homepage-sections {
         max-width: 1000px;

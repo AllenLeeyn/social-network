@@ -43,6 +43,7 @@ func ExtendSession(w http.ResponseWriter, r *http.Request) error {
 		Value:    sessionID,
 		Expires:  time.Now().Add(2 * time.Hour),
 		MaxAge:   7200,
+		Path:     "/",
 		HttpOnly: true,
 		//Secure:   false,
 		//SameSite: http.SameSiteNoneMode,
@@ -62,6 +63,7 @@ func expireSession(w http.ResponseWriter, r *http.Request, s *session) {
 		Expires:  time.Now(), // Set expiration to a past date
 		MaxAge:   -1,         // Invalidate the cookie immediately
 		HttpOnly: true,
+		Path:     "/",
 		//Secure:   false,
 		//SameSite: http.SameSiteNoneMode,
 	})

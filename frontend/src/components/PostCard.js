@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { FaThumbsUp, FaThumbsDown, FaCommentAlt } from 'react-icons/fa';
-import { TimeAgo } from '../utils/TimeAgo';
-import DynamicImage from './DynamicImage';
-import { toast } from 'react-toastify';
+import { useState } from "react";
+import Link from "next/link";
+import { FaThumbsUp, FaThumbsDown, FaCommentAlt } from "react-icons/fa";
+import { TimeAgo } from "../utils/TimeAgo";
+import DynamicImage from "./DynamicImage";
+import { toast } from "react-toastify";
 import { fetchPostById, submitPostFeedback } from "../lib/apiPosts";
-import { FaUserCircle } from 'react-icons/fa';
-import Image from 'next/image';
+import { FaUserCircle } from "react-icons/fa";
+import Image from "next/image";
 
 export default function PostCard({ post }) {
   const [liked, setLiked] = useState(post.liked);
@@ -25,7 +25,7 @@ export default function PostCard({ post }) {
   };
 
   const handleLike = () => {
-      handlePostFeedback(1)
+    handlePostFeedback(1);
     if (liked) {
       setLiked(false);
       setLikeCount((c) => c - 1);
@@ -40,7 +40,7 @@ export default function PostCard({ post }) {
   };
 
   const handleDislike = () => {
-      handlePostFeedback(-1)
+    handlePostFeedback(-1);
     if (disliked) {
       setDisliked(false);
       setDislikeCount((c) => c - 1);
@@ -57,24 +57,24 @@ export default function PostCard({ post }) {
   return (
     <div>
       <h2>
-        <Link href={`/post?id=${post.uuid}`}>{post.title}</Link>
+        <Link href={`/post/${post.uuid}`}>{post.title}</Link>
       </h2>
 
       <div className="user-info">
         <div className="user-avatar">
-        {post.user.profile_image ? (
-          <Image
-            src={`/frontend-api/image/${post.user.profile_image}`}
-            alt="User Avatar"
-            width={40}
-            height={40}
-          />
-        ) : (
-          <FaUserCircle size={50} color="#aaa"/>
-        )}
+          {post.user.profile_image ? (
+            <Image
+              src={`/frontend-api/image/${post.user.profile_image}`}
+              alt="User Avatar"
+              width={40}
+              height={40}
+            />
+          ) : (
+            <FaUserCircle size={50} color="#aaa" />
+          )}
         </div>
         <div className="user-details">
-          <Link href={`/user/${post.user.uuid}`} className="user-name">
+          <Link href={`/profile/${post.user.uuid}`} className="user-name">
             {post.user.nick_name}
           </Link>
           <div className="timestamp">{TimeAgo(post.created_at)}</div>
@@ -97,14 +97,14 @@ export default function PostCard({ post }) {
 
       <div className="post-stats">
         <button
-          className={`stat-btn ${liked ? 'liked' : ''}`}
+          className={`stat-btn ${liked ? "liked" : ""}`}
           onClick={handleLike}
         >
           <FaThumbsUp /> {likeCount}
         </button>
 
         <button
-          className={`stat-btn ${disliked ? 'disliked' : ''}`}
+          className={`stat-btn ${disliked ? "disliked" : ""}`}
           onClick={handleDislike}
         >
           <FaThumbsDown /> {dislikeCount}
@@ -116,6 +116,10 @@ export default function PostCard({ post }) {
       </div>
 
       <small className="category-tags">
+        {post.group?.title && (
+          <span className="category-badge">group: {post.group.title}</span>
+        )}
+
         {post.categories.map((cat) => (
           <span key={cat.id || cat.name} className="category-badge">
             {cat.name}

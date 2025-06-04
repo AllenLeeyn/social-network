@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 import SidebarSection from "../components/SidebarSection";
 import CategoriesList from "../components/CategoriesList";
@@ -11,7 +10,7 @@ import CreatePost from "../components/CreatePost";
 import Modal from "../components/Modal";
 import UsersList from "../components/UsersList";
 
-import { fetchPosts, fetchPostsByCategory } from "../lib/apiPosts";
+import { fetchPostsByCategory } from "../lib/apiPosts";
 import { usePosts } from "../hooks/usePosts";
 import ConnectionList from "../components/ConnectionList";
 import { fetchFollowees, fetchGroups } from "../lib/apiAuth";
@@ -25,7 +24,6 @@ export default function HomePage() {
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
 
   const [connections, setConnections] = useState([]);
   const [connectionsLoading, setConnectionsLoading] = useState(true);
@@ -34,22 +32,8 @@ export default function HomePage() {
   const [groups, setGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
   const [groupsError, setGroupsError] = useState(null);
-  
-  const router = useRouter();
 
   const { isConnected, connect } = useWebsocketContext();
-  useEffect(() => {
-    async function checkAccess() {
-      try {
-        await fetchPosts();
-        setIsAuthorized(true);
-      } catch (error) {
-        console.error("Access denied, redirecting to login:", error);
-        router.push("/login");
-      }
-    }
-    checkAccess();
-  }, [router]);
 
   useEffect(() => {
     if (!selectedCategory) setFilteredPosts(posts);
@@ -108,11 +92,6 @@ export default function HomePage() {
 
   // Filter logic
   const displayedPosts = selectedCategory ? filteredPosts : posts;
-
-  if (!isAuthorized) {
-    // Prevent rendering the homepage until access is verified
-    return null;
-  }
 
   return (
     <main>

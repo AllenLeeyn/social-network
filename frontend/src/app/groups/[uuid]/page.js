@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { fetchGroupPosts } from "../../../lib/apiPosts";
 import GroupDetail from '../../../components/groups/GroupDetail';
 import SidebarSection from '../../../components/SidebarSection';
 import UsersList from '../../../components/UsersList';
@@ -32,13 +33,27 @@ export default function GroupDetailPage() {
 
     function refreshGroup() {
         setLoadingGroup(true);
-        fetch(`/frontend-api/groups/${uuid}`)
+        fetch(`/frontend-api/group/${uuid}`)
             .then(res => res.json())
             .then(data => {
                 setGroup(data.data);
                 setLoadingGroup(false);
             });
     }
+    const [grpPosts, setGrpPosts] = useState([]);
+    useEffect(() => {
+
+        async function loadGroupPost() {
+            try {
+            const groupPostsData = await fetchGroupPosts(uuid);
+            setGrpPosts(groupPostsData.data);
+
+            } catch (err) {
+                toast.error(err.message);
+            }
+        }
+        loadGroupPost();
+    }, [uuid]);
 
     // Helper to refresh members and requests
     function refreshMembersAndRequests() {
@@ -238,6 +253,7 @@ function handleRequestJoin() {
                     loadingActions={loadingActions}
                     isJoining={isJoining}
                     isInviting={isInviting}
+                    posts={grpPosts}
                 />
             </section>
 

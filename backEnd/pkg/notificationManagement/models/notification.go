@@ -8,11 +8,12 @@ import (
 )
 
 type NotificationFromUser struct {
-	ID        int    `json:"id"`
-	UUID      string `json:"uuid"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	NickName  string `json:"nick_name"`
+	ID           int    `json:"id"`
+	UUID         string `json:"uuid"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	NickName     string `json:"nick_name"`
+	ProfileImage string `json:"profile_image,omitempty"` // Optional field for profile image
 }
 
 // Post struct represents the user data model
@@ -33,7 +34,8 @@ type Notification struct {
 	UpdatedAt          *time.Time       `json:"updated_at"`
 	UpdatedBy          *int             `json:"updated_by"`
 
-	FromUser NotificationFromUser `json:"from_user"` // Embedded from user data
+	FromUser   NotificationFromUser `json:"from_user"` // Embedded from user data
+	ToUserUUID string               `json:"to_user_uuid"`
 }
 
 var sqlDB *sql.DB
@@ -77,15 +79,14 @@ func InsertNotificationForEvent(n *Notification, groupID, userID int) error {
 			SELECT 
 				members.follower_id, ?,
 				'groups', 'group_event',
-				?, ?, 
-				'new_event'
+				?, ?, ?
 			FROM following members
 			WHERE members.group_id = ? AND members.follower_id != ?
 				AND members.status = 'accepted';`
 
 	_, err := sqlDB.Exec(qry,
 		n.FromUserId,
-		n.TargetId, n.TargetUUID, groupID, userID)
+		n.TargetId, n.TargetUUID, n.Message, groupID, userID)
 	return err
 }
 
@@ -137,27 +138,72 @@ func DeleteNotification(notification_id int, user_id int) error {
 
 func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 	rows, selectError := sqlDB.Query(`
-        SELECT n.id as notification_id, n.to_user_id as notification_to_user_id, n.from_user_id as notification_from_user_id, 
-			n.target_id as notification_target_id, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
-			case
-				when n.target_detailed_type = 'follow_request' then 'You have a follow request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
-				when n.target_detailed_type = 'follow_request_accepted' then 'Your follow request to ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been accepted'
-				when n.target_detailed_type = 'group_invite' then 'You have been invited to group ' || (SELECT title FROM groups WHERE id = n.target_id)
-				when n.target_detailed_type = 'group_request' then 'You have a group joining request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
-				when n.target_detailed_type = 'group_event' then 'You have been invited to event' || (SELECT title FROM group_events WHERE id = n.target_id)
-				else ''
-			end as notification_message
-			, n.is_read as notification_is_read, n.data as notification_data,
-			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name
-		FROM notifications n
+        SELECT 
+			n.id AS notification_id,
+			n.to_user_id AS notification_to_user_id,
+			n.from_user_id AS notification_from_user_id,
+			n.target_id AS notification_target_id,
+			n.target_uuid AS notification_target_uuid,
+			n.target_type AS notification_target_type,
+			n.target_detailed_type AS notification_target_detailed_type,
+
+			IFNULL(
+				CASE
+					WHEN n.target_detailed_type = 'follow_request' THEN
+						'You have a follow request from <b>' || target_user.nick_name || '</b>'
+					WHEN n.target_detailed_type = 'follow_request_responded' THEN
+						CASE
+							WHEN n.message = 'You have a new follower' THEN
+								'You have a new follower: <b>' || target_user.nick_name || '</b>'
+							ELSE
+								'Your follow request to <b>' || target_user.nick_name || '</b> has been ' || n.message
+						END
+					WHEN n.target_detailed_type = 'group_invite' THEN
+						'You have been invited to group <b>' || target_group.title || '</b>'
+					WHEN n.target_detailed_type = 'group_invite_responded' THEN
+						'Your group invitation to group <b>' || target_group.title || '</b> has been ' || n.message
+					WHEN n.target_detailed_type = 'group_request' THEN
+						'You have a group joining request from <b>' || from_user.nick_name || '</b> to group <b>' || target_group.title || '</b>'
+					WHEN n.target_detailed_type = 'group_request_responded' THEN
+						'Your group joining request to group <b>' || target_group.title || '</b> has been ' || n.message
+					WHEN n.target_detailed_type = 'group_event' THEN
+						'Event <b>' || n.message || '</b>' || ' has been created in group <b>' || target_group.title || '</b>'
+					ELSE ''
+				END,
+				''
+			) AS notification_message,
+
+			n.is_read AS notification_is_read,
+			n.data AS notification_data,
+			n.status AS notification_status,
+			n.created_at AS notification_created_at,
+			n.updated_at AS notification_updated_at,
+			n.updated_by AS notification_updated_by,
+
+			from_user.id AS from_user_id,
+			from_user.uuid AS from_user_uuid,
+			from_user.first_name AS from_user_first_name,
+			from_user.last_name AS from_user_last_name,
+			from_user.nick_name AS from_user_nick_name,
+			from_user.profile_image AS from_user_profile_image,
+
+			to_user.uuid AS to_user_uuid
+
+			FROM notifications n
 			INNER JOIN users to_user
 				ON n.to_user_id = to_user.id
 				AND to_user.id = ?
 			LEFT JOIN users from_user
 				ON n.from_user_id = from_user.id
-		WHERE n.status != 'delete'
-		ORDER BY n.id desc;
+			LEFT JOIN users target_user
+				ON n.target_detailed_type IN ('follow_request', 'follow_request_responded')
+				AND n.target_id = target_user.id
+			LEFT JOIN groups target_group
+				ON n.target_detailed_type IN ('group_invite', 'group_invite_responded', 'group_request', 'group_request_responded', 'group_event')
+				AND n.target_id = target_group.id
+
+			WHERE n.status != 'delete'
+			ORDER BY n.id DESC;
     `, to_user_id)
 	if selectError != nil {
 		return nil, selectError
@@ -173,10 +219,11 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 		// Scan the post and user data
 		err := rows.Scan(
 			&notification.ID, &notification.ToUserId, &notification.FromUserId,
-			&notification.TargetId, &notification.TargetType, &notification.TargetDetailedType,
+			&notification.TargetId, &notification.TargetUUIDForm, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
-			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
+			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName, &fromUser.ProfileImage,
+			&notification.ToUserUUID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
@@ -196,28 +243,73 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 
 func ReadNotificationById(notification_id int, to_user_id int) (Notification, error) {
 	rows, selectError := sqlDB.Query(`
-        SELECT n.id as notification_id, n.to_user_id as notification_to_user_id, n.from_user_id as notification_from_user_id, 
-			n.target_id as notification_target_id, n.target_type as notification_target_type, n.target_detailed_type as notification_target_detailed_type, 
-			case
-				when n.target_detailed_type = 'follow_request' then 'You have a follow request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
-				when n.target_detailed_type = 'follow_request_accepted' then 'Your follow request to ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id) || ' has been accepted'
-				when n.target_detailed_type = 'group_invite' then 'You have been invited to group ' || (SELECT title FROM groups WHERE id = n.target_id)
-				when n.target_detailed_type = 'group_request' then 'You have a group joining request from ' || (SELECT u.nick_name FROM users u WHERE u.id = n.target_id)
-				when n.target_detailed_type = 'group_event' then 'You have been invited to event' || (SELECT title FROM group_events WHERE id = n.target_id)
-				else ''
-			end as notification_message, 
-			n.is_read as notification_is_read, n.data as notification_data,
-			n.status as notification_status, n.created_at as notification_created_at, n.updated_at as notification_updated_at, n.updated_by as notification_updated_by,
-			from_user.id as from_user_id, from_user.uuid as from_user_uuid, from_user.first_name as from_user_first_name, from_user.last_name as from_user_last_name, from_user.nick_name as from_user_nick_name
-		FROM notifications n
+        SELECT 
+			n.id AS notification_id,
+			n.to_user_id AS notification_to_user_id,
+			n.from_user_id AS notification_from_user_id,
+			n.target_id AS notification_target_id,
+			n.target_uuid AS notification_target_uuid,
+			n.target_type AS notification_target_type,
+			n.target_detailed_type AS notification_target_detailed_type,
+
+			IFNULL(
+				CASE
+					WHEN n.target_detailed_type = 'follow_request' THEN
+						'You have a follow request from <b>' || target_user.nick_name || '</b>'
+					WHEN n.target_detailed_type = 'follow_request_responded' THEN
+						CASE
+							WHEN n.message = 'You have a new follower' THEN
+								n.message || ': <b>' || target_user.nick_name || '</b>'
+							ELSE
+								'Your follow request to <b>' || target_user.nick_name || '</b> has been ' || n.message
+						END
+					WHEN n.target_detailed_type = 'group_invite' THEN
+						'You have been invited to group <b>' || target_group.title || '</b>'
+					WHEN n.target_detailed_type = 'group_invite_responded' THEN
+						'Your group invitation to group <b>' || target_group.title || '</b> has been ' || n.message
+					WHEN n.target_detailed_type = 'group_request' THEN
+						'You have a group joining request from <b>' || from_user.nick_name || '</b> to group <b>' || target_group.title || '</b>'
+					WHEN n.target_detailed_type = 'group_request_responded' THEN
+						'Your group joining request to group <b>' || target_group.title || '</b> has been ' || n.message
+					WHEN n.target_detailed_type = 'group_event' THEN
+						'Event <b>' || n.message || '</b>' || ' has been created in group <b>' || target_group.title || '</b>'
+					ELSE ''
+				END,
+				''
+			) AS notification_message,
+
+			n.is_read AS notification_is_read,
+			n.data AS notification_data,
+			n.status AS notification_status,
+			n.created_at AS notification_created_at,
+			n.updated_at AS notification_updated_at,
+			n.updated_by AS notification_updated_by,
+
+			from_user.id AS from_user_id,
+			from_user.uuid AS from_user_uuid,
+			from_user.first_name AS from_user_first_name,
+			from_user.last_name AS from_user_last_name,
+			from_user.nick_name AS from_user_nick_name,
+			from_user.profile_image AS from_user_profile_image,
+
+			to_user.uuid AS to_user_uuid
+
+			FROM notifications n
 			INNER JOIN users to_user
 				ON n.to_user_id = to_user.id
 				AND to_user.id = ?
 			LEFT JOIN users from_user
 				ON n.from_user_id = from_user.id
-		WHERE n.status != 'delete'
-			AND n.id = ?
-		ORDER BY n.id desc;
+			LEFT JOIN users target_user
+				ON n.target_detailed_type IN ('follow_request', 'follow_request_responded')
+				AND n.target_id = target_user.id
+			LEFT JOIN groups target_group
+				ON n.target_detailed_type IN ('group_invite', 'group_invite_responded', 'group_request', 'group_request_responded', 'group_event')
+				AND n.target_id = target_group.id
+
+			WHERE n.status != 'delete'
+				AND n.id = ?
+			ORDER BY n.id DESC;
     `, to_user_id, notification_id)
 	if selectError != nil {
 		return Notification{}, selectError
@@ -232,10 +324,11 @@ func ReadNotificationById(notification_id int, to_user_id int) (Notification, er
 		// Scan the post and user data
 		err := rows.Scan(
 			&notification.ID, &notification.ToUserId, &notification.FromUserId,
-			&notification.TargetId, &notification.TargetType, &notification.TargetDetailedType,
+			&notification.TargetId, &notification.TargetUUIDForm, &notification.TargetType, &notification.TargetDetailedType,
 			&notification.Message, &notification.IsRead, &notification.Data,
 			&notification.Status, &notification.CreatedAt, &notification.UpdatedAt, &notification.UpdatedBy,
-			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName,
+			&fromUser.ID, &fromUser.UUID, &fromUser.FirstName, &fromUser.LastName, &fromUser.NickName, &fromUser.ProfileImage,
+			&notification.ToUserUUID,
 		)
 		if err != nil {
 			return Notification{}, fmt.Errorf("error scanning row: %v", err)

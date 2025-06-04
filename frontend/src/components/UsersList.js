@@ -8,10 +8,11 @@ import "../styles/globals.css";
 
 export default function UsersList( { activeConversation } ) {
 
+    const userUUID = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
     const { userList, isConnected, setUserList, setMessages, sendAction } = useWebsocketContext();
     const { activeChat, setActiveChat } = useActiveChat();
     const router = useRouter();
-
+    
     const handleUserClick = (user) => {
         setActiveChat({ 
             type: user.type,
@@ -20,20 +21,20 @@ export default function UsersList( { activeConversation } ) {
             receiverUUID: user.receiverUUID,
             groupUUID: user.groupUUID,
         });
-        
-        const isSameChat = 
-        activeChat?.uuid === user.uuid;
 
-        if (!isSameChat) {
-            setMessages([]);
-            sendAction({
-                action: "messageReq",
-                receiverUUID: user.receiverUUID,
-                groupUUID: user.groupUUID,
-                content: "-1"
-            });
-        }
-        setUserList(prev => prev.map(u => u.id === user.id ? { ...u, unread: false } : u));
+        setMessages([]);
+        sendAction({
+            action: "messageReq",
+            receiverUUID: user.receiverUUID,
+            groupUUID: user.groupUUID,
+            content: "-1"
+        });
+        sendAction({
+            action: 'messageAck',
+            receiverUUID: userUUID,
+            senderUUID: user.receiverUUID
+        });
+        setUserList(prev => prev.map(u => u.uuid === user.uuid ? { ...u, unread: false } : u));
         console.log("User clicked:", user);
         router.push('/messages');
     }
@@ -76,10 +77,7 @@ export default function UsersList( { activeConversation } ) {
                         key={group.uuid}
                         role="button"
                         tabIndex={0}
-                        className={[
-                            'user-item',
-                            activeConversation?.uuid === group.uuid ? 'active' : ''
-                        ].filter(Boolean).join(' ')}
+                        className={'group-item'}
                         onClick={() => handleUserClick(group)}
                         onKeyDown={e => {
                             if (e.key === 'Enter' || e.key === ' ') handleUserClick(group);

@@ -1,0 +1,253 @@
+.users-page {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 80px auto 0;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.users-header {
+  margin-bottom: 2rem;
+  text-align: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #233144 40%, #4682b4 100%);
+  color: white;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.users-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.users-header h2 {
+  color: white;
+  font-size: 1.8rem;
+  margin: 0;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+/* UserCard Styles */
+.user-card {
+  border: none;
+  border-radius: 16px;
+  padding: 1.5rem;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.user-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #233144 40%, #4682b4 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.user-card:hover::before {
+  transform: scaleX(1);
+}
+
+.user-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.user-card-link:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.user-avatar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.avatar-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #e5e7eb;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-card:hover .avatar-img {
+  border-color: #4682b4;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(70, 130, 180, 0.3);
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 4px solid #e5e7eb;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-card:hover .avatar-placeholder {
+  border-color: #4682b4;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(70, 130, 180, 0.3);
+}
+
+.user-info {
+  text-align: center;
+}
+
+.user-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+  color: #233144;
+  transition: color 0.3s ease;
+}
+
+.user-card:hover .user-name {
+  color: #4682b4;
+}
+
+.visibility-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.visibility-badge.public {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border: 1px solid #b8dacc;
+}
+
+.visibility-badge.private {
+  background: linear-gradient(135deg, #f8d7da 0%, #f1c2c7 100%);
+  color: #721c24;
+  border: 1px solid #fca5a5;
+}
+
+.user-card:hover .visibility-badge {
+  transform: scale(1.05);
+}
+
+.loading,
+.error {
+  padding: 3rem;
+  text-align: center;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+.loading {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #64748b;
+  border: 2px dashed #cbd5e1;
+}
+
+.error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  color: #dc2626;
+  border: 2px solid #fca5a5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .users-page {
+    margin: 60px 1rem 0;
+    padding: 1rem;
+  }
+
+  .users-header {
+    padding: 1rem;
+  }
+
+  .users-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .users-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .user-card {
+    padding: 1rem;
+  }
+
+  .avatar-img,
+  .avatar-placeholder {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .users-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .users-page {
+    margin: 60px 0.5rem 0;
+    padding: 0.75rem;
+  }
+}

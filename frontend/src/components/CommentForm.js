@@ -11,6 +11,16 @@ export default function CommentForm({ postId, onCommentSubmitted }) {
   const [postImage, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImage(e.target.files[0])
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +51,7 @@ export default function CommentForm({ postId, onCommentSubmitted }) {
 
   return (
     <form className="comment-form" onSubmit={handleSubmit}>
-      <h2>Feel free to comment!</h2>
+      <h3>Feel free to comment!</h3>
       <textarea
         placeholder="Add a comment..."
         value={content}
@@ -52,8 +62,15 @@ export default function CommentForm({ postId, onCommentSubmitted }) {
       <input
         type="file"
         accept="image/*"
-        onChange={(e) => setImage(e.target.files[0])}
+        onChange={handleFileChange}
       />
+      {previewUrl && (
+        <img
+          src={previewUrl}
+          alt="Avatar Preview"
+          style={{ width: 100, height: 100, objectFit: "cover", marginTop: 10 }}
+        />
+      )}
       <button type="submit" disabled={loading}>
         {loading ? "Posting..." : "Post Comment"}
       </button>

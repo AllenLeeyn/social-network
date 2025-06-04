@@ -1,4 +1,4 @@
-import { proxyToBackend } from '../../../proxyToBackend'
+import { proxyToBackend } from "../../../proxyToBackend";
 
 export async function POST(req) {
   return proxyToBackend(req, "/api/group/member/response");

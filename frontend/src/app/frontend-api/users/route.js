@@ -1,5 +1,5 @@
 import { proxyToBackend } from "../proxyToBackend";
 
 export async function GET(req) {
-    return proxyToBackend(req, "/api/users", "GET")
+  return proxyToBackend(req, "/api/users", "GET");
 }

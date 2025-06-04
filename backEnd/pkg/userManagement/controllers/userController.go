@@ -7,6 +7,7 @@ import (
 	"social-network/pkg/utils"
 
 	errorControllers "social-network/pkg/errorManagement/controllers"
+	followingModel "social-network/pkg/followingManagement/models"
 	userModel "social-network/pkg/userManagement/models"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -147,9 +148,25 @@ func ViewUsersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewUserHandler(w http.ResponseWriter, r *http.Request) {
+	userUUID, isOk := middleware.GetUserUUID(r.Context())
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.UnauthorizedError)
+		return
+	}
+
 	tgtUUID, statusCode, err := GetTgtUUID(r, "api/user")
+
 	if err != nil {
-		errorControllers.CustomErrorHandler(w, r, err.Error(), statusCode)
+		tgtUser, err := userModel.SelectUser(tgtUUID)
+		if err != nil {
+			errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
+			return
+		}
+		fStatus, _ := followingModel.SelectStatusByUUID(&followingModel.Following{
+			LeaderUUID: tgtUUID, FollowerUUID: userUUID, GroupID: 0,
+		})
+		errorControllers.CustomErrorHandler(w, r,
+			tgtUser.NickName+"|"+fStatus, statusCode)
 		return
 	}
 
@@ -158,6 +175,11 @@ func ViewUserHandler(w http.ResponseWriter, r *http.Request) {
 		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
 		return
 	}
+	fStatus, _ := followingModel.SelectStatusByUUID(&followingModel.Following{
+		LeaderUUID: tgtUUID, FollowerUUID: userUUID, GroupID: 0,
+	})
+	uProfile.Status = fStatus
+
 	ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "user profile retrieved", uProfile)
 }

@@ -20,6 +20,7 @@ type Group struct {
 }
 
 type GroupView struct {
+	ID           int    `json:"id"`
 	UUID         string `json:"uuid"`
 	Title        string `json:"title"`
 	Description  string `json:"description"`
@@ -73,7 +74,7 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]GroupView, error) {
 		joinedOnlyQry = ` AND f.status = 'accepted'`
 	}
 	qry := `SELECT
-				g.uuid, g.title,
+				g.id, g.uuid, g.title,
 				g.description, g.banner_image, g.members_count,
 				u.nick_name, u.uuid,
 				COALESCE(f.status, '') as status
@@ -95,7 +96,7 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]GroupView, error) {
 	for rows.Next() {
 		var g GroupView
 		err := rows.Scan(
-			&g.UUID, &g.Title,
+			&g.ID, &g.UUID, &g.Title,
 			&g.Description, &g.BannerImage, &g.MembersCount,
 			&g.CreatorName, &g.CreatorUUID,
 			&g.Status)
@@ -112,7 +113,7 @@ func SelectGroups(userUUID string, joinedOnly bool) (*[]GroupView, error) {
 
 func SelectGroup(userID int, groupUUID string) (*GroupView, error) {
 	qry := `SELECT
-				g.uuid AS group_uuid, g.title,
+				g.id, g.uuid AS group_uuid, g.title,
 				g.description, g.banner_image, g.members_count,
 				u.nick_name AS creator_name, u.uuid AS creator_uuid,
 				COALESCE(f.status, '') as status
@@ -124,7 +125,7 @@ func SelectGroup(userID int, groupUUID string) (*GroupView, error) {
 			WHERE g.status = 'enable' AND g.id != 0 AND g.uuid = ?;`
 	var g GroupView
 	err := sqlDB.QueryRow(qry, userID, groupUUID).Scan(
-		&g.UUID, &g.Title,
+		&g.ID, &g.UUID, &g.Title,
 		&g.Description, &g.BannerImage, &g.MembersCount,
 		&g.CreatorName, &g.CreatorUUID,
 		&g.Status)

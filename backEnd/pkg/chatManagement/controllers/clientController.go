@@ -14,12 +14,12 @@ func (cc *ChatController) listener() {
 		switch action.kind {
 		case "online":
 			cc.sendClientList(action.client, action.client.UserUUID)
-			status := fmt.Sprintf(`{"action": "online", "id": "%s", "name": "%s"}`, action.client.UserUUID, action.client.UserName)
+			status := fmt.Sprintf(`{"action": "online", "uuid": "%s", "name": "%s"}`, action.client.UserUUID, action.client.UserName)
 			cc.queueStatusToFollowings(status, action.client.UserUUID)
 
 		case "offline":
 			delete(cc.clients, action.client.UserUUID)
-			status := fmt.Sprintf(`{"action": "offline", "id": "%s"}`, action.client.UserUUID)
+			status := fmt.Sprintf(`{"action": "offline", "uuid": "%s"}`, action.client.UserUUID)
 			cc.queueStatusToFollowings(status, action.client.UserUUID)
 		}
 	}

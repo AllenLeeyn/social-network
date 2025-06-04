@@ -5,12 +5,19 @@ import NotificationCard from './NotificationCard';
 
 export default function NotificationList({ notifications }) {
     if (!notifications.length) {
-        return <p>No notifications found.</p>;
+        return (
+            <div className='notification-list-empty'>
+                <p>No notifications found.</p>
+            </div>
+        );
     }
     return (
         <div className="notification-list">
         {notifications.map(notification => (
-            <NotificationCard key={notification.id} notification={notification} />
+            <NotificationCard 
+                key={notification.id} 
+                notification={notification}
+            />
         ))}
         </div>
     );

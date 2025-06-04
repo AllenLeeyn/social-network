@@ -47,8 +47,12 @@ export async function logout() {
   }
 }
 
-export async function fetchFollowees() {
-  const response = await fetch("/frontend-api/followers/", {
+export async function fetchFollowees(uuid) {
+  const url = uuid
+    ? `/frontend-api/followers/${uuid}`
+    : "/frontend-api/followers";
+
+  const response = await fetch(url, {
     method: "GET",
     credentials: "include",
   });
@@ -57,12 +61,36 @@ export async function fetchFollowees() {
   return result.data;
 }
 
-export async function fetchGroups() {
-  const response = await fetch("/frontend-api/groups?joined=true", {
+export async function fetchGroups(uuid) {
+  const url = uuid
+    ? `/frontend-api/groups/${uuid}?joined=true`
+    : `/frontend-api/groups?joined=true`;
+
+  const response = await fetch(url, {
     method: "GET",
     credentials: "include",
   });
   if (!response.ok) throw new Error("Failed to fetch groups");
   const result = await response.json();
   return result.data;
+}
+
+export async function fetchUsers() {
+  try {
+    const response = await fetch("/frontend-api/users", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
 }

@@ -1,13 +1,16 @@
 "use client";
-import React, { useState } from "react";
-import { useAuth } from "../../hooks/useAuth"; // Import the useAuth hook
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useRouter } from "next/navigation";
 import "./login.css";
-import { toast } from 'react-toastify';
-import { handleImage } from "../../lib/handleImage"; 
+import { toast } from "react-toastify";
+import { handleImage } from "../../lib/handleImage";
+import { fetchUsers } from "../../lib/apiAuth";
 
 export default function AuthPage() {
-  const { handleLogin, handleSignup, error, loading } = useAuth(); // Use the hook for login and signup logic
-  const [mode, setMode] = useState("login"); // 'login' or 'register'
+  const { handleLogin, handleSignup, error, loading } = useAuth();
+  const [mode, setMode] = useState("login");
+  const router = useRouter();
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -26,13 +29,28 @@ export default function AuthPage() {
   const [registerGender, setGender] = useState("");
   const [registerVisibility, setVisibility] = useState("");
   const [formError, setFormError] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
 
+  // Check if user is already authenticated
+  useEffect(() => {
+    async function checkAuthentication() {
+      try {
+        await fetchUsers(); // Use the same function as Navbar
+        // If successful (200), user is already authenticated
+        router.push("/");
+      } catch (error) {
+        // If failed, user is not authenticated, stay on login page
+        console.log("User not authenticated, staying on login page");
+      }
+    }
+
+    checkAuthentication();
+  }, [router]);
 
   // Handle login submission
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      // await handleLogin(loginEmail, loginPassword); // Pass the credentials
       const response = await handleLogin(loginEmail, loginPassword);
       toast.success("Login successful! Redirecting...");
       setTimeout(() => {
@@ -41,6 +59,15 @@ export default function AuthPage() {
     } catch (err) {
       console.error("Login failed:", err.message);
     }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setAvatar(e.target.files[0]);
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
   };
 
   // Handle registration submission
@@ -73,13 +100,13 @@ export default function AuthPage() {
       birthday: new Date(registerDateOfBirth).toISOString(),
       about_me: registerAboutMe,
       gender: registerGender,
-      visibility: registerVisibility, 
+      visibility: registerVisibility,
       profile_image: imageUUID ? Object.values(imageUUID)[0] : null,
     };
 
     try {
       await handleSignup(userData);
-      toast.success("Signup successful! Redirecting...")
+      toast.success("Signup successful! Redirecting...");
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
@@ -196,6 +223,7 @@ export default function AuthPage() {
                   type="date"
                   value={registerDateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]}
                   required
                 />
                 {/* Gender Radio Group */}
@@ -259,26 +287,6 @@ export default function AuthPage() {
                     </label>
                   </div>
                 </div>
-                {/* <select
-                  value={registerGender}
-                  onChange={(e) => setGender(e.target.value)}
-                  required
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-
-                <select
-                  value={registerVisibility}
-                  onChange={(e) => setVisibility(e.target.value)}
-                  required
-                >
-                  <option value="">Select Visibility</option>
-                  <option value="public">Public</option>
-                  <option value="private">Private</option>
-                </select> */}
-
               </fieldset>
 
               <fieldset className="auth-form">
@@ -292,8 +300,15 @@ export default function AuthPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setAvatar(e.target.files[0])}
+                  onChange={handleFileChange}
                 />
+                {previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt="Avatar Preview"
+                    style={{ width: 100, height: 100, objectFit: "cover", marginTop: 10 }}
+                  />
+                )}
                 <textarea
                   placeholder="About Me - Optional"
                   value={registerAboutMe}
@@ -315,29 +330,29 @@ export default function AuthPage() {
 
 // function smoothToggleAuthForm() {
 //     if (isToggling) return;
-    
+
 //     isToggling = true;
 //     const container = document.querySelector('.auth-form-container');
-    
+
 //     // Fade out
 //     container.style.transition = 'all 1.5s cubic-bezier(0.23, 1, 0.32, 1)';
 //     container.style.opacity = '0';
 //     container.style.transform = 'translateY(-35px) scale(0.94)';
 //     container.style.filter = 'blur(1px)';
-    
+
 //     setTimeout(() => {
 //         // Your form switching logic here
 //         // updateFormContent(); // Call your existing function
-        
+
 //         // Fade in
 //         container.style.opacity = '1';
 //         container.style.transform = 'translateY(0) scale(1)';
 //         container.style.filter = 'blur(0px)';
-        
+
 //         setTimeout(() => {
 //             isToggling = false;
 //         }, 1800);
-        
+
 //     }, 1500);
 // }
 
