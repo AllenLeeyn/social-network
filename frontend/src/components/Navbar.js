@@ -61,7 +61,7 @@ export default function Navbar() {
             height={35}
             className="logo-img"
           />
-          <span className="site-title">grit:Hub</span>
+          <span className="site-title">grit:hub</span>
         </div>
       </Link>
 

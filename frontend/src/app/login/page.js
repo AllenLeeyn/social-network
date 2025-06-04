@@ -102,7 +102,7 @@ export default function AuthPage() {
         <div className="auth-left-content">
           {mode === "login" ? (
             <>
-              <h2>Welcome to grit:Hub!</h2>
+              <h2>Welcome to grit:hub!</h2>
               <p>Connect instantly. Log in to continue.</p>
               <button
                 onClick={() => setMode("register")}
@@ -113,7 +113,7 @@ export default function AuthPage() {
             </>
           ) : (
             <>
-              <h2>Join grit:Hub!</h2>
+              <h2>Join grit:hub!</h2>
               <p>Sign up and start connecting now.</p>
               <button
                 onClick={() => setMode("login")}
