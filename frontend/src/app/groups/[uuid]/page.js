@@ -56,17 +56,34 @@ export default function GroupDetailPage() {
     }, [uuid]);
 
     // Helper to refresh members and requests
-    function refreshMembersAndRequests() {
+    // function refreshMembersAndRequests() {
+    //     setLoadingMembers(true);
+    //     Promise.all([
+    //         fetch(`/frontend-api/groups/members/${uuid}`).then(res => res.json()),
+    //         fetch(`/frontend-api/group/member/requests/${uuid}`).then(res => res.json())
+    //     ]).then(([membersData, requestsData]) => {
+    //         setMembers(membersData.data || []);
+    //         setRequests(requestsData.data || []);
+    //         setLoadingMembers(false);
+    //     });
+    // }
+
+    async function refreshMembersAndRequests() {
         setLoadingMembers(true);
-        Promise.all([
-            fetch(`/frontend-api/groups/members/${uuid}`).then(res => res.json()),
-            fetch(`/frontend-api/group/member/requests/${uuid}`).then(res => res.json())
-        ]).then(([membersData, requestsData]) => {
+        try {
+            const [membersRes, requestsRes] = await Promise.all([
+                fetch(`/frontend-api/groups/members/${uuid}`),
+                fetch(`/frontend-api/group/member/requests/${uuid}`)
+            ]);
+            const membersData = await membersRes.json();
+            const requestsData = await requestsRes.json();
             setMembers(membersData.data || []);
             setRequests(requestsData.data || []);
+        } finally {
             setLoadingMembers(false);
-        });
+        }
     }
+
 
     useEffect(() => {
         refreshGroup();
@@ -156,9 +173,8 @@ function handleRequestJoin() {
     }
 
     function handleInviteUser(follower_uuid) {
-        if (isInviting || loadingActions[follower_uuid]) return;
+        if (loadingActions[follower_uuid]) return;
         setActionLoading(follower_uuid, true);
-        setIsInviting(true);
         fetch('/frontend-api/group/invite', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -176,7 +192,6 @@ function handleRequestJoin() {
         .catch(() => toast.error('Failed to invite user.'))
         .finally(() => {
             setActionLoading(follower_uuid, false);
-            setIsInviting(false);
         });
     }
 

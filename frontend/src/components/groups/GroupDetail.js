@@ -36,7 +36,7 @@ export default function GroupDetail(
       isInviting = false,
       posts
   }) {
-      
+
   if (!group) return null;
 
   // Modal state
@@ -59,6 +59,7 @@ export default function GroupDetail(
   // Get current user UUID
   const currentUserUUID =
     typeof window !== "undefined" ? localStorage.getItem("user-uuid") : null;
+  const isCreator = group.creator_uuid === currentUserUUID;
 
     // status checks
     const isMember = group.status === "accepted";
@@ -69,11 +70,16 @@ export default function GroupDetail(
     const acceptedMembers = members.filter(m => m.status === 'accepted');
     const pendingRequests = requests.filter(r => r.status === 'requested' || r.status === 'invited');
 
-    const currentUserUuid = localStorage.getItem('user-uuid');
 
-    const memberUuids = new Set(members.map(m => m.follower_uuid || m.uuid));
-    const nonMembers = allUsers.filter(u => !memberUuids.has(u.uuid));
-    const filteredNonMembers = nonMembers.filter(u => u.uuid !== currentUserUuid);
+    // const memberUuids = new Set(members.map(m => m.follower_uuid || m.uuid));    
+    // const nonMembers = allUsers.filter(u => !memberUuids.has(u.uuid));
+
+    const memberUuids = new Set([
+      ...members.map(m => m.follower_uuid || m.uuid),
+      ...requests.map(r => r.follower_uuid || r.uuid)
+    ]);
+    const nonMembers = allUsers.filter(u => !memberUuids.has(u.uuid) && u.uuid !== currentUserUUID);
+    const filteredNonMembers = nonMembers.filter(u => u.uuid !== currentUserUUID);
 
     const refreshEvents = () => {
         fetch(`/frontend-api/groups/events/${group.uuid}`)
@@ -251,16 +257,16 @@ export default function GroupDetail(
           ) : isInvited ? (
               <>
                   <button
-                      onClick={() => handleAcceptInvite(currentUserUuid)}
+                      onClick={() => handleAcceptInvite(currentUserUUID)}
                       style={{ marginRight: '0.5rem' }}
-                      disabled={!!loadingActions[currentUserUuid]}
+                      disabled={!!loadingActions[currentUserUUID]}
                   >
                       Accept
                   </button>
                   <button
-                      onClick={() => handleDeclineInvite(currentUserUuid)}
+                      onClick={() => handleDeclineInvite(currentUserUUID)}
                       style={{ color: 'red' }}
-                      disabled={!!loadingActions[currentUserUuid]}
+                      disabled={!!loadingActions[currentUserUUID]}
                   >
                       Decline
                   </button>
@@ -341,38 +347,42 @@ export default function GroupDetail(
                 </section>
                 {isMember && (
                 <section>
-                    <h3>Pending Members</h3>
-                    <ul>
+                  <h3>Pending Members</h3>
+                  <ul>
                     {pendingRequests.length > 0 ? (
-                        pendingRequests.map(r => (
+                      pendingRequests.map(r => (
                         <li key={r.follower_uuid || r.uuid || r.user_uuid}>
-                            {r.follower_name || r.name}
-                            {r.status === "invited" ? (
+                          {r.follower_name || r.name}
+                          {r.status === "invited" ? (
                             <span style={{ marginLeft: '1rem', color: '#888' }}>Invited</span>
+                          ) : (
+                            isCreator ? (
+                              <>
+                                <button
+                                  style={{ marginLeft: '1rem' }}
+                                  onClick={() => onApproveRequest(r.follower_uuid || r.uuid || r.user_uuid)}
+                                  disabled={!!loadingActions[r.follower_uuid || r.uuid || r.user_uuid]}
+                                >
+                                  {loadingActions[r.follower_uuid || r.uuid || r.user_uuid] ? 'Approving...' : 'Approve'}
+                                </button>
+                                <button
+                                  style={{ marginLeft: '0.5rem', color: 'red' }}
+                                  onClick={() => onDenyRequest(r.follower_uuid || r.uuid || r.user_uuid)}
+                                  disabled={!!loadingActions[r.follower_uuid || r.uuid || r.user_uuid]}
+                                >
+                                  {loadingActions[r.follower_uuid || r.uuid || r.user_uuid] ? 'Denying...' : 'Deny'}
+                                </button>
+                              </>
                             ) : (
-                            <>
-                                <button
-                                style={{ marginLeft: '1rem' }}
-                                onClick={() => onApproveRequest(r.follower_uuid || r.uuid || r.user_uuid)}
-                                disabled={!!loadingActions[r.follower_uuid || r.uuid || r.user_uuid]}
-                                >
-                                {loadingActions[r.follower_uuid || r.uuid || r.user_uuid] ? 'Approving...' : 'Approve'}
-                                </button>
-                                <button
-                                style={{ marginLeft: '0.5rem', color: 'red' }}
-                                onClick={() => onDenyRequest(r.follower_uuid || r.uuid || r.user_uuid)}
-                                disabled={!!loadingActions[r.follower_uuid || r.uuid || r.user_uuid]}
-                                >
-                                {loadingActions[r.follower_uuid || r.uuid || r.user_uuid] ? 'Denying...' : 'Deny'}
-                                </button>
-                            </>
-                            )}
+                              <span style={{ marginLeft: '1rem', color: '#888' }}>Pending...</span>
+                            )
+                          )}
                         </li>
-                        ))
+                      ))
                     ) : (
-                        <li>No pending members</li>
+                      <li>No pending members</li>
                     )}
-                    </ul>
+                  </ul>
                 </section>
                 )}
                 {isMember && (
