@@ -5,6 +5,7 @@
 
 .form-group {
     margin-bottom: 1rem;
+    box-sizing: border-box;
 }
 
 .form-group h4,
@@ -30,11 +31,21 @@
     resize: none;
 }
 
+.create-post-form input {
+    margin-bottom: 10px;
+    font-family: inherit;
+}
+
 .create-post-form textarea {
     min-height: 120px;
     resize: none;
+    margin-bottom: 10px;
 }
 
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
 
 .create-post-form form{
     display: flex;
@@ -46,7 +57,6 @@
     box-shadow: 0 4px 20px rgba(30, 41, 59, 0.1);
     box-sizing: border-box;
 }
-
 
 /* ----------- Button styles------------ */
 .form-actions, .RSVP-btn {
@@ -87,14 +97,3 @@
 .form-actions button:hover {
     transform: scale(1.05);
 } 
-
-/* .RSVP-btn {
-    border: solid 1px rgba(255, 255, 255, 0.8);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-    position: relative;
-    gap: 0.5rem;
-} */

@@ -99,7 +99,6 @@ form input {
 .new-post:focus {
     outline: none;
     transform: scale(1.05);
-
 }
 
 /* select {

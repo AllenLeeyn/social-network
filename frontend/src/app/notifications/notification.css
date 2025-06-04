@@ -116,16 +116,22 @@
     margin-bottom: 0.5rem;
 }
 
+.notification-actions > div {
+    display: flex;
+    gap: 0.1rem; /* Adjust as needed */
+}
+
 .notification-actions button {
     margin-right: 0.5rem;
-    padding: 0.3em 1em;
+    padding: 10px 20px;
     border-radius: 6px;
     border: none;
-    background: #1976d2;
+    /* background: #1976d2; */
     color: #fff;
     cursor: pointer;
-    font-size: 0.95em;
-    }
+    font-size: 14px;
+}
+
     .notification-actions button:last-child {
     margin-right: 0;
 }

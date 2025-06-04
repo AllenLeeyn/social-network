@@ -96,28 +96,6 @@
     padding: 1.5rem;
 }
 
-/* Back button */
-/* .group-detail-back-btn {
-    background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 2rem;
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.group-detail-back-btn:hover {
-    background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(107, 114, 128, 0.3);
-} */
-
 /* Members section */
 .group-detail-members-section {
     display: flex;
@@ -154,6 +132,26 @@
 .group-detail-join-btn:hover,
 .group-detail-invite-btn:hover {
     transform: scale(1.05);
+}
+
+.invite-non-members li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    background: #f3f4f6;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.invite-button {
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 /* Events section */

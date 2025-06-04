@@ -111,6 +111,8 @@ textarea:focus {
 /* Sidebar lists */
 .sidebar-section {
     text-align: center;
+    padding-bottom: 20px;
+
 }
 
 .sidebar-section ul {
