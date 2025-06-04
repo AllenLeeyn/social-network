@@ -63,7 +63,7 @@ export async function fetchFollowees(uuid) {
 
 export async function fetchGroups(uuid) {
   const url = uuid
-    ? `/frontend-api/groups/${uuid}`
+    ? `/frontend-api/groups/${uuid}?joined=true`
     : `/frontend-api/groups?joined=true`;
 
   const response = await fetch(url, {

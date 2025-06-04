@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, use } from "react";
-import { fetchMyPosts } from "../../../lib/apiPosts";
+import { useRouter } from 'next/navigation';
+import { fetchUserPosts } from "../../../lib/apiPosts";
 import { fetchGroups, fetchFollowees } from "../../../lib/apiAuth";
 import "./profile.css";
 import ProfileCard from "../../../components/ProfileCard";
@@ -12,7 +13,15 @@ import FollowingsList from '../../../components/FollowingsList';
 
 export default function ProfilePage({ params }) {
     const { uuid } = use(params);
+    const router = useRouter();
+
     const userUUID = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
+
+    useEffect(() => {
+        if (uuid === userUUID) {
+        router.replace('/profile');
+        }
+    }, [uuid, userUUID, router]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -48,9 +57,9 @@ export default function ProfilePage({ params }) {
 
         async function loadMyData() {
             try {
-            const [myPostsData, myFollowings] = await Promise.all(
-                [fetchMyPosts(uuid), fetchFollowees(uuid)]); // need to add fetch by UUID
-            setMyPosts(myPostsData.data);
+            const [userPostsData, myFollowings] = await Promise.all(
+                [fetchUserPosts(uuid), fetchFollowees(uuid)]); // need to add fetch by UUID
+            setMyPosts(userPostsData.data);
 
             if (myFollowings && Array.isArray(myFollowings)) {
                 const followersList = myFollowings.filter(item => item.leader_uuid === uuid);

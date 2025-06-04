@@ -10,14 +10,14 @@ import CreateEventForm from "./[uuid]/events/CreateEventForm";
 import GroupHeader from "./[uuid]/GroupHeader";
 import EventCard from "./[uuid]/events/EventCard";
 import { createPost } from "../../lib/apiPosts";
-import PostCard from '../PostCard'
+import PostList from "../../components/PostList";
 
 import { formatDate } from '../../utils/formatDate';
 
 import "../../styles/groups/GroupDetail.css"; 
 
 
-export default function GroupDetail({ group, onBack, onRequestJoin }) {
+export default function GroupDetail({ group, onBack, onRequestJoin, posts }) {
     console.log(group.id)
     if (!group) return null;
 
@@ -183,9 +183,7 @@ export default function GroupDetail({ group, onBack, onRequestJoin }) {
                 </section>
                 <section className="post-section">
                     <strong>Posts:</strong>
-                    {/* <PostCard>
-
-                    </PostCard> */}
+                    <PostList posts={posts} />
                 </section>
 
                 {/* Modals */}

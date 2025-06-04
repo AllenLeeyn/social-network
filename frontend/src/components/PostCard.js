@@ -121,6 +121,9 @@ export default function PostCard({ post }) {
             {cat.name}
           </span>
         ))}
+        {post.group?.title && (
+          <span className="category-badge">group: {post.group.title}</span>
+        )}
       </small>
     </div>
   );

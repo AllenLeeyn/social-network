@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { fetchGroupPosts } from "../../../lib/apiPosts";
 import GroupDetail from '../../../components/groups/GroupDetail';
 import SidebarSection from '../../../components/SidebarSection';
 import UsersList from '../../../components/UsersList';
@@ -18,6 +19,22 @@ export default function GroupDetailPage() {
     const [requests, setRequests] = useState([]);
     const [loadingMembers, setLoadingMembers] = useState(true);
 
+    const [grpPosts, setGrpPosts] = useState([]);
+    useEffect(() => {
+
+        async function loadGroupPost() {
+            try {
+            const groupPostsData = await fetchGroupPosts(uuid); // need to add fetch by UUID
+            setGrpPosts(groupPostsData.data);
+
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadGroupPost();
+    }, [uuid]);
 
     // Helper to refresh members and requests
     function refreshMembersAndRequests() {
@@ -141,7 +158,7 @@ export default function GroupDetailPage() {
 
             {/* Main Content */}
             <section className="main-feed group-section">
-                <GroupDetail group={group} onRequestJoin={handleRequestJoin} />
+                <GroupDetail group={group} onRequestJoin={handleRequestJoin} posts={grpPosts}/>
             </section>
 
             {/* Right Sidebar */}
