@@ -263,10 +263,14 @@ func ReadAllPosts(checkLikeForUser int) ([]Post, error) {
 			AND u.status != 'delete'
             AND (
 			p.user_id = ?
-            OR if(p.type = 'user', 
-			p.visibility = 'public' OR (p.visibility = 'selected' AND psa.user_id = ?) OR (p.visibility = 'private' AND follow_user.follower_id = ?),
-			(follow_group.follower_id = ?)
-            )
+			OR (
+				(p.type = 'user' AND (
+					p.visibility = 'public'
+					OR (p.visibility = 'selected' AND psa.user_id = ?)
+					OR (p.visibility = 'private' AND follow_user.follower_id = ?)
+				))
+				OR (p.type = 'group' AND follow_group.follower_id = ?)
+			))
 		ORDER BY p.id desc;
     `, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser)
 	if selectError != nil {
@@ -408,16 +412,20 @@ func ReadPostsByCategoryId(category_id int, checkForUser int) ([]Post, error) {
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
 			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
+			OR (
+				(p.type = 'user' AND (
+					p.visibility = 'public'
+					OR (p.visibility = 'selected' AND psa.user_id = ?)
+					OR (p.visibility = 'private' AND follow_user.follower_id = ?)
+				))
+				OR (p.type = 'group' AND follow_group.follower_id = ?)
+			))
 		ORDER BY p.id desc;
     `, category_id, checkForUser, checkForUser, checkForUser, checkForUser)
 	if selectError != nil {
@@ -556,17 +564,21 @@ func FilterPosts(searchTerm string, checkForUser int) ([]Post, error) {
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
       		AND (p.title LIKE ? OR p.content LIKE ?)
             AND (
 			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
+			OR (
+				(p.type = 'user' AND (
+					p.visibility = 'public'
+					OR (p.visibility = 'selected' AND psa.user_id = ?)
+					OR (p.visibility = 'private' AND follow_user.follower_id = ?)
+				))
+				OR (p.type = 'group' AND follow_group.follower_id = ?)
+			))
 		ORDER BY p.id desc;
     `, searchPattern, searchPattern, checkForUser, checkForUser, checkForUser, checkForUser)
 	if selectError != nil {
@@ -712,7 +724,7 @@ func ReadPostsByUserId(userId int) ([]Post, error) {
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
@@ -868,7 +880,7 @@ func ReadPostsLikedByUserId(userId int) ([]Post, error) {
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
@@ -1019,16 +1031,20 @@ func ReadPostById(postId int, checkLikeForUser int) (Post, error) {
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
 			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
+			OR (
+				(p.type = 'user' AND (
+					p.visibility = 'public'
+					OR (p.visibility = 'selected' AND psa.user_id = ?)
+					OR (p.visibility = 'private' AND follow_user.follower_id = ?)
+				))
+				OR (p.type = 'group' AND follow_group.follower_id = ?)
+			))
 		ORDER BY p.id desc;
     `, checkLikeForUser, checkLikeForUser, postId, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser)
 	if selectError != nil {
@@ -1163,17 +1179,20 @@ func ReadPostByUUID(postUUID string, checkLikeForUser int) (Post, error) {
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
-			AND u.status != 'delete'
-            AND (
+			AND (
 			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
+			OR (
+				(p.type = 'user' AND (
+					p.visibility = 'public'
+					OR (p.visibility = 'selected' AND psa.user_id = ?)
+					OR (p.visibility = 'private' AND follow_user.follower_id = ?)
+				))
+				OR (p.type = 'group' AND follow_group.follower_id = ?)
+			))
 		ORDER BY p.id desc;
     `, checkLikeForUser, checkLikeForUser, postUUID, checkLikeForUser, checkLikeForUser, checkLikeForUser, checkLikeForUser)
 	if selectError != nil {
@@ -1300,16 +1319,20 @@ func ReadPostByUserID(postId int, userID int) (Post, error) {
             LEFT JOIN following follow_group
                 ON follow_group.group_id = p.group_id
 				AND p.type = 'group'
-				AND follow_user.type = 'group'
+				AND follow_group.type = 'group'
                 AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
             AND (
 			p.user_id = ?
-            OR p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
+			OR (
+				(p.type = 'user' AND (
+					p.visibility = 'public'
+					OR (p.visibility = 'selected' AND psa.user_id = ?)
+					OR (p.visibility = 'private' AND follow_user.follower_id = ?)
+				))
+				OR (p.type = 'group' AND follow_group.follower_id = ?)
+			))
 		ORDER BY p.id desc;
     `, postId, userID, userID, userID, userID)
 	if selectError != nil {
@@ -1441,20 +1464,15 @@ func ReadPostsSubmittedByUserUUID(userUUID string, audienceUserId int) ([]Post, 
 				AND p.type = 'user'
 				AND follow_user.type = 'user'
                 AND follow_user.status = 'accepted'
-            LEFT JOIN following follow_group
-                ON follow_group.group_id = p.group_id
-				AND p.type = 'group'
-				AND follow_user.type = 'group'
-                AND follow_group.status = 'accepted'
 		WHERE p.status != 'delete'
 			AND u.status != 'delete'
 			AND p.type = 'user'
 			AND u.uuid = ?
             AND (
-			p.visibility = 'public'
-            OR (p.visibility = 'selected' AND psa.user_id = ?)
-            OR (p.visibility = 'private' AND (follow_user.follower_id = ? OR follow_group.follower_id = ?))
-            )
+				p.visibility = 'public'
+				OR (p.visibility = 'selected' AND psa.user_id = ?)
+				OR (p.visibility = 'private' AND follow_user.follower_id = ?)
+			)
 		ORDER BY p.id desc;
     `, audienceUserId, audienceUserId, userUUID, audienceUserId, audienceUserId, audienceUserId)
 	if selectError != nil {
