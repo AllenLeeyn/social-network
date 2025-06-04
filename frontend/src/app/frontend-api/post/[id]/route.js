@@ -1,8 +1,7 @@
-import { proxyToBackend } from "../proxyToBackend";
+import { proxyToBackend } from "../../proxyToBackend";
 
-export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
+export async function GET(req, { params }) {
+  const { id } = params;
   if (!id) {
     return new Response(JSON.stringify({ message: "Missing post id" }), {
       status: 400,

@@ -126,7 +126,7 @@ func GetTgtUUID(r *http.Request, basePath string) (string, int, error) {
 
 	} else {
 		if !userModel.IsPublic(tgtUUID) && !followingModel.IsFollower(userID, tgtUUID) {
-			return "", http.StatusForbidden,
+			return tgtUUID, http.StatusForbidden,
 				fmt.Errorf("access denied: private profile and user is not follower")
 		}
 	}

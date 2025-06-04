@@ -3,15 +3,17 @@
 import React, { useState, useEffect } from "react";
 import "../styles/CreatePost.css";
 import { createPost, fetchCategories } from "../lib/apiPosts";
-import { toast } from 'react-toastify';
-import { handleImage } from "../lib/handleImage"; 
+import { toast } from "react-toastify";
+import { handleImage } from "../lib/handleImage";
 import { fetchFollowees } from "../lib/apiAuth";
 
 export default function CreatePost({ onClose }) {
   const [title, setTitle] = useState("");
   const [content, setcontent] = useState("");
+
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categories, setCategories] = useState([]);
+  
   const [postVisibility, setVisibility] = useState("");
   const [postImages, setImages] = useState(null);
   const [followers, setFollowers] = useState([]);
@@ -26,9 +28,9 @@ export default function CreatePost({ onClose }) {
         const categoriesData = await fetchCategories();
         setCategories(categoriesData.data);
 
-        let nickname = null
-        if (typeof window !== 'undefined') {
-          nickname = localStorage.getItem('user-nick_name');
+        let nickname = null;
+        if (typeof window !== "undefined") {
+          nickname = localStorage.getItem("user-nick_name");
         }
 
         const followerData = await fetchFollowees();
@@ -36,9 +38,8 @@ export default function CreatePost({ onClose }) {
           (follower) => follower.follower_name !== nickname
         );
         setFollowers(filteredFollowers || []);
-
       } catch (err) {
-        setError(err)
+        setError(err);
         toast.error(err.message);
       } finally {
         setLoading(false);
@@ -75,7 +76,6 @@ export default function CreatePost({ onClose }) {
       (name) => categoryNameToId[name]
     );
 
-
     let imageUUIDs = null;
     if (postImages) {
       try {
@@ -86,15 +86,18 @@ export default function CreatePost({ onClose }) {
       }
     }
 
-    const postData = { title, content, 
-      category_ids: categoryIds, 
-      file_attachments: imageUUIDs, 
+    const postData = {
+      title,
+      content,
+      category_ids: categoryIds,
+      file_attachments: imageUUIDs,
       visibility: postVisibility,
-      selected_audience_user_uuids: selectedUsers};
+      selected_audience_user_uuids: selectedUsers,
+    };
     try {
       const data = await createPost(postData);
       if (data) {
-        window.location.href = `/post?id=${data.data}`;
+        window.location.href = `/post/${data.data}`;
       } else {
         toast.error(data.message || "Failed to create post");
       }
@@ -156,7 +159,9 @@ export default function CreatePost({ onClose }) {
                     checked={selectedUsers.includes(f.follower_uuid)}
                     onChange={handleUserSelect}
                   />
-                  <label htmlFor={`user-${f.follower_uuid}`}>{f.follower_name}</label>
+                  <label htmlFor={`user-${f.follower_uuid}`}>
+                    {f.follower_name}
+                  </label>
                 </li>
               ))}
             </ul>

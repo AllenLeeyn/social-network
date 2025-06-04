@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { submitFollowRequest, submitUnfollowRequest } from "../lib/apiFollow";
 import { toast } from "react-toastify";
+import { FaUserCircle } from 'react-icons/fa';
+import Image from 'next/image';
 
 export default function ProfileCard({ uuid, setPrivateProfile }) {
   const [user, setUser] = useState(null);
-  const [followers, setFollowers] = useState([]);
-  const [followings, setFollowings] = useState([]);
   const [isPrivateProfile, setIsPrivateProfile] = useState(false);
   const [followStatus, setFollowStatus] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
@@ -17,20 +17,23 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
     async function fetchProfile() {
       try {
         const url = uuid
-          ? `/frontend-api/profile?uuid=${uuid}`
+          ? `/frontend-api/profile/${uuid}`
           : "/frontend-api/profile";
         const res = await fetch(url, {
           credentials: "include",
         });
 
         if (res.status === 403) {
+          const response = await res.json();
+
+          const resData = response.message.split("|");
           // Profile is private - we have the UUID from the URL
           console.log("Private profile detected, UUID from URL:", uuid);
 
           // Create minimal user object with the UUID from URL
           setUser({
             uuid: uuid,
-            nick_name: "Private User",
+            nick_name: resData[0] || "Private User",
             first_name: "",
             last_name: "",
             visibility: "private",
@@ -38,7 +41,7 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
 
           setPrivateProfile && setPrivateProfile(true);
           setIsPrivateProfile(true);
-          setFollowStatus("none");
+          setFollowStatus(resData[1] || "none");
           return;
         }
 
@@ -50,10 +53,11 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
         setUser(data.data);
         setPrivateProfile && setPrivateProfile(false);
 
+        console.log(data.data)
         if (!uuid) {
           setIsOwnProfile(true);
         } else {
-          setFollowStatus("none");
+          setFollowStatus(data.data.status);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -128,20 +132,41 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
     }
   };
 
+  async function handleVisibilityChange(e, user, setUser) {
+    const newVisibility = e.target.value;
+    const prevVisibility = user.visibility;
+    
+    const updatedUser = { ...user, visibility: newVisibility };
+    setUser(updatedUser);
+
+    try {
+      const res = await fetch(`/frontend-api/users/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(updatedUser),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update visibility");
+      }
+
+      const data = await res.json();
+      toast.success("Visibility successfully updated!");
+    } catch (err) {
+      setUser({ ...user, visibility: prevVisibility });
+      toast.error("Error updating visibility");
+    }
+  }
+
   if (!user) return <div>Loading profile...</div>;
 
   if (isPrivateProfile) {
     return (
       <div className="profile-header">
-        <img
-          src={
-            user.profile_image
-              ? `/frontend-api/image/${user.profile_image}`
-              : ""
-          }
-          alt={user.nick_name || "Private User"}
-          className="profile-avatar"
-        />
+        <FaUserCircle size={120} color="#aaa" />
         <div className="profile-info">
           <h2>{user.nick_name || "Private User"}</h2>
           <p>
@@ -166,13 +191,17 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
 
   return (
     <div className="profile-header">
-      <img
-        src={
-          user.profile_image ? `/frontend-api/image/${user.profile_image}` : ""
-        }
-        alt={user.nick_name || "User"}
-        className="profile-avatar"
-      />
+      {user?.profile_image ? (
+        <Image
+          src={`/frontend-api/image/${user.profile_image}`}
+          alt="User Avatar"
+          width={120}
+          height={120}
+          className="radial-avatar"
+        />
+      ) : (
+        <FaUserCircle size={120} color="#aaa" />
+      )}
       <div className="profile-info">
         <h2>{user.nick_name || "Unknown User"}</h2>
         <p>
@@ -186,7 +215,20 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
           <span>Date of Birth:</span> {user.birthday || "Not specified"}
         </p>
         <p>{user.about_me || "Nothing is written."}</p>
-        <p>Visibility: {user.visibility || "Unknown"}</p>
+        {isOwnProfile ? (
+          <label>
+            Visibility:
+            <select
+              value={user.visibility || "private"}
+              onChange={(e) => handleVisibilityChange(e, user, setUser)}
+            >
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+          </label>
+        ) : (
+          <p>Visibility: {user.visibility || "Unknown"}</p>
+        )}
         <p className="bio">{user.bio || ""}</p>
 
         {!isOwnProfile && uuid && (
@@ -197,35 +239,6 @@ export default function ProfileCard({ uuid, setPrivateProfile }) {
           >
             {getFollowButtonText()}
           </button>
-        )}
-
-        {isOwnProfile && (
-          <div className="connection-buttons">
-            <div className="followers-list">
-              <h3>Followers</h3>
-              {followers.length === 0 ? (
-                <p>No followers yet.</p>
-              ) : (
-                <ul>
-                  {followers.map((entry) => (
-                    <li key={entry.follower_uuid}>{entry.follower_name}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="following-list">
-              <h3>Following</h3>
-              {followings.length === 0 ? (
-                <p>Not following anyone.</p>
-              ) : (
-                <ul>
-                  {followings.map((entry) => (
-                    <li key={entry.leader_uuid}>{entry.leader_name}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
         )}
       </div>
     </div>

@@ -1,151 +1,118 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { fetchMyPosts } from "../../../lib/apiPosts";
+import React, { useState, useEffect, use } from "react";
+import { useRouter } from 'next/navigation';
+import { fetchUserPosts } from "../../../lib/apiPosts";
+import { fetchGroups, fetchFollowees } from "../../../lib/apiAuth";
 import "./profile.css";
-import SidebarSection from "../../../components/SidebarSection";
-import PostCard from "../../../components/PostCard";
 import ProfileCard from "../../../components/ProfileCard";
+import GroupList from "../../../components/GroupList";
 import UsersList from "../../../components/UsersList";
-import {
-    myPosts,
-    myActivity,
-    sampleGroups,
-    sampleFollowers,
-    sampleFollowing,
-} from "../../../data/mockData";
+import PostList from "../../../components/PostList";
+import FollowingsList from '../../../components/FollowingsList';
 
 export default function ProfilePage({ params }) {
-    const [showFollowers, setShowFollowers] = useState(false);
-    const [showFollowing, setShowFollowing] = useState(false);
-    const [isPrivateProfile, setIsPrivateProfile] = useState(false);
+    const { uuid } = use(params);
+    const router = useRouter();
+
+    const userUUID = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
+
+    useEffect(() => {
+        if (uuid === userUUID) {
+        router.replace('/profile');
+        }
+    }, [uuid, userUUID, router]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [myPosts, setMyPosts] = useState([]);
-
-    // Optionally, fetch posts only if not private
+    const [groups, setGroups] = useState([]);
+    const [groupsLoading, setGroupsLoading] = useState(true);
+    const [groupsError, setGroupsError] = useState(null);
     useEffect(() => {
-    if (isPrivateProfile) {
-        setMyPosts([]);
-        setLoading(false);
-        return;
-    }
-    async function loadMyData() {
+      async function loadGroups() {
         try {
-        const [myPostsData] = await Promise.all([fetchMyPosts()]);
-        setMyPosts(myPostsData.data);
+          setGroupsLoading(true);
+          const data = await fetchGroups(uuid);
+          setGroups(data || []);
         } catch (err) {
-        setError(err.message);
+          setGroupsError(err.message);
         } finally {
-        setLoading(false);
+          setGroupsLoading(false);
         }
-    }
-    loadMyData();
+      }
+      loadGroups();
+    }, []);
+
+    const [followers, setFollowers] = useState([]);
+    const [following, setFollowing] = useState([]);
+    const [myPosts, setMyPosts] = useState([]);
+    const [isPrivateProfile, setIsPrivateProfile] = useState(false);
+    useEffect(() => {
+        if (isPrivateProfile) {
+            setMyPosts([]);
+            setLoading(false);
+            return;
+        }
+
+        async function loadMyData() {
+            try {
+            const [userPostsData, myFollowings] = await Promise.all(
+                [fetchUserPosts(uuid), fetchFollowees(uuid)]); // need to add fetch by UUID
+            setMyPosts(userPostsData.data);
+
+            if (myFollowings && Array.isArray(myFollowings)) {
+                const followersList = myFollowings.filter(item => item.leader_uuid === uuid);
+                const followingList = myFollowings.filter(item => item.follower_uuid === uuid);
+
+                setFollowers(followersList);
+                setFollowing(followingList);
+            }
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadMyData();
     }, [isPrivateProfile]);
 
     return (
     <main>
         <div className="homepage-layout">
-        {/* Left Sidebar */}
-        <aside className="sidebar left-sidebar">
-            <SidebarSection title="Privacy">
-            <div className="privacy-toggle">
-                <label htmlFor="privacySwitch">Visibility:</label>
-                <select
-                id="privacySwitch"
-                value={isPrivateProfile ? "private" : "public"}
-                onChange={(e) => setIsPrivateProfile(e.target.value === "private")}
-                >
-                <option value="public">Public</option>
-                <option value="private">Private</option>
-                </select>
-            </div>
-            </SidebarSection>
-            <SidebarSection title="My Activity">
-            <ul className="categories">
-                {myActivity.map((cat) => (
-                <li key={cat.id} className="category-item">
-                    <strong>{cat.name}</strong>
-                </li>
-                ))}
-            </ul>
-            </SidebarSection>
-            <SidebarSection title="My Groups">
-            <ul className="groups">
-                {sampleGroups.map((group) => (
-                <li key={group.id} className="group-item">
-                    <strong>{group.name}</strong>
-                </li>
-                ))}
-            </ul>
-            </SidebarSection>
-        </aside>
 
         {/* Profile Content */}
         <section className="main-post-section">
-            <ProfileCard uuid={params.uuid} setPrivateProfile={setIsPrivateProfile} />
+            <ProfileCard uuid={uuid} setPrivateProfile={setIsPrivateProfile} />
 
           {/* Main Post Content */}
             {!isPrivateProfile && (
-            <div className="user-posts-section">
-                <h3>Posts</h3>
-                {myPosts.length > 0 ? (
-                myPosts.map((post) => <PostCard key={post.id} post={post} />)
-                ) : (
-                <p>No posts yet.</p>
-                )}
-            </div>
-            )}
+                <>
+                    {/* Followers Modal */}
+                    <FollowingsList title="Followers" users={followers} 
+                    displayProperty={"follower_name"} linkProperty={"follower_uuid"}/>
 
-            {/* Followers Modal */}
-            {showFollowers && (
-            <div className="modal">
-                <div className="modal-content">
-                <h3>Followers</h3>
-                <button
-                    className="close"
-                    onClick={() => setShowFollowers(false)}
-                >
-                    ✖
-                </button>
-                <ul className="users">
-                    {sampleFollowers.map((user) => (
-                    <li key={user.id} className="user-item">
-                        <img src={user.avatar} alt={user.username} />
-                        <span>
-                            {user.fullName} ({user.username})
-                        </span>
-                    </li>
-                    ))}
-                    </ul>
-                </div>
-            </div>
-            )}
+                    {/* Following Modal */}
+                    <FollowingsList title="following" users={following}
+                    displayProperty={"leader_name"} linkProperty={"leader_uuid"}/>
 
-            {/* Following Modal */}
-            {showFollowing && (
-            <div className="modal">
-                <div className="modal-content">
-                <h3>Following</h3>
-                <button
-                    className="close"
-                    onClick={() => setShowFollowing(false)}
-                >
-                    ✖
-                </button>
-                <ul className="users">
-                    {sampleFollowing.map((user) => (
-                    <li key={user.id} className="user-item">
-                        <img src={user.avatar} alt={user.username} />
-                        <span>
-                        {user.fullName} ({user.username})
-                        </span>
-                        </li>
-                    ))}
-                    </ul>
-                </div>
-            </div>
+                    {/* Main Post Content */}
+                    <div className="user-posts-section">
+                    <h3>Posts</h3>
+                        {loading && <div>Loading...</div>}
+                        {error && <div>Error: {error}</div>}
+                        {!loading && !error && <PostList posts={myPosts} />}
+                    </div>
+
+                    <div className="user-posts-section">
+                    <h3>Groups</h3>
+                        <GroupList
+                        groups={groups}
+                        loading={groupsLoading}
+                        error={groupsError}
+                        />
+                    </div>
+                </>
             )}
         </section>
 

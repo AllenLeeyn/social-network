@@ -4,6 +4,7 @@ import (
 	// "forum/middlewares"
 
 	"errors"
+	"log"
 	"net/http"
 	errorControllers "social-network/pkg/errorManagement/controllers"
 	"social-network/pkg/forumManagement/models"
@@ -47,7 +48,7 @@ func isValidPostInfo(post *models.Post) error {
 	if post.Visibility == "" {
 		post.Visibility = "public"
 	}
-	if post.Visibility == "public" {
+	if post.Visibility == "public" && post.Type == "user" {
 		post.GroupId = 0
 	}
 	if post.Visibility != "public" && post.Visibility != "private" && post.Visibility != "selected" {
@@ -254,6 +255,52 @@ func ReadPostHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnJsonSuccess(w, "Post fetched successfully", data_obj_sender)
 }
 
+func ReadPostsSubmittedByUserUUIDHandler(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
+	audienceUserId, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	userUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/userPosts")
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
+		return
+	}
+
+	posts, err := models.ReadPostsSubmittedByUserUUID(userUUID, audienceUserId)
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	utils.ReturnJsonSuccess(w, "Posts fetched successfully", posts)
+}
+
+func ReadPostsSubmittedByGroupUUIDHandler(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value(middleware.CtxUserID)
+	audienceUserId, isOk := userIDRaw.(int)
+	if !isOk {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	groupUUID, err := utils.ExtractUUIDFromUrl(r.URL.Path, "api/groupPosts")
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.NotFoundError)
+		return
+	}
+
+	posts, err := models.ReadPostsSubmittedByGroupUUID(groupUUID, audienceUserId)
+	if err != nil {
+		errorControllers.ErrorHandler(w, r, errorControllers.InternalServerError)
+		return
+	}
+
+	utils.ReturnJsonSuccess(w, "Posts fetched successfully", posts)
+}
+
 func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value(middleware.CtxUserID)
 	userID, isOk := userIDRaw.(int)
@@ -269,6 +316,8 @@ func SubmitPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println(post.Type)
+	log.Println(post.GroupId)
 	if err := isValidPostInfo(post); err != nil {
 		errorControllers.CustomErrorHandler(w, r, err.Error(), http.StatusBadRequest)
 		return
