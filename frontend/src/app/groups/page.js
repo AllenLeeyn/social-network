@@ -13,8 +13,8 @@ import '../../styles/groups/FilterList.css'
 import './groups.css'
 
 const groupFilters = [
-  { key: 'my_groups', label: 'My Groups' },
   { key: 'discover', label: 'Discover' },
+  { key: 'my_groups', label: 'My Groups' },
 ];
 
 export default function GroupsPage() {

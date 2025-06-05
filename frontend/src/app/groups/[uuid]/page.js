@@ -55,19 +55,6 @@ export default function GroupDetailPage() {
         loadGroupPost();
     }, [uuid]);
 
-    // Helper to refresh members and requests
-    // function refreshMembersAndRequests() {
-    //     setLoadingMembers(true);
-    //     Promise.all([
-    //         fetch(`/frontend-api/groups/members/${uuid}`).then(res => res.json()),
-    //         fetch(`/frontend-api/group/member/requests/${uuid}`).then(res => res.json())
-    //     ]).then(([membersData, requestsData]) => {
-    //         setMembers(membersData.data || []);
-    //         setRequests(requestsData.data || []);
-    //         setLoadingMembers(false);
-    //     });
-    // }
-
     async function refreshMembersAndRequests() {
         setLoadingMembers(true);
         try {
