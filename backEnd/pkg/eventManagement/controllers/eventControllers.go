@@ -92,7 +92,7 @@ func EventCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	notificationModel.InsertNotificationForEvent(&notificationModel.Notification{
 		FromUserId: userID, TargetId: e.GroupID, TargetUUID: e.GroupUUID,
-		Message: `{"event_id":"` + strconv.Itoa(eventID) + `","event_uuid":"` + eventUUID + `"}`,
+		Message: strconv.Itoa(eventID),
 	}, e.GroupID, userID)
 	userControllers.ExtendSession(w, r)
 	utils.ReturnJsonSuccess(w, "event created",

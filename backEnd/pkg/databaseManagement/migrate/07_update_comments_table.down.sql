@@ -2,6 +2,7 @@ DROP TRIGGER IF EXISTS update_like_count_after_insert_in_comment_feedback;
 DROP TRIGGER IF EXISTS update_like_count_after_update_in_comment_feeback;
 DROP TRIGGER IF EXISTS update_dislike_count_after_insert_in_comment_feedback;
 DROP TRIGGER IF EXISTS update_dislike_count_after_update_in_comment_feeback;
+DROP TRIGGER IF EXISTS update_comment_count_after_insert;
 
 CREATE TABLE comments_old (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,4 +107,16 @@ BEGIN
         FROM comment_feedback 
         WHERE parent_id = NEW.parent_id AND rating = -1)
     WHERE id = NEW.parent_id;
+END;
+
+CREATE TRIGGER update_comment_count_after_insert
+AFTER INSERT ON comments
+FOR EACH ROW
+BEGIN
+    UPDATE posts
+    SET comment_count = (
+        SELECT COUNT(*) 
+        FROM comments 
+        WHERE post_id = NEW.post_id)
+    WHERE id = NEW.post_id;
 END;
