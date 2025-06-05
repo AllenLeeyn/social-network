@@ -162,6 +162,7 @@
 }
 
 .visibility-badge {
+  flex-direction: column;
   display: inline-block;
   padding: 0.35rem 0.75rem;
   border-radius: 20px;
