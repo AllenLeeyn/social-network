@@ -19,8 +19,11 @@ export default function GroupList({ filter, onSelectGroup }) {
         });
     }, []);
 
+    if (!groups || groups.length === 0)
+        return <div>No groups found.</div>;
+
     // req 
-    let filteredGroups = groups;
+    let filteredGroups = groups || [];
     if (filter === 'my_groups') {
         filteredGroups = groups.filter(g => g.status === "accepted");
     } else if (filter === 'discover') {
