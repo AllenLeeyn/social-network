@@ -18,7 +18,7 @@ const groupFilters = [
 ];
 
 export default function GroupsPage() {
-  const [selectedFilter, setSelectedFilter] = useState('my_groups');
+  const [selectedFilter, setSelectedFilter] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [groupsRefreshKey, setGroupsRefreshKey] = useState(0);
