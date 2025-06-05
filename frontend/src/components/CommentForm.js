@@ -1,6 +1,6 @@
 // Handles new comment submissions
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { submitComment } from "../lib/apiPosts";
 import { handleImage } from "../lib/handleImage"; 
 
@@ -11,6 +11,7 @@ export default function CommentForm({ postUUID, onCommentSubmitted }) {
   const [postImage, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
   const handleFileChange = (e) => {
@@ -41,7 +42,14 @@ export default function CommentForm({ postUUID, onCommentSubmitted }) {
       await submitComment({ post_uuid: postUUID, content,
         attached_image: imageUUID ? Object.values(imageUUID)[0] : null });
       setContent("");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setImage(null)
+      setPreviewUrl(null);
       if (onCommentSubmitted) onCommentSubmitted();
+
     } catch (err) {
       setError(err.message || "Failed to submit comment");
     } finally {
@@ -63,11 +71,12 @@ export default function CommentForm({ postUUID, onCommentSubmitted }) {
         type="file"
         accept="image/*"
         onChange={handleFileChange}
+        ref={fileInputRef}
       />
       {previewUrl && (
         <img
           src={previewUrl}
-          alt="Avatar Preview"
+          alt="Image Preview"
           style={{ width: 100, height: 100, objectFit: "cover", marginTop: 10 }}
         />
       )}

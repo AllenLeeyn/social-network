@@ -75,6 +75,16 @@ export default function ProfilePage() {
           displayProperty={"leader_name"} linkProperty={"leader_uuid"}/>
           </div>
 
+ 
+          <div className="user-posts-section">
+          <h3>Groups</h3>
+              <GroupList
+              groups={groups}
+              loading={groupsLoading}
+              error={groupsError}
+              />
+          </div>
+          
           {/* Main Post Content */}
           <div className="user-posts-section">
           <h3>Posts</h3>
@@ -83,14 +93,6 @@ export default function ProfilePage() {
               {!loading && !error && <PostList posts={myPosts} />}
           </div>
 
-          <div className="user-posts-section">
-          <h3>Groups</h3>
-            <GroupList
-              groups={groups}
-              loading={groupsLoading}
-              error={groupsError}
-            />
-          </div>
       </section>
 
       {/* Right Sidebar */}
