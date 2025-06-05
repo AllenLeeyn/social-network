@@ -25,6 +25,8 @@ export default function GroupList({ filter, onSelectGroup }) {
         filteredGroups = groups.filter(g => g.status === "accepted");
     } else if (filter === 'discover') {
         filteredGroups = groups.filter(g => g.status !== "accepted");
+    } else {
+        filteredGroups = groups
     }
 
 
