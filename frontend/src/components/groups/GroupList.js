@@ -19,7 +19,6 @@ export default function GroupList({ filter, onSelectGroup }) {
         });
     }, []);
 
-    
     if (!groups || groups.length === 0)
         return <div>No groups found.</div>;
 
