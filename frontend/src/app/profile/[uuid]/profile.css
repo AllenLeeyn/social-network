@@ -13,26 +13,11 @@
     padding: 1rem;
 }
 
-.sidebar .right-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    background: #233144;
-}
-
 .profile-grid {
     display: grid;
     grid-template-columns: 1fr 300px; 
     grid-template-rows: auto;
     gap: 20px; 
-}
-
-.profile-content {
-    grid-column: 1 / 2; 
-}
-
-.right-sidebar {
-    grid-column: 2 / 3; 
 }
 
 .profile-header {
@@ -93,7 +78,6 @@
 .connection-buttons button {
     margin-right: 10px;
     padding: 8px 12px;
-    border: 1px solid #ccc;
     border-radius: 5px;
     background-color: #12252E;
     cursor: pointer;
@@ -129,47 +113,6 @@
     font-size: 1.2em;
     cursor: pointer;
     color: #333;
-}
-
-.sidebar {
-    padding: 15px;
-    background-color: #f9f9f9;
-    border: 1px solid #eee;
-    border-radius: 5px;
-}
-
-.sidebar-title {
-    font-size: 1.1em;
-    margin-bottom: 10px;
-    color: #333;
-}
-
-.sidebar .users {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.sidebar .user-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-}
-
-.sidebar .user-item:last-child {
-    border-bottom: none;
-}
-
-.sidebar .user-item img {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 10px;
-}
-
-.sidebar .user-item span {
-    flex-grow: 1;
 }
 
 .follow-lists-row {
@@ -237,11 +180,18 @@
 .connections{
     flex: 1;
     width: auto;
-    border: 1px solid #ddd;
     border-radius: 8px;
     box-sizing: border-box;
 
 }
+
+.connections ul {
+    margin: 3px;
+    font-size: 14px;
+    list-style: none;
+    background: linear-gradient(135deg, #233144 40%, #4682B4 100%);
+}
+
 
 .connections .connection-item{
     width: auto;
