@@ -167,7 +167,7 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 					WHEN n.target_detailed_type = 'group_request_responded' THEN
 						'Your group joining request to group <b>' || target_group.title || '</b> has been ' || n.message
 					WHEN n.target_detailed_type = 'group_event' THEN
-						'Event <b>' || n.message || '</b>' || ' has been created in group <b>' || target_group.title || '</b>'
+						'Event <b>' || IFNULL(ge.title, '') || '</b>' || ' has been created in group <b>' || target_group.title || '</b>'
 					ELSE ''
 				END,
 				''
@@ -201,6 +201,9 @@ func ReadAllNotifications(to_user_id int) ([]Notification, error) {
 			LEFT JOIN groups target_group
 				ON n.target_detailed_type IN ('group_invite', 'group_invite_responded', 'group_request', 'group_request_responded', 'group_event')
 				AND n.target_id = target_group.id
+			LEFT JOIN group_events ge
+				ON n.target_detailed_type = 'group_event'
+				AND ge.id = n.message
 
 			WHERE n.status != 'delete'
 			ORDER BY n.id DESC;
