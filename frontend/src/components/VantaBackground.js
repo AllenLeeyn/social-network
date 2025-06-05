@@ -22,7 +22,7 @@ export default function VantaBackground({ children }) {
 
         minHeight: 200.0,
         minWidth: 200.0,
-        scale: 3,
+        scale: 2,
         scaleMobile: 1.0,
         color: 0x33FFFF,
         backgroundColor: 0x111111,

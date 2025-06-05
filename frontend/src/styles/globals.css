@@ -246,7 +246,7 @@ textarea:focus {
 .user-item span:hover {
     font-size: 14px;
     font-weight: 500;
-    color: white;
+    color: rgb(33, 43, 71);
     text-decoration: none;
 }
 
