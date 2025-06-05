@@ -156,7 +156,7 @@ export default function HomePage() {
 
         {/* Right Sidebar */}
         <aside className="sidebar right-sidebar">
-          <SidebarSection title="Active Users">
+          <SidebarSection title="Chat list">
             <UsersList />
           </SidebarSection>
         </aside>

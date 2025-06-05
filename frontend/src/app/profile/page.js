@@ -9,6 +9,7 @@ import UsersList from "../../components/UsersList";
 import GroupList from "../../components/GroupList";
 import PostList from "../../components/PostList";
 import FollowingsList from '../../components/FollowingsList';
+import SidebarSection from "../../components/SidebarSection";
 
 export default function ProfilePage() {
   const userUUID = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
@@ -97,7 +98,9 @@ export default function ProfilePage() {
 
       {/* Right Sidebar */}
       <aside className="sidebar right-sidebar">
-      <UsersList />
+        <SidebarSection title="Chat list">
+          <UsersList />
+        </SidebarSection>
       </aside>
       </div>
   </main>

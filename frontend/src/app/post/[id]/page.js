@@ -75,7 +75,7 @@ export default function PostPage() {
 
         {/* Right Sidebar */}
         <aside className="sidebar right-sidebar">
-          <SidebarSection title="Active Users">
+          <SidebarSection title="Chat list">
             <UsersList />
           </SidebarSection>
         </aside>

@@ -44,7 +44,7 @@ export default function UsersList( { activeConversation } ) {
     
     return (
         <div className='sidebar-section'>
-            <h3>({isConnected ? '✅ Connected' : '❌ Disconnected'})</h3>
+            <p>({isConnected ? '🟢 online' : '🔴 offline'})</p>
             <h4>Users</h4>
             <ul className='users'>
                 {users.map(user => (

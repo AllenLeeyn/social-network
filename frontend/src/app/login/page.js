@@ -219,6 +219,7 @@ export default function AuthPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
+                <label className="field-label">Birthday</label>
                 <input
                   type="date"
                   value={registerDateOfBirth}

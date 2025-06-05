@@ -16,7 +16,7 @@ export default function MessagePage() {
                 </section>
                 {/* Right Sidebar */}
                 <aside className="sidebar right-sidebar">
-                    <SidebarSection title="All Users">
+                    <SidebarSection title="Chat list">
                         <UsersList />
                     </SidebarSection>
                 </aside>

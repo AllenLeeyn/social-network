@@ -3,6 +3,7 @@
 import { useWebsocketContext } from '../../contexts/WebSocketContext';
 import { useActiveChat } from '../../contexts/ActiveChatContext';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import EmojiPicker from "emoji-picker-react";
 
 export default function MessagesChatbox() {
@@ -129,7 +130,11 @@ export default function MessagesChatbox() {
     return (
         <div className='chat-component'>
             <h2>
-                {activeChat ? activeChat.name : 'Select a user to chat'}
+                {activeChat ? (
+                    <Link href={`/profile/${activeChat.uuid}`} style={{ fontWeight: 'bold', textDecoration: 'none' }}>
+                        {activeChat.name}
+                    </Link>
+                    ) : 'Select a user to chat'}
                 {!isConnected && <span style={{color: 'red', marginLeft: '1em'}}>Disconnected</span>}
             </h2>
             <div className='messages-list' ref={messagesContainerRef}>
@@ -146,7 +151,7 @@ export default function MessagesChatbox() {
                             <div key={msg.ID} className={`message-item ${isSent ? 'sent' : 'received'}`}>
                                 <div className="message-bubble">
                                     <strong>{isSent ? "You" : (msg.senderName || "unknown")}</strong>
-                                    <div className="message-content">{msg.content}</div>
+                                    <pre className="message-content">{msg.content}</pre>
                                     <span className='timestamp'>{new Date(msg.createdAt).toLocaleTimeString()}</span>
                                 </div>
                             </div>
