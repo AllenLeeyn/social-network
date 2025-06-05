@@ -7,7 +7,6 @@ import Modal from '../../components/Modal';
 import GroupFilterList from '../../components/groups/GroupFilterList';
 import GroupList from '../../components/groups/GroupList';
 import GroupDetail from '../../components/groups/GroupDetail';
-import GroupInvitationList from '../../components/groups/GroupInvitationList';
 import CreateGroupForm from '../../components/groups/CreateGroupForm';
 
 import '../../styles/groups/FilterList.css'
@@ -16,7 +15,6 @@ import './groups.css'
 const groupFilters = [
   { key: 'my_groups', label: 'My Groups' },
   { key: 'discover', label: 'Discover' },
-  { key: 'invitations', label: 'Invitations' }
 ];
 
 export default function GroupsPage() {
@@ -26,13 +24,14 @@ export default function GroupsPage() {
   const [groupsRefreshKey, setGroupsRefreshKey] = useState(0);
 
 
+  // Handles group selection/deselection
   const handleSelectGroup = (group) => {
-  if (selectedGroup && selectedGroup.id === group.id) {
-    setSelectedGroup(null); // Deselect if same group is clicked
-  } else {
-    setSelectedGroup(group); // Select new group
-  }
-};
+    if (selectedGroup && selectedGroup.id === group.id) {
+      setSelectedGroup(null);
+    } else {
+      setSelectedGroup(group);
+    }
+  };
 
   return (
     <main>
@@ -58,15 +57,14 @@ export default function GroupsPage() {
             + Create Group
           </button>
         </div>
-          {selectedFilter === 'my_groups' && (
-            <GroupList key={groupsRefreshKey} onSelectGroup={handleSelectGroup} />
-          )}
-          {selectedFilter === 'discover' && (
-            <GroupList discover onSelectGroup={handleSelectGroup} />
-          )}
-          {selectedFilter === 'invitations' && (
-            <GroupInvitationList />
-          )}
+        {/* Group List: always pass selectedFilter as prop */}
+          <GroupList
+            key={groupsRefreshKey}
+            filter={selectedFilter}
+            onSelectGroup={handleSelectGroup}
+          />
+
+          {/* Group Details */}
           {selectedGroup && (
             <GroupDetail group={selectedGroup} />
           )}
