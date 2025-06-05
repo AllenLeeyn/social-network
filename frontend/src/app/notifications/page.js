@@ -9,7 +9,6 @@ import '../../styles/globals.css';
 import './notification.css';
 import '../../styles/notifications/FilterList.css'
 
-import { mockNotifications } from '../../data/mockData';
 import { useNotifications } from '../../contexts/NotificationsContext';
 
 const notificationFilters = [
