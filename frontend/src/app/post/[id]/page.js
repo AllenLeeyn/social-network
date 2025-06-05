@@ -73,7 +73,7 @@ export default function PostPage() {
           <CommentsSection
             comments={comments}
             postId={id}
-            onCommentAdded={refreshComments}
+            onCommentSubmitted={refreshComments}
           />
         </section>
 
