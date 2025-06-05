@@ -13,11 +13,16 @@ export default function VantaBackground({ children }) {
         el: vantaRef.current,
         THREE,
         mouseControls: true,
-        touchControls: true,
+        touchControls: false,
         gyroControls: false,
-        minHeight: 200.0,
-        minWidth: 200.0,
-        scale: 1.0,
+
+        points: 2.0,              // default is 12.0, lower = fewer dots
+        maxDistance: 30.0,        // default is 20.0, lower = fewer connections
+        spacing: 20.0,    
+
+        minHeight: 50.0,
+        minWidth: 50.0,
+        scale: 0.25,
         scaleMobile: 1.0,
         color: 0x33FFFF,
         backgroundColor: 0x111111, // optional: set a background color
