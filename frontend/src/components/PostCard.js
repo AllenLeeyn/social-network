@@ -9,6 +9,9 @@ import { toast } from "react-toastify";
 import { fetchPostById, submitPostFeedback } from "../lib/apiPosts";
 import { FaUserCircle } from "react-icons/fa";
 import Image from "next/image";
+import "../styles/PostList.css";
+
+
 
 export default function PostCard({ post }) {
   const [liked, setLiked] = useState(post.liked);

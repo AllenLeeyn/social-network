@@ -156,14 +156,11 @@
     margin-left: 5px;
 }
 
-.follow-lists-row {
-    display: inline-flex;
-    position: relative;
-    gap:40px;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-    align-items: center;
-    justify-content: flex-start;
+.user-list-panel {
+  margin-bottom: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  /* overflow: hidden; */
 }
 
 .user-list-panel {

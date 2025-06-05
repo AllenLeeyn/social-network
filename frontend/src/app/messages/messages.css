@@ -1,24 +1,25 @@
 .message-page-layout {
-    padding-top: 70px;
     display: flex;
+    flex-direction: row;
     gap: 1rem;
     max-width: 1100px;
-    margin: 0 auto;
+    margin: 70px auto 0 auto; /* 70px top margin for navbar space */
     width: 100%;
     align-items: flex-start;
+    min-height: 80vh;
+    box-sizing: border-box;
+
 }
 
 /*.sidebar use styling from globals.css*/
 
-.left-sidebar {
-    margin-right: 0.5rem;
-}
 
 .right-sidebar {
     margin-left: 0.5rem;
 }
 
-.main-feed.message-list-section {
+
+.message-list-section {
     flex: 1 1 0;
     min-width: 320px;
     border-radius: 12px;
@@ -26,18 +27,22 @@
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     background: #fff;
     display: flex;
-    flex-direction: column;
-    max-width: 700px;
 }
 
+.chat-component {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}   
+
 .messages-list {
-    height: 550px;         /* Or any fixed value that fits your design */
-    overflow-y: auto;      /* Enables vertical scrolling */
+    height: 550px;         
+    overflow-y: auto;      
     display: flex;
     flex-direction: column;
     border: 1px solid #ccc;
     background: #fff;
-    /* Optional: */
     padding: 10px;
     box-sizing: border-box;
     overscroll-behavior: contain;
@@ -78,7 +83,7 @@
 }
 
 .typing-indicator-area {
-    height: 32px; /* or whatever fits your design */
+    height: 32px; 
     transition: opacity 0.2s;
     color: #888;
     display: flex;
@@ -100,7 +105,7 @@
 }
 
 .message-input-form input:focus {
-    border-color: #4682B4; /* Change to your desired focus color */
+    border-color: #4682B4; 
     outline: none;
 }
 
@@ -138,19 +143,3 @@
 }
 
 
-/* What to Put in messages.css
-Messages-specific styles should include:
-
-Chat-specific layout:
-.message-page-layout, .message-list-section, .message-view
-
-Chat bubbles and message formatting:
-.message-item, .message-content, .message-header, .timestamp, .sender-name
-
-Message input bar:
-.message-input-form, .message-input
-
-Overrides for global styles (if needed):
-E.g., if you want chat avatars or chat user lists to look different from the homepage, use more specific selectors like .message-page-layout .user-item { ... }
-
-These are styles that only make sense in the context of the chat/messages feature. */

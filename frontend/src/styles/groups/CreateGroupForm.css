@@ -5,6 +5,7 @@
 
 .form-group {
     margin-bottom: 1rem;
+    box-sizing: border-box;
 }
 
 .form-group h4,
@@ -30,11 +31,21 @@
     resize: none;
 }
 
+.create-post-form input {
+    margin-bottom: 10px;
+    font-family: inherit;
+}
+
 .create-post-form textarea {
     min-height: 120px;
     resize: none;
+    margin-bottom: 10px;
 }
 
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
 
 .create-post-form form{
     display: flex;
@@ -47,9 +58,8 @@
     box-sizing: border-box;
 }
 
-
 /* ----------- Button styles------------ */
-.form-actions {
+.form-actions, .RSVP-btn {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;

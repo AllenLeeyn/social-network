@@ -1,9 +1,8 @@
 .comments-section {
     margin-top: 2rem;
-    background: #f1f2f4; 
+    /* background: #F9FAFB;  */
     border-radius: 12px;
     padding: 1.2rem 1rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
 .comments-list {

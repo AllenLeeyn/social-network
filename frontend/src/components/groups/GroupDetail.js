@@ -386,7 +386,7 @@ export default function GroupDetail(
                 </section>
                 )}
                 {isMember && (
-                    <section>
+                    <section className="invite-non-members">
                         <h3>Non-Members</h3>
                         {loadingUsers ? (
                             <div>Loading users...</div>
@@ -398,7 +398,7 @@ export default function GroupDetail(
                                 .map(u => (
                                     <li key={u.uuid}>
                                         {u.nick_name}
-                                        <button
+                                        <button className="invite-button"
                                             style={{ marginLeft: '1rem' }}
                                             onClick={() => onInviteUser(u.uuid)}
                                             disabled={!!loadingActions[u.uuid]}

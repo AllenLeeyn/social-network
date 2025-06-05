@@ -3,7 +3,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import SidebarSection from "../../../components/SidebarSection";
 import CommentsSection from "../../../components/CommentSection";
-import "../../post/post.css";
+// import "../../../styles/globals.css";
 import "../../../styles/PostList.css";
 import { usePosts } from "../../../hooks/usePosts";
 import { fetchPostById } from "../../../lib/apiPosts";
@@ -60,16 +60,12 @@ export default function PostPage() {
   return (
     <main>
       <div className="post-page-layout">
-        {/* Left Sidebar */}
-        <aside className="sidebar left-sidebar">
-          <SidebarSection title="Categories">
-            <CategoriesList categories={categories} />
-          </SidebarSection>
-        </aside>
 
         {/* Main Content */}
         <section className="main-feed">
+          <div className="single-page">
           <PostCard post={post} />
+          </div>
           <CommentsSection
             comments={comments}
             postId={id}

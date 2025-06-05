@@ -20,6 +20,8 @@
     padding: 2rem;
     transition: background 0.5s;
     background: none;
+    border-radius: 16px;
+
 }
 
 .auth-left-content {
@@ -46,6 +48,7 @@
 .auth-left p {
     font-size: 1.1rem;
     margin-bottom: 2rem;
+    border-radius: 16px;
 }
 
 .auth-toggle-btn {
@@ -80,10 +83,10 @@
     width: 100%;
     max-width: 450px;
     padding: 2rem;
-    background: #fff;
+    background: rgb(241 241 241 / 70%);
     border-radius: 16px;
     box-shadow: 0 4px 24px rgba(30,41,59,0.08);
-
+    backdrop-filter: blur(8px);
 }
 
 .auth-form h3 {
