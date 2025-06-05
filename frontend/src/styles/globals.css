@@ -21,6 +21,7 @@ footer {
     font-size: 0.9rem;
     color: #666;
     margin-top: auto;
+    opacity: 0.8;
 }
 
 footer a {
@@ -252,6 +253,7 @@ textarea:focus {
     font-size: 14px;
     margin-left: 5px;
 }
+
 
 /* ------------- Reponsive -------------- */
 @media (max-width: 1150px) {
