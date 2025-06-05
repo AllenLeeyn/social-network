@@ -119,7 +119,7 @@ export default function PostCard({ post }) {
       </div>
 
       <small className="category-tags">
-        {post.group?.title && (
+        {post.group?.title && post.group.title !== "Public" && (
           <span className="category-badge">group: {post.group.title}</span>
         )}
 

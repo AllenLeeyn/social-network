@@ -88,13 +88,25 @@ export default function ProfilePage({ params }) {
           {/* Main Post Content */}
             {!isPrivateProfile && (
                 <>
-                    {/* Followers Modal */}
-                    <FollowingsList title="Followers" users={followers} 
-                    displayProperty={"follower_name"} linkProperty={"follower_uuid"}/>
 
-                    {/* Following Modal */}
-                    <FollowingsList title="following" users={following}
-                    displayProperty={"leader_name"} linkProperty={"leader_uuid"}/>
+                    <div className="follow-lists-row">
+                        {/* Followers Modal */}
+                        <FollowingsList title="Followers" users={followers} 
+                        displayProperty={"follower_name"} linkProperty={"follower_uuid"}/>
+
+                        {/* Following Modal */}
+                        <FollowingsList title="following" users={following}
+                        displayProperty={"leader_name"} linkProperty={"leader_uuid"}/>
+                    </div>
+                    
+                    <div className="user-posts-section">
+                    <h3>Groups</h3>
+                        <GroupList
+                        groups={groups}
+                        loading={groupsLoading}
+                        error={groupsError}
+                        />
+                    </div>
 
                     {/* Main Post Content */}
                     <div className="user-posts-section">
@@ -104,14 +116,6 @@ export default function ProfilePage({ params }) {
                         {!loading && !error && <PostList posts={myPosts} />}
                     </div>
 
-                    <div className="user-posts-section">
-                    <h3>Groups</h3>
-                        <GroupList
-                        groups={groups}
-                        loading={groupsLoading}
-                        error={groupsError}
-                        />
-                    </div>
                 </>
             )}
         </section>

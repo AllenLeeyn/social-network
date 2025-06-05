@@ -23,7 +23,7 @@ export default function DynamicImage({ src, alt }) {
       alt={alt}
       width={dimensions.width}
       height={dimensions.height}
-      style={{ maxWidth: "100%", height: "auto" }}
+      style={{ maxWidth: "50%", height: "auto" }}
     />
   );
 }

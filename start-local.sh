@@ -29,6 +29,7 @@ npm install react-toastify
 npm install react-icons
 npm install three
 npm install vanta
+npm install emoji-picker-react
 npm run dev &
 
 FRONTEND_PID=$!

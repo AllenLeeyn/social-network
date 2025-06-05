@@ -150,9 +150,78 @@
     margin-left: 5px;
 }
 
+.follow-lists-row {
+    display: inline-flex;
+    position: relative;
+    gap:40px;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.user-posts-section {
+    width:100%;
+}
+
 .user-item {
   list-style: none;
   margin-bottom: 0.75rem;
+}
+
+.user-list-panel {
+    flex: 1;
+    margin-bottom: 1.5rem;
+    width: 220px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.user-list-panel .toggle-btn{
+    text-align: left;
+    display: inline-block; 
+    margin: 0;
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+.button .toggle-btn {
+    text-align: left;
+    display: inline-block; 
+    margin: 0;
+    min-width: 100px;
+    padding: 6px 12px;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+.toggle-btn:hover {
+    filter: brightness(1.15); 
+}
+
+.panel-content {
+    padding: 0.5rem;
+    align-content: center;
+    background-color: #fff;
+    animation: fadeIn 0.2s ease-in;
+}
+
+.connections{
+    flex: 1;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.connections .connection-item{
+    width: auto;
+} 
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .user-link {

@@ -11,6 +11,7 @@ RUN npm install react-toastify
 RUN npm install react-icons
 RUN npm install three
 RUN npm install vanta
+RUN npm install emoji-picker-react
 
 # Copy the rest of the app
 COPY . .

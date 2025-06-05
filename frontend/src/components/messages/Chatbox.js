@@ -3,7 +3,7 @@
 import { useWebsocketContext } from '../../contexts/WebSocketContext';
 import { useActiveChat } from '../../contexts/ActiveChatContext';
 import { useState, useEffect, useRef, useCallback } from 'react';
-
+import EmojiPicker from "emoji-picker-react";
 
 export default function MessagesChatbox() {
 
@@ -23,6 +23,7 @@ export default function MessagesChatbox() {
     
     const { activeChat } = useActiveChat();
     const [inputMessage, setInputMessage] = useState('');
+    const [showPicker, setShowPicker] = useState(false);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const prevScrollHeight = useRef(0);
@@ -30,6 +31,10 @@ export default function MessagesChatbox() {
 
     // Get your own UUID from context or localStorage
     const userUUID = typeof window !== 'undefined' ? localStorage.getItem('user-uuid') : null;
+
+    const handleEmojiClick = (emojiData) => {
+        setInputMessage((prev) => prev + emojiData.emoji);
+    };
 
     // Keep currentChatId in sync with activeChat
     useEffect(() => {
@@ -155,6 +160,7 @@ export default function MessagesChatbox() {
                     <div className="typing-indicator">{activeChat.name} is typing...</div>
                 )}
             </div>
+
             <form onSubmit={handleSendMessage} className='message-input-form'>
                 <input
                     type='text'
@@ -164,7 +170,21 @@ export default function MessagesChatbox() {
                     disabled={!activeChat}
                     className='message-input'
                 />
+
+                <button
+                    type='button'
+                    onClick={() => setShowPicker((prev) => !prev)}
+                    title="Insert emoji"
+                    >
+                    😊
+                </button>
             </form>
+
+            {showPicker && (
+                <div>
+                    <EmojiPicker onEmojiClick={handleEmojiClick} />
+                </div>
+            )}
         </div>
     );
 }
