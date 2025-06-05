@@ -408,7 +408,7 @@ export default function GroupDetail(
                                     </li>
                                 ))
                             ) : (
-                                <li>Everyone is a member!</li>
+                                <li>Everyone is a member or awaiting response!</li>
                             )}
                             </ul>
                         )}
