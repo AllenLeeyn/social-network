@@ -71,6 +71,10 @@
     font-size: 14px;
 }
 
+.message-content {
+    margin: 0px;
+}
+
 .message-item.sent .message-bubble {
     background: #d1e7dd;
 }

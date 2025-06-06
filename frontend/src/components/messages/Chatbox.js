@@ -150,9 +150,11 @@ export default function MessagesChatbox() {
                         return (
                             <div key={msg.ID} className={`message-item ${isSent ? 'sent' : 'received'}`}>
                                 <div className="message-bubble">
-                                    <strong>{isSent ? "You" : (msg.senderName || "unknown")}</strong>
                                     <pre className="message-content">{msg.content}</pre>
-                                    <span className='timestamp'>{new Date(msg.createdAt).toLocaleTimeString()}</span>
+                                    <span className='timestamp'>
+                                        {isSent ? "You " : (msg.senderName || "unknown ")}
+                                         {`[${new Date(msg.createdAt).toLocaleTimeString()}]`}
+                                    </span>
                                 </div>
                             </div>
                         );

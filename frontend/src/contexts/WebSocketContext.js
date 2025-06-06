@@ -121,7 +121,8 @@ export function WebSocketProvider( { children } ) {
                 });
 
                 setIsLoadingMore(false);
-                setHasMore(newMessages.length === 10); 
+                setHasMore(newMessages.length === 10);
+
                 break;
 
             case 'message':
@@ -129,6 +130,12 @@ export function WebSocketProvider( { children } ) {
                     data.receiverUUID === currentChatUUIDRef.current ||
                     data.groupUUID === currentChatUUIDRef.current) {
                     setMessages(prev => [...prev, data]);
+
+                    sendAction({
+                        action: 'messageAck',
+                        receiverUUID: data.receiverUUID,
+                        senderUUID: data.senderUUID
+                    });
                 }
 
                 if (data.groupUUID !== '00000000-0000-0000-0000-000000000000') return;

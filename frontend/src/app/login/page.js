@@ -8,7 +8,7 @@ import { handleImage } from "../../lib/handleImage";
 import { fetchUsers } from "../../lib/apiAuth";
 
 export default function AuthPage() {
-  const { handleLogin, handleSignup, error, loading } = useAuth();
+  const { handleLogin, handleSignup, setError, error, loading } = useAuth();
   const [mode, setMode] = useState("login");
   const router = useRouter();
 
@@ -30,6 +30,7 @@ export default function AuthPage() {
   const [registerVisibility, setVisibility] = useState("");
   const [formError, setFormError] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -50,6 +51,10 @@ export default function AuthPage() {
   // Handle login submission
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
+
     try {
       const response = await handleLogin(loginEmail, loginPassword);
       toast.success("Login successful! Redirecting...");
@@ -58,6 +63,7 @@ export default function AuthPage() {
       }, 1500);
     } catch (err) {
       console.error("Login failed:", err.message);
+      setIsLoggingIn(false);
     }
   };
 
@@ -73,6 +79,9 @@ export default function AuthPage() {
   // Handle registration submission
   const handleRegister = async (e) => {
     e.preventDefault();
+
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
 
     if (registerPassword !== registerConfirmPassword) {
       setFormError("Passwords do not match.");
@@ -112,6 +121,7 @@ export default function AuthPage() {
       }, 1500);
     } catch (err) {
       console.error("Signup failed:", err.message);
+      setIsLoggingIn(false);
     }
   };
 
@@ -132,7 +142,11 @@ export default function AuthPage() {
               <h2>Welcome to grit:hub!</h2>
               <p>Connect instantly. Log in to continue.</p>
               <button
-                onClick={() => setMode("register")}
+                onClick={() => {
+                  setMode("register");
+                  setFormError("");
+                  setError("");
+                }}
                 className="auth-toggle-btn"
               >
                 New here? Register
@@ -143,7 +157,11 @@ export default function AuthPage() {
               <h2>Join grit:hub!</h2>
               <p>Sign up and start connecting now.</p>
               <button
-                onClick={() => setMode("login")}
+                onClick={() => {
+                  setMode("login");
+                  setFormError("");
+                  setError("");
+                }}
                 className="auth-toggle-btn"
               >
                 Already have an account? Log In

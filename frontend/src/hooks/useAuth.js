@@ -58,5 +58,5 @@ export function useAuth() {
     localStorage.removeItem('user-nick_name');
   }
 
-  return { user, loading, error, handleLogin, handleSignup, handleLogout }
+  return { user, loading, error, handleLogin, handleSignup, handleLogout, setError }
 }
