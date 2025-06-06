@@ -2,6 +2,7 @@
 // src/components/comments/CommentSection.js
 
 import CommentForm from "./CommentForm";
+import CommentCard from "./CommentCard";
 import "../styles/Comments.css";
 
 export default function CommentSection({
