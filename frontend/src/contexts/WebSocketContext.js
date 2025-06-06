@@ -126,8 +126,8 @@ export function WebSocketProvider( { children } ) {
                 break;
 
             case 'message':
-                if (data.senderUUID === currentChatUUIDRef.current || 
-                    data.receiverUUID === currentChatUUIDRef.current ||
+                if (data.senderUUID === currentChatUUIDRef.current && data.groupUUID === '00000000-0000-0000-0000-000000000000' || 
+                    data.receiverUUID === currentChatUUIDRef.current && data.groupUUID === '00000000-0000-0000-0000-000000000000' ||
                     data.groupUUID === currentChatUUIDRef.current) {
                     setMessages(prev => [...prev, data]);
 
@@ -136,9 +136,11 @@ export function WebSocketProvider( { children } ) {
                         receiverUUID: data.receiverUUID,
                         senderUUID: data.senderUUID
                     });
+                    return;
                 }
 
                 if (data.groupUUID !== '00000000-0000-0000-0000-000000000000') return;
+
                 if (data.senderUUID !== currentChatUUIDRef.current) {
                     setUserList(prev =>{
                         const index = prev.findIndex(user => 
@@ -154,7 +156,7 @@ export function WebSocketProvider( { children } ) {
                 break;
 
             case 'typing':
-                if (data.senderUUID === currentChatUUIDRef.current) {
+                if (data.senderUUID === currentChatUUIDRef.current && activeChat.type === "user") {
                     setIsTyping(true);
                     setTimeout(() => setIsTyping(false), 3000);
                 }

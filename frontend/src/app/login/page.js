@@ -84,6 +84,7 @@ export default function AuthPage() {
     setIsLoggingIn(true);
 
     if (registerPassword !== registerConfirmPassword) {
+      setIsLoggingIn(false);
       setFormError("Passwords do not match.");
       return;
     }
@@ -95,6 +96,7 @@ export default function AuthPage() {
         imageUUID = await handleImage([registerAvatar]);
       } catch (err) {
         setFormError("Image upload failed: " + err.message);
+        setIsLoggingIn(false);
         return;
       }
     }
