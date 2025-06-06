@@ -1,14 +1,14 @@
 .group-card {
-  border: 1px solid #000;      /* Thin black border */
-  border-radius: 6px;          /* Optional: slightly rounded corners */
-  margin-bottom: 20px;         /* Space between cards */
-  padding: 16px;               /* Space inside each card */
-  background: inherit;         /* Keeps your existing background */
-  box-sizing: border-box;      /* Ensures padding doesn't affect width */
+  border: 1px solid #000;     
+  border-radius: 6px;          
+  margin-bottom: 20px;         
+  padding: 16px;             
+  background: inherit;         
+  box-sizing: border-box;      
 }
 
 .group-card p {
-  font-size: 14px;                /* Remove default padding */
+  font-size: 14px;               
 }
 
 .group-card-link .group-card {

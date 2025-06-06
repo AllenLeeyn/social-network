@@ -44,6 +44,9 @@
 }
 
 @media (max-width: 600px) {
+    .modal-overlay {
+        max-width: 80%;
+    }
     .modal-content {
         max-width: 98vw;
         min-width: 0;

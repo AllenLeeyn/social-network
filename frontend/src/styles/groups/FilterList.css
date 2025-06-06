@@ -40,17 +40,9 @@
 
 }
 
-/* .group-filter-item.active {
-    background: #1D9BF0;
-    color: white;
-    font-size: 14px;    
-    border-left: 6px solid white;
-    border-bottom: 2px solid white;
-} */
-
 .group-filter-item,
 .group-filter-item.active {
-  font-weight: bold; /* or bold, but keep it consistent */
+  font-weight: bold; 
   user-select: none;
 }
 

@@ -144,7 +144,7 @@ export default function Navbar() {
         >
           {userName || "Profile"}
         </Link>
-        <a href="/" className="nav-link" onClick={onLogoutClick}>
+        <a href="/" className="nav-link-logout" onClick={onLogoutClick}>
           <FaArrowRightFromBracket />
         </a>
       </div>
