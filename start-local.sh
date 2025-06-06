@@ -25,12 +25,8 @@ cd ../frontend
 
 echo "Starting Next.js frontend..."
 npm install
-npm install react-toastify
-npm install react-icons
-npm install three
-npm install vanta
-npm install emoji-picker-react
-npm run dev &
+npm run build
+npm start &
 
 FRONTEND_PID=$!
 
